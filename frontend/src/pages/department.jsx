@@ -135,86 +135,108 @@ const Department = () => {
 
 
   return (
-    <div className='w-full max-w-6xl m-5 text-center'>
-      <p className="text-2xl font-bold text-gray-800">MANAGE DEPARTMENT</p>
+    <div className='w-full max-w-6xl mx-auto px-4 text-center'>
+  <p className="text-xl sm:text-2xl font-bold text-gray-800 mt-5">MANAGE DEPARTMENT</p>
 
-      <div className='flex justify-between items-center mt-4'>
-        <input
-          type='text'
-          placeholder='Search by Department Name...'
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className='mb-6 px-4 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-1/4'
-        />
+  {/* Search and Add Button */}
+  <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-4'>
+    <input
+      type='text'
+      placeholder='Search by Department Name...'
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/3'
+    />
 
-        <button
-          onClick={handleAddNew}
-          className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition mb-6"
+    <button
+      onClick={handleAddNew}
+      className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
+    >
+      Add Department
+    </button>
+  </div>
+
+  {/* Table container */}
+  <div className='bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]'>
+    {/* Header */}
+    <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_3fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
+      <p className="hidden sm:block">#</p>
+      <p>Department</p>
+      <p>Actions</p>
+    </div>
+
+    {/* Table Rows */}
+    {paginatedDepartments.length > 0 ? (
+      paginatedDepartments.map((item, index) => (
+        <div
+          key={index}
+          className="flex flex-col sm:grid sm:grid-cols-[0.5fr_3fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
         >
-          Add Department
-        </button>
-      </div>
+          <p className="hidden sm:block">{(currentPage - 1) * itemsPerPage + index + 1}</p>
+          <p>{item.name}</p>
 
-      <div className='bg-white border-rounded text-sm max-h-[80vh] min-h-[60vh] overflow-scroll'>
-        <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_3fr_2fr] py-3 px-6 rounded-xl border-b-4 border-green-500'>
-          <p>#</p>
-          <p>Department</p>
-          <p>Actions</p>
+          <div className="flex sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+            <button
+              onClick={() => handleUpdate(item)}
+              className="bg-green-500 text-white text-sm px-3 py-1 rounded-full"
+            >
+              Update
+            </button>
+            <button
+              onClick={() => setConfirmDeleteId(item._id)}
+              className="bg-red-500 text-white text-sm px-3 py-1 rounded-full"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ))
+    ) : (
+      <p className="text-center py-5 text-gray-500">No departments found.</p>
+    )}
+
+    {/* Pagination */}
+    {totalPages > 1 && (
+      <>
+        <div className="flex justify-center items-center flex-wrap gap-2 mt-4 px-4 pb-4">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-3 py-1 rounded ${currentPage === i + 1
+                ? 'bg-green-500 text-white'
+                : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
 
-        {paginatedDepartments.length > 0 ? (
-          paginatedDepartments.map((item, index) => (
-            <div key={index} className="flex flex-wrap justify-between sm:grid sm:grid-cols-[0.5fr_3fr_2fr] items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50">
-              <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
-              <p>{item.name}</p>
-              <div className="flex justify-end gap-2">
-                <button onClick={() => handleUpdate(item)} className="bg-green-500 text-white text-sm px-3 py-1 rounded-full">Update</button>
-                <button onClick={() => setConfirmDeleteId(item._id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded-full">Delete</button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-center py-5 text-gray-500">No departments found.</p>
-        )}
+        <div className="flex justify-end mt-2 text-sm text-gray-800 px-4 pb-2">
+          Showing {(currentPage - 1) * itemsPerPage + 1}–
+          {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+        </div>
+      </>
+    )}
+  </div>
 
-        {totalPages > 1 && (
-          <>
-
-
-            {/* Pagination controls */}
-            <div className="flex justify-center items-center mt-2 gap-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
-                Prev
-              </button>
-
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-green-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                  {i + 1}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
-                Next
-              </button>
-            </div>
-            <div className="flex justify-end mt-2 text-sm  text-gray-800">
-              Showing {(currentPage - 1) * itemsPerPage + 1}–
-              {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
-            </div>
-          </>
-        )}
-
-
-      </div>
 
       {/* Form Modal */}
       {showForm && (
@@ -283,30 +305,32 @@ const Department = () => {
         </div>
       )}
 
-      {/* Delete Confirmation */}
-      {confirmDeleteId && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded shadow-md w-80">
-            <p className="text-red-500 mb-4 text-center font-semibold">
-              Are you sure you want to delete this department?
-            </p>
-            <div className="flex justify-between">
-              <button
-                onClick={() => setConfirmDeleteId(null)}
-                className="bg-gray-300 px-8 py-2 rounded-full hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(confirmDeleteId)}
-                className="bg-red-500 text-white px-8 py-2 rounded-full hover:bg-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+     {confirmDeleteId && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 px-4">
+    <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-xs sm:w-80">
+      <p className="text-red-500 mb-4 text-center font-semibold text-sm sm:text-base">
+        Are you sure you want to delete this department?
+      </p>
+
+      <div className="flex flex-col sm:flex-row justify-center gap-3">
+        <button
+          onClick={() => setConfirmDeleteId(null)}
+          className="bg-gray-300 px-6 py-2 rounded-full hover:bg-gray-400 w-full sm:w-auto"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => handleDelete(confirmDeleteId)}
+          className="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 w-full sm:w-auto"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

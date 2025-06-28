@@ -109,25 +109,27 @@ const attendance = () => {
     currentPage * itemsPerPage
   );
   return (
-    <div className='w-full max-w-6xl m-5 text-center'>
-      <p className="text-2xl font-bold text-gray-800">ATTENDANCE MANAGEMENT </p>
+   <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 text-center">
+  {/* Page Title */}
+  <p className="text-2xl font-bold text-gray-800">ATTENDANCE MANAGEMENT</p>
 
-      <div className='flex justify-between items-center mt-4'>
-        <input
-          type='text'
-          placeholder='Search by month Name...'
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className='mb-6 px-4 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-1/4'
-        />
+  {/* Search & Add Button */}
+  <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4 sm:gap-0">
+    <input
+      type="text"
+      placeholder="Search by month name..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="w-full sm:w-1/3 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+    />
 
-        <button
-          onClick={handleAddNew}
-          className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition mb-6"
-        >
-          Add Attendance
-        </button>
-      </div>
+    <button
+      onClick={handleAddNew}
+      className="bg-green-500 text-white py-2 px-6 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
+    >
+      Add Attendance
+    </button>
+  </div>
 
       <div className='bg-white border-rounded text-sm max-h-[80vh] min-h-[60vh] overflow-scroll'>
         <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_1fr_1fr_0.5fr_0.5fr_0.5fr_0.5fr_0.5fr_1fr] py-3 px-6 rounded-xl border-b-4 border-green-500'>
@@ -278,139 +280,141 @@ const attendance = () => {
             )}
 
 
-            {/* Attendance Table */}
-            <div id="print-salary-table">
+           {/* Attendance Table Wrapper */}
+<div id="print-salary-table" className="overflow-x-auto">
 
-              <h2 className="text-xl font-bold mb-4">
-                {selectedEmployee
-                  ? `Details for ${selectedEmployee.name} (${selectedEmployee.staffId})`
-                  : 'Monthly Attendance Report'} for {month && (
-                    <span className="text-green-700">
-                      {new Date(month + "-01").toLocaleString("default", {
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </span>
-                  )}
-              </h2>
-              {!selectedEmployee ? (
-                report.length > 0 ? (
-                  <table className="w-full border mt-2 text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border p-2">#</th>
-                        <th className="border p-2">Staff ID</th>
-                        <th className="border p-2">Name</th>
-                        <th className="border p-2">Present</th>
-                        <th className="border p-2">Absent</th>
-                        <th className="border p-2">On Leave</th>
-                        <th className="border p-2">Over Time</th>
-                        <th className="border p-2">On Shift</th>
-                        <th className="border p-2">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.values(
-                        report.reduce((acc, rec) => {
-                          const id = rec.employeeId._id;
-                          if (!acc[id]) {
-                            acc[id] = {
-                              employeeId: rec.employeeId,
-                              present: 0,
-                              absent: 0,
-                              leave: 0,
-                              overTime: 0,
-                              shift: 0,
-                              records: [],
-                            };
-                          }
-                          acc[id].records.push(rec);
-                          if (rec.status === 'Present') acc[id].present++;
-                          if (rec.status === 'Absent') acc[id].absent++;
-                          if (rec.status === 'Leave') acc[id].leave++;
-                          if (rec.status === 'overTime') acc[id].overTime++;
-                          if (rec.status === 'Shift') acc[id].shift++;
-                          return acc;
-                        }, {})
-                      ).map((emp, idx) => (
-                        <tr key={idx}>
-                          <td className="border p-2">{idx + 1}</td>
-                          <td className="border p-2">{emp.employeeId.staffId}</td>
-                          <td className="border p-2">{emp.employeeId.name}</td>
-                          <td className="border p-2 text-green-700">{emp.present}</td>
-                          <td className="border p-2 text-red-700">{emp.absent}</td>
-                          <td className="border p-2 text-yellow-700">{emp.leave}</td>
-                          <td className="border p-2 text-blue-700">{emp.overTime}</td>
-                          <td className="border p-2 text-gray-700">{emp.shift}</td>
-                          <td className="border p-2">
-                            <button
-                              onClick={() => {
-                                setSelectedEmployee(emp.employeeId);
-                                setEmployeeDetails(emp.records);
-                              }}
-                              className="text-blue-600 hover:underline"
-                            >
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="text-center text-gray-500 py-4">
-                    No attendance found for this month.
-                  </p>
-                )
-              ) : (
-                <>
-                  <table className="w-full border mt-2 text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border p-2">Date</th>
-                        <th className="border p-2">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {employeeDetails.map((rec, i) => (
-                        <tr key={i}>
-                          <td className="border p-2">
-                            {new Date(rec.date).toLocaleDateString()}
-                          </td>
-                          <td
-                            className={`border p-2 font-bold text-center ${rec.status === "Present"
-                                ? "text-green-600"
-                                : rec.status === "Absent"
-                                  ? "text-red-600"
-                                  : rec.status === "Leave"
-                                    ? "text-yellow-600"
-                                    : rec.status === "overTime"
-                                      ? "text-blue-600"
-                                      : rec.status === "Shift"
-                                        ? "text-gray-700"
-                                        : "text-black-600"
-                              }`}
-                          >
-                            {rec.status}
-                          </td>
+  <h2 className="text-lg sm:text-xl font-bold mb-4 text-center sm:text-left">
+    {selectedEmployee
+      ? `Details for ${selectedEmployee.name} (${selectedEmployee.staffId})`
+      : 'Monthly Attendance Report'}{" "}
+    {month && (
+      <span className="text-green-700">
+        for{" "}
+        {new Date(month + "-01").toLocaleString("default", {
+          month: "long",
+          year: "numeric",
+        })}
+      </span>
+    )}
+  </h2>
 
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+  {/* Table for Monthly Summary */}
+  {!selectedEmployee ? (
+    report.length > 0 ? (
+      <div className="overflow-x-auto">
+        <table className="w-full border mt-2 text-sm text-gray-800 min-w-[700px]">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border p-2">#</th>
+              <th className="border p-2">Staff ID</th>
+              <th className="border p-2">Name</th>
+              <th className="border p-2">Present</th>
+              <th className="border p-2">Absent</th>
+              <th className="border p-2">On Leave</th>
+              <th className="border p-2">Over Time</th>
+              <th className="border p-2">On Shift</th>
+              <th className="border p-2">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.values(
+              report.reduce((acc, rec) => {
+                const id = rec.employeeId._id;
+                if (!acc[id]) {
+                  acc[id] = {
+                    employeeId: rec.employeeId,
+                    present: 0,
+                    absent: 0,
+                    leave: 0,
+                    overTime: 0,
+                    shift: 0,
+                    records: [],
+                  };
+                }
+                acc[id].records.push(rec);
+                if (rec.status === 'Present') acc[id].present++;
+                if (rec.status === 'Absent') acc[id].absent++;
+                if (rec.status === 'Leave') acc[id].leave++;
+                if (rec.status === 'overTime') acc[id].overTime++;
+                if (rec.status === 'Shift') acc[id].shift++;
+                return acc;
+              }, {})
+            ).map((emp, idx) => (
+              <tr key={idx} className="hover:bg-gray-50">
+                <td className="border p-2">{idx + 1}</td>
+                <td className="border p-2">{emp.employeeId.staffId}</td>
+                <td className="border p-2">{emp.employeeId.name}</td>
+                <td className="border p-2 text-green-700">{emp.present}</td>
+                <td className="border p-2 text-red-700">{emp.absent}</td>
+                <td className="border p-2 text-yellow-700">{emp.leave}</td>
+                <td className="border p-2 text-blue-700">{emp.overTime}</td>
+                <td className="border p-2 text-gray-700">{emp.shift}</td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => {
+                      setSelectedEmployee(emp.employeeId);
+                      setEmployeeDetails(emp.records);
+                    }}
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p className="text-center text-gray-500 py-4">
+        No attendance found for this month.
+      </p>
+    )
+  ) : (
+    <>
+      {/* Table for Single Employee Detail */}
+      <div className="overflow-x-auto">
+        <table className="w-full border mt-2 text-sm text-gray-800 min-w-[300px]">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border p-2">Date</th>
+              <th className="border p-2">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {employeeDetails.map((rec, i) => (
+              <tr key={i} className="hover:bg-gray-50">
+                <td className="border p-2">
+                  {new Date(rec.date).toLocaleDateString()}
+                </td>
+                <td className={`border p-2 font-bold text-center ${
+                  rec.status === "Present" ? "text-green-600" :
+                  rec.status === "Absent" ? "text-red-600" :
+                  rec.status === "Leave" ? "text-yellow-600" :
+                  rec.status === "overTime" ? "text-blue-600" :
+                  rec.status === "Shift" ? "text-gray-700" : "text-black"
+                }`}>
+                  {rec.status}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
+      {/* Back Button */}
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={() => setSelectedEmployee(null)}
+          className="bg-gray-300 text-gray-800 px-4 py-1 rounded hover:bg-gray-400"
+        >
+          ← Back
+        </button>
+      </div>
+    </>
+  )}
+</div>
 
-                  <div className="flex justify-end mt-4">
-                    <button
-                      onClick={() => setSelectedEmployee(null)}
-                      className="bg-gray-300 text-gray-800 px-4 py-1 rounded hover:bg-gray-400"
-                    >
-                      ← Back
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
 
             {/* Print Button */}
             <div className="flex justify-center mt-6">

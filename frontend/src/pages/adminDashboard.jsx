@@ -41,12 +41,12 @@ const AdminDashboard = () => {
 
         // ✅ Find matching group
         const currentGroup = result.data.find(group =>
-        group.month?.toLowerCase() === currentMonthName.toLowerCase() &&
-        Number(group.year) === currentYear
-      );
+          group.month?.toLowerCase() === currentMonthName.toLowerCase() &&
+          Number(group.year) === currentYear
+        );
 
-      const total = currentGroup.totalAmount || 0;
-      setTotalSalary(total);
+        const total = currentGroup.totalAmount || 0;
+        setTotalSalary(total);
       } catch (error) {
         console.error("Error loading salaries:", error);
       }
@@ -68,12 +68,15 @@ const AdminDashboard = () => {
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Greeting */}
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-gray-800">
+      <div className="text-center mb-6 sm:mb-10 px-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
           KIRCT {token && user?.role === 'admin' ? 'ADMIN' : 'EMPLOYEE'} DASHBOARD
         </h1>
-        <p className="text-gray-600 mt-2 text-lg">Here's your dashboard overview</p>
+        <p className="text-sm sm:text-base md:text-lg text-gray-600 mt-2">
+          Here's your dashboard overview
+        </p>
       </div>
+
 
       {/* Top Summary Cards */}
       <div className="flex justify-center mb-14">

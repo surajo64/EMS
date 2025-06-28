@@ -325,7 +325,7 @@ const adminEvaluation = () => {
 
             {showDetail && selectedRecords && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl relative">
+                    <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl relative overflow-auto max-h-[95vh]">
                         <button
                             onClick={handleClose}
                             className="absolute top-4 right-4 text-gray-500 hover:text-red-600 text-xl font-bold"
@@ -333,12 +333,15 @@ const adminEvaluation = () => {
                             ✕
                         </button>
 
-                        <h2 className="text-2xl font-bold text-center text-gray-700 col-span-3">
-                            Evaluation Summary For<span className="text-2xl font-bold mb-6 text-center text-green-700 col-span-3"> {selectedRecords.hodEvaluation?.userId.name}</span>
+                        <h2 className="text-2xl font-bold text-center text-gray-700">
+                            Evaluation Summary For
+                            <span className="text-green-700 ml-2">
+                                {selectedRecords.hodEvaluation?.userId.name}
+                            </span>
                         </h2>
-                        <h2 className="text-2xl font-bold mb-6 text-center text-blue-700 col-span-3">
+                        <h3 className="text-lg font-semibold mb-6 text-center text-blue-700">
                             {selectedRecords.hodEvaluation?.month} {selectedRecords.hodEvaluation?.year}
-                        </h2>
+                        </h3>
 
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -376,7 +379,7 @@ const adminEvaluation = () => {
                                                 <td className="px-4 py-2 font-medium text-gray-600">Communication</td>
                                                 <td className="px-4 py-2">{selectedRecords.kpi?.scores.communication}</td>
                                             </tr>
-                                           <tr className="bg-gray-50 border-b">
+                                            <tr className="bg-gray-50 border-b">
                                                 <td className="px-4 py-2 font-semibold text-black">Total Score</td>
                                                 <td className="px-4 py-2 font-semibold text-black">{selectedRecords.kpi.total} / 100</td>
                                             </tr>
@@ -415,7 +418,7 @@ const adminEvaluation = () => {
                                     <table className="w-full text-sm text-start border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
                                         <tbody>
 
-                                           
+
 
                                             <tr className="bg-gray-50 border-b">
                                                 <td className="px-4 py-2 font-medium text-gray-600">Punctuality</td>
@@ -478,7 +481,7 @@ const adminEvaluation = () => {
                                             <h3 className="text-lg font-bold mb-4 text-green-600 text-center">Admin Evaluation</h3>
                                             <table className="w-full text-sm text-left border border-gray-200 rounded-lg bg-white shadow">
                                                 <tbody>
-                                                    
+
 
                                                     <tr className="bg-gray-50 border-b">
                                                         <td className="px-4 py-2 font-medium text-gray-600">Punctuality</td>

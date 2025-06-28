@@ -260,102 +260,131 @@ const employee = () => {
   }, [token, searchTerm]);
 
   return (
-    <div className='w-full max-w-6xl m-5 text-center'>
-      <p className="text-2xl font-bold text-gray-800">MANAGE EMPLOYEE</p>
+    <div className='w-full max-w-6xl mx-auto px-4 text-center'>
+  <p className="text-xl sm:text-2xl font-bold text-gray-800 mt-5">MANAGE EMPLOYEE</p>
 
-      <div className='flex justify-between items-center mt-4'>
-        <input
-          type='text'
-          placeholder='Search by Employee Name or ID...'
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className='mb-6 px-4 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-1/4'
-        />
+  {/* Search and Add Button */}
+  <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-4'>
+    <input
+      type='text'
+      placeholder='Search by Employee Name or ID...'
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/3'
+    />
 
-        <button
-          onClick={handleAddNew}
-          className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition mb-6"
-        >
-          Add Employee
-        </button>
-      </div>
+    <button
+      onClick={handleAddNew}
+      className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
+    >
+      Add Employee
+    </button>
+  </div>
 
-      <div className='bg-white border-rounded text-sm max-h-[80vh] min-h-[60vh] overflow-scroll'>
-        <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_3fr_2fr_2fr_1fr_5fr] grid-flow-col py-3 px-6 rounded-xl border-b-4 border-green-500'>
-          <p>#</p>
-          <p>Full Name</p>
-          <p>Email</p>
-          <p>Department</p>
-          <p>BOB</p>
-          <p>Actions</p>
+ <div className='bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]'>
+  {/* Table Header */}
+  <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_3fr_2fr_2fr_1fr_5fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
+    <p>#</p>
+    <p>Full Name</p>
+    <p className="hidden md:block">Email</p>
+    <p className="hidden lg:block">Department</p>
+    <p className="hidden lg:block">BOB</p>
+    <p>Actions</p>
+  </div>
+
+  {/* Table Body */}
+  {paginatedEmployees.length > 0 ? (
+    paginatedEmployees.map((item, index) => (
+      <div
+        key={index}
+        className="flex flex-col sm:grid sm:grid-cols-[0.5fr_3fr_2fr_2fr_1fr_5fr] items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-4 sm:gap-0"
+      >
+        <p>{index + 1}</p>
+
+        <div className="flex items-center gap-2">
+          <img
+            className="w-10 h-10 rounded-full object-cover"
+            src={backendUrl + `/upload/${item.userId?.profileImage}`}
+            alt="profile"
+          />
+          <p className="text-sm">{item.userId?.name}</p>
         </div>
 
-        {paginatedEmployees.length > 0 ? (
-          paginatedEmployees.map((item, index) => (
-            <div key={index} className="flex flex-wrap justify-between sm:grid sm:grid-cols-[0.5fr_3fr_2fr_2fr_1fr_5fr] items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50">
-              <p>{index + 1}</p>
+        <p className="hidden md:block text-sm text-center sm:text-left">
+          {item.userId?.email}
+        </p>
 
-              <div className="flex items-center gap-2">
-                <img className="w-12 h-12 rounded-full object-cover"
-                  src={backendUrl + `/upload/${item.userId?.profileImage}`}
-                  alt="profile" />
-                <p>{item.userId?.name}</p>
-              </div>
+        <p className="hidden lg:block text-sm">{item.department?.name}</p>
 
-              <p>{item.userId?.email}</p>
-              <p>{item.department?.name}</p>
-              <p>{new Date(item.dob).toLocaleDateString()}</p>
+        <p className="hidden lg:block text-sm">
+          {new Date(item.dob).toLocaleDateString()}
+        </p>
 
-              <div className="flex justify-end gap-2">
-
-                <button onClick={() => handleView(item)} className="bg-blue-500 text-white text-sm px-3 py-1 rounded-full">View</button>
-                <button onClick={() => handleUpdate(item)} className="bg-green-500 text-white text-sm px-3 py-1 rounded-full">Update</button>
-                <button onClick={() => setConfirmDeleteId(item._id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded-full">Delete</button>
-              </div>
-
-            </div>
-          ))
-        ) : (
-          <p className="text-center py-5 text-gray-500">No employees found.</p>
-        )}
-        {/* Pagination codes */}
-
-
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center mt-4 gap-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
-
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-green-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-              >
-                {i + 1}
-              </button>
-            ))}
-
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-
-        )}
+        <div className="flex justify-end gap-2 flex-wrap">
+          <button
+            onClick={() => handleView(item)}
+            className="bg-blue-500 text-white text-sm px-3 py-1 rounded-full"
+          >
+            View
+          </button>
+          <button
+            onClick={() => handleUpdate(item)}
+            className="bg-green-500 text-white text-sm px-3 py-1 rounded-full"
+          >
+            Update
+          </button>
+          <button
+            onClick={() => setConfirmDeleteId(item._id)}
+            className="bg-red-500 text-white text-sm px-3 py-1 rounded-full"
+          >
+            Delete
+          </button>
+        </div>
       </div>
-      <div className="flex justify-end mt-2 text-sm  text-gray-800">
-        Showing {(currentPage - 1) * itemsPerPage + 1}–
-        {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+    ))
+  ) : (
+    <p className="text-center py-5 text-gray-500">No employees found.</p>
+  )}
+
+    {/* Pagination */}
+    {totalPages > 1 && (
+      <div className="flex justify-center items-center mt-4 gap-2 flex-wrap px-4 pb-4">
+        <button
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        {[...Array(totalPages)].map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-green-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            {i + 1}
+          </button>
+        ))}
+
+        <button
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
+    )}
+  </div>
+
+  {/* Footer showing count */}
+  <div className="flex justify-end mt-2 text-sm text-gray-800 px-2">
+    Showing {(currentPage - 1) * itemsPerPage + 1}–
+    {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+  </div>
+
+
 
       {showForm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -606,66 +635,75 @@ const employee = () => {
 
 
       {selectedEmployee && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-3xl w-full shadow-xl relative">
-            <button
-              onClick={() => setSelectedEmployee(null)}
-              className="absolute top-2 right-4 text-red-600 text-2xl font-bold"
-            >
-              ✕
-            </button>
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 px-2">
+    <div className="bg-white rounded-lg p-4 sm:p-6 max-w-3xl w-full shadow-xl relative max-h-[95vh] overflow-y-auto">
+      
+      {/* Close Button */}
+      <button
+        onClick={() => setSelectedEmployee(null)}
+        className="absolute top-2 right-4 text-red-600 text-2xl font-bold"
+      >
+        ✕
+      </button>
 
-            <h2 className="text-xl font-bold mb-6 text-center text-gray-700">
-              {selectedEmployee.userId?.name.toUpperCase()}
-            </h2>
-            <div className="mt-6 text-center">
-              <img
-                src={backendUrl + `/upload/${selectedEmployee.userId?.profileImage}`}
-                alt="Profile"
-                className="w-44 h-44 rounded-full object-cover inline-block border border-gray-300 mb-10"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700 text-start">
-              {[
-                { label: "Name", value: selectedEmployee.userId?.name },
-                { label: "Email", value: selectedEmployee.userId?.email },
-                { label: "Staff ID", value: selectedEmployee.staffId },
-                { label: "Department", value: selectedEmployee.department?.name },
-                { label: "Designation", value: selectedEmployee.designation },
-                { label: "DOB", value: new Date(selectedEmployee.dob).toLocaleDateString() },
-                { label: "Phone", value: selectedEmployee.phone },
-                { label: "Gender", value: selectedEmployee.gender },
-                { label: "Marital Status", value: selectedEmployee.maritalStatus },
-                { label: "State", value: selectedEmployee.state },
-                { label: "Address", value: selectedEmployee.address },
-                { label: "Join Date", value: new Date(selectedEmployee.joinDate).toLocaleDateString() },
-                { label: "Experience", value: selectedEmployee.experience },
-                { label: "Qualification", value: selectedEmployee.qualification },
-                { label: "Role", value: selectedEmployee.userId?.role },
-                {
-                  label: "CV", value: selectedEmployee.cv ? (
-                    <a href={`${backendUrl}/upload/${selectedEmployee.cv}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="text-blue-600 underline block mb-2">
-                      View Uploaded CV</a>
-                  ) : (
-                    <span className="text-red-500">No CV uploaded</span>
-                  )
-                },
+      {/* Employee Name */}
+      <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-center text-gray-700">
+        {selectedEmployee.userId?.name?.toUpperCase()}
+      </h2>
 
+      {/* Profile Image */}
+      <div className="mt-4 sm:mt-6 text-center">
+        <img
+          src={backendUrl + `/upload/${selectedEmployee.userId?.profileImage}`}
+          alt="Profile"
+          className="w-28 h-28 sm:w-44 sm:h-44 rounded-full object-cover inline-block border border-gray-300 mb-6"
+        />
+      </div>
 
-              ].map((item, index) => (
-                <div key={index} className="flex border-b py-2">
-                  <div className="font-semibold w-40">{item.label}:</div>
-                  <div className="text-gray-800">{item.value}</div>
-                </div>
-              ))}
-            </div>
-
-
+      {/* Info Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-700 text-start">
+        {[
+          { label: "Name", value: selectedEmployee.userId?.name },
+          { label: "Email", value: selectedEmployee.userId?.email },
+          { label: "Staff ID", value: selectedEmployee.staffId },
+          { label: "Department", value: selectedEmployee.department?.name },
+          { label: "Designation", value: selectedEmployee.designation },
+          { label: "DOB", value: new Date(selectedEmployee.dob).toLocaleDateString() },
+          { label: "Phone", value: selectedEmployee.phone },
+          { label: "Gender", value: selectedEmployee.gender },
+          { label: "Marital Status", value: selectedEmployee.maritalStatus },
+          { label: "State", value: selectedEmployee.state },
+          { label: "Address", value: selectedEmployee.address },
+          { label: "Join Date", value: new Date(selectedEmployee.joinDate).toLocaleDateString() },
+          { label: "Experience", value: selectedEmployee.experience },
+          { label: "Qualification", value: selectedEmployee.qualification },
+          { label: "Role", value: selectedEmployee.userId?.role },
+          {
+            label: "CV",
+            value: selectedEmployee.cv ? (
+              <a
+                href={`${backendUrl}/upload/${selectedEmployee.cv}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline block"
+              >
+                View Uploaded CV
+              </a>
+            ) : (
+              <span className="text-red-500">No CV uploaded</span>
+            ),
+          },
+        ].map((item, index) => (
+          <div key={index} className="flex border-b py-2">
+            <div className="font-semibold w-32 sm:w-40">{item.label}:</div>
+            <div className="text-gray-800 break-words">{item.value}</div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Delete Confirmation */}
       {confirmDeleteId && (
