@@ -130,7 +130,7 @@ const attendance = () => {
       Add Attendance
     </button>
   </div>
-
+<br/>
       <div className='bg-white border-rounded text-sm max-h-[80vh] min-h-[60vh] overflow-scroll'>
         <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_1fr_1fr_0.5fr_0.5fr_0.5fr_0.5fr_0.5fr_1fr] py-3 px-6 rounded-xl border-b-4 border-green-500'>
           <p>#</p>
@@ -260,7 +260,7 @@ const attendance = () => {
 
             {!selectedEmployee && (
               <>
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex justify-center items-center gap-2 mb-4">
                   <input
                     type="month"
                     value={month}

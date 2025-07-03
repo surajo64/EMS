@@ -19,22 +19,17 @@ import Attendance from "../models/attendance.js";
 
 
 const addEmployee = async (req, res) => {
-  const session = await mongoose.startSession();
-
   try {
-    session.startTransaction();
-
     const {
       name, email, phone, department,
       designation, role, state,
       maritalStatus, dob, joinDate,
       gender, staffId, address, password,
-      experience, qualification
+      experience, qualification, type
     } = req.body;
 
     const normalizedStaffId = staffId.toLowerCase();
 
-    // Check if email or staffId already exists
     const [existingUser, existingEmployee] = await Promise.all([
       User.findOne({ email }),
       Employee.findOne({ staffId: normalizedStaffId })
@@ -64,7 +59,7 @@ const addEmployee = async (req, res) => {
       profileImage
     });
 
-    const savedUser = await newUser.save({ session });
+    const savedUser = await newUser.save();
 
     const newEmployee = new Employee({
       userId: savedUser._id,
@@ -77,6 +72,7 @@ const addEmployee = async (req, res) => {
       qualification,
       maritalStatus,
       dob,
+      type,
       joinDate,
       gender,
       staffId: normalizedStaffId,
@@ -84,10 +80,7 @@ const addEmployee = async (req, res) => {
       cv: cvFile
     });
 
-    await newEmployee.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
+    await newEmployee.save();
 
     res.status(201).json({
       success: true,
@@ -96,9 +89,6 @@ const addEmployee = async (req, res) => {
     });
     console.log('Uploaded files:', req.files);
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
     console.error("Register Employee Error:", error);
     res.status(500).json({
       success: false,
@@ -107,6 +97,139 @@ const addEmployee = async (req, res) => {
     });
   }
 };
+
+// API to Update Employee
+const updateEmployee = async (req, res) => {
+  try {
+    const {
+      employeeId, // The _id of the Employee document to update
+      name, email, phone, department,
+      designation, role, state,
+      maritalStatus, dob, salary,type,
+      gender, staffId, address, password
+    } = req.body;
+
+    if (!staffId) {
+      return res.json({ success: false, message: "Staff ID is required" });
+    }
+
+    const normalizedStaffId = staffId.toLowerCase();
+
+    // Find the employee by ID
+    const employee = await Employee.findById(employeeId).populate("userId");
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    const userId = employee.userId._id;
+
+    // Check if email is used by another user
+    const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+    if (existingUser) {
+      return res.json({ success: false, message: "Email already in use by another employee" });
+    }
+
+    // Check if staffId is used by another employee
+    const existingStaffId = await Employee.findOne({ staffId: normalizedStaffId, _id: { $ne: employeeId } });
+    if (existingStaffId) {
+      return res.json({ success: false, message: "Staff ID already in use by another employee" });
+    }
+
+    // Conditionally include uploaded files
+    const profileImage = req.files?.image?.[0]?.filename;
+    const cvFile = req.files?.cv?.[0]?.filename;
+
+    // Prepare user update data
+    const updatedUserData = {
+      name,
+      email,
+      role,
+      department,
+    };
+
+    if (profileImage) {
+      updatedUserData.profileImage = profileImage;
+    }
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updatedUserData.password = await bcrypt.hash(password, salt);
+    }
+
+    await User.findByIdAndUpdate(userId, updatedUserData, { new: true });
+
+    // Prepare employee update data
+    const updatedEmployeeData = {
+      phone,
+      department,
+      designation,
+      state,
+      maritalStatus,
+      dob,
+      type,
+      salary,
+      gender,
+      staffId: normalizedStaffId,
+      address,
+    };
+
+    if (cvFile) {
+      updatedEmployeeData.cv = cvFile;
+    }
+
+    await Employee.findByIdAndUpdate(employeeId, updatedEmployeeData, { new: true });
+
+    res.json({ success: true, message: "Employee updated successfully" });
+    console.log("Uploaded files:", req.files);
+
+  } catch (error) {
+    console.error("Update Employee Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while updating employee",
+      error: error.message
+    });
+  }
+};
+
+
+// Update employee status to false (deactivate employee)
+const deactivateEmployee = async (req, res) => {
+  try {
+    const { employeeId } = req.body;
+
+    if (!employeeId) {
+      return res.status(400).json({ success: false, message: "Employee ID is required" });
+    }
+
+    // Get current employee
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    // Toggle status
+    const updatedEmployee = await Employee.findByIdAndUpdate(
+      employeeId,
+      { status: !employee.status },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: `Employee ${updatedEmployee.status ? 'activated' : 'deactivated'} successfully`,
+      employee: updatedEmployee,
+    });
+  } catch (error) {
+    console.error("Error toggling employee status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while updating employee status",
+      error: error.message,
+    });
+  }
+};
+
 
 
 
@@ -127,6 +250,39 @@ const getAllEmployees = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 }
+
+
+// GET /api/employees?status=all|active|inactive
+const getEmployeesByStatus = async (req, res) => {
+  try {
+    const { status, type } = req.query;
+
+    let filter = {};
+
+    // Filter by employment status
+    if (status === "active") {
+      filter.status = true;
+    } else if (status === "inactive") {
+      filter.status = false;
+    }
+
+    // Filter by type of employee
+    if (type && type !== "all") {
+      filter.type = type.toLowerCase(); // e.g., "permanent", "locum"
+    }
+
+    const employees = await Employee.find(filter)
+      .populate("userId")
+      .populate("department");
+
+    res.json({ success: true, employees });
+  } catch (error) {
+    console.error("Error fetching employees:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 
 // get all employee from same department
 const fetchEmployees = async (req, res) => {
@@ -156,91 +312,6 @@ const fetchEmployees = async (req, res) => {
   }
 };
 
-
-// API to update department
-const updateEmployee = async (req, res) => {
-  try {
-    const {
-      employeeId, // The _id of the Employee document to update
-      name, email, phone, department,
-      designation, role, state,
-      maritalStatus, dob, salary,
-      gender, staffId, address, password
-    } = req.body;
-
-    if (!staffId) {
-      return res.json({ success: false, message: "Staff ID is required" });
-    }
-    const normalizedStaffId = staffId.toLowerCase();
-
-    // Find the employee by ID
-    const employee = await Employee.findById(employeeId).populate("userId");
-    if (!employee) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
-    }
-
-    const userId = employee.userId._id;
-
-    // Check if new email exists for another user
-
-    const existingUser = await User.findOne({ email, _id: { $ne: userId } });
-    if (existingUser) {
-      return res.json({ success: false, message: "Email already in use by another employee" });
-    }
-
-    // Check if new staff ID exists for another employee
-    const existingStaffId = await Employee.findOne({ staffId: normalizedStaffId, _id: { $ne: employeeId } });
-    if (existingStaffId) {
-      return res.json({ success: false, message: "Staff ID already in use by another employee" });
-    }
-    // ✅ Correctly extract uploaded file names
-    const profileImage = req.files?.image?.[0]?.filename || "";
-    const cvFile = req.files?.cv?.[0]?.filename || "";
-
-    // Update user info
-    const updatedUserData = {
-      name,
-      email,
-      role,
-      department,
-      profileImage
-    };
-
-
-
-    if (password) {
-      const salt = await bcrypt.genSalt(10);
-      updatedUserData.password = await bcrypt.hash(password, salt);
-    }
-
-    await User.findByIdAndUpdate(userId, updatedUserData, { new: true });
-
-    // Update employee info
-    await Employee.findByIdAndUpdate(employeeId, {
-      phone,
-      department,
-      designation,
-      state,
-      maritalStatus,
-      dob,
-      salary,
-      gender,
-      staffId: normalizedStaffId,
-      address,
-      cv: cvFile,
-    }, { new: true });
-
-    res.json({ success: true, message: "Employee updated successfully" });
-    console.log('Uploaded files:', req.files);
-  } catch (error) {
-    console.error("Update Employee Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while updating employee",
-      error: error.message
-    });
-  }
-};
 
 
 // API to Delete Employee
@@ -1285,7 +1356,6 @@ const getEmployeeDashboardData = async (req, res) => {
   try {
     const userId = req.userId;
 
-    // Fetch employee profile by userId
     const profile = await Employee.findOne({ userId })
       .populate('department', 'name')
       .populate('userId', 'name email role profileImage');
@@ -1293,39 +1363,18 @@ const getEmployeeDashboardData = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Employee profile not found' });
     }
 
-
-
-    // Fetch leave applications for userId
     const leaves = await Leave.find({ userId });
 
-    // Fetch salary for current month/year
-
-    // Fetch salary for current month/year
-    const currentDate = new Date();
-    const month = currentDate.toLocaleString('default', { month: 'long' }); // e.g., "June"
-    const year = currentDate.getFullYear().toString();
-
-
-    // Log the search input
-    console.log("Looking for salary with:", { employeeId: profile._id.toString(), month, year });
-
-    // Query salary
-    const salary = await Salary.findOne({
-      employeeId: profile._id,
-      month,
-      year
-    });
-    if (!salary) {
-      const allSalaries = await Salary.find({ employeeId: profile._id });
-      console.log("Salary records found for employee:", allSalaries);
-    }
+    const latestSalary = await Salary.findOne({ employeeId: profile._id })
+      .sort({ year: -1, payDate: -1 })
+      .limit(1);
 
     return res.status(200).json({
       success: true,
       data: {
         profile,
         leaves,
-        currentMonthSalary: salary || null
+        latestSalary: latestSalary || null,
       }
     });
   } catch (error) {
@@ -1333,6 +1382,7 @@ const getEmployeeDashboardData = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error });
   }
 };
+
 
 
 
@@ -1596,6 +1646,6 @@ export {
   changePassword, forgotPassword, resetPassword, getLeaveToHod, approveHodLeave, rejectHodLeave,
   getAllevaluations, updateEvaluation, getUsers, getEmployeeDashboardData, fetchEmployees,
   submitKpi, getKpi, hodEvaluation, getKpiByDepartment, adminEvaluation, updateAdminEvaluation,
-  uploadAttendance, getAttendance, getAllAttendance,resumeLeave,
+  uploadAttendance, getAttendance, getAllAttendance,resumeLeave,deactivateEmployee,getEmployeesByStatus,
 
 }

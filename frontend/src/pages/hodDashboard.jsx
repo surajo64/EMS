@@ -15,7 +15,7 @@ const hodDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     profile: null,
     leaves: [],
-    currentMonthSalary: null
+    latestSalary: null
   });
 
   const fetchDashboardData = async () => {
@@ -28,7 +28,7 @@ const hodDashboard = () => {
 
       if (data.success) {
         setDashboardData(data.data);
-        console.log("Response:",data.data);
+        console.log("Response:", data.data);
       }
     } catch (error) {
       console.error('Dashboard data fetch error:', error);
@@ -42,14 +42,14 @@ const hodDashboard = () => {
   }, [token]);
 
   const totalLeaves = dashboardData.leaves.length;
-  const netSalary = dashboardData.currentMonthSalary?.netSalary?.toLocaleString() || '0';
+
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Greeting */}
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold text-gray-800">
-          KIRCT {token && user?.role === 'admin' ? 'Admin'  : user?.role === 'HOD' ? 'HOD' : 'EMPLOYEE'} DASHBOARD
+          KIRCT {token && user?.role === 'admin' ? 'Admin' : user?.role === 'HOD' ? 'HOD' : 'EMPLOYEE'} DASHBOARD
         </h1>
         <p className="text-gray-600 mt-2 text-lg">Here's your dashboard overview</p>
       </div>
@@ -68,11 +68,12 @@ const hodDashboard = () => {
 
           <Card
             title="Monthly Pay"
-            value={`₦${netSalary}`}
+            value={`₦${dashboardData.latestSalary?.netSalary?.toLocaleString() || '0'}`}
             icon={<DollarSign className="text-purple-500 w-12 h-12" />}
             bg="bg-purple-100"
             textColor="text-purple-600"
           />
+
 
           <Card
             title="Leave Applied"

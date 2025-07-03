@@ -281,7 +281,7 @@ const hodLeave = () => {
                       0,
                       Math.ceil((resumeDate - toDate) / (1000 * 60 * 60 * 24))
                     );
-
+ 
                     return (
                       <span
                         className={`text-sm font-semibold px-3 py-1 rounded-full ${addedDays > 0

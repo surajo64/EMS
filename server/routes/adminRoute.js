@@ -2,9 +2,11 @@ import express from 'express'
 import authUser from '../middlewares/authUser.js';
 import { addDepartment, addEmployee, addLeave, addSalary, adminEvaluation, approveHodLeave, approveLeave,
      changePassword,
+     deactivateEmployee,
      deleteDepartment, deleteEmployee, deleteLeave, fetchEmployees, forgotPassword, getAllAttendance, getAllDepartment, 
      getAllEmployees, getAllevaluations, getAllLeaves,getAllSalaries,getAttendance,getEmployeeDashboardData,getEmployeeLeaves,  
     getEmployeeSalaries, 
+    getEmployeesByStatus, 
     getKpi, 
     getKpiByDepartment, 
     getLeaveToHod, 
@@ -34,6 +36,8 @@ adminRouter.post('/update-employee', authUser, upload.fields([{ name: 'image', m
 adminRouter.delete('/delete-employee/:id', deleteEmployee);
 adminRouter.get('/employee-leave',authUser, getEmployeeLeaves );
 adminRouter.get('/get-all-employees', authUser, getAllEmployees);
+adminRouter.get('/employees', authUser, getEmployeesByStatus);
+adminRouter.post("/deactivate-employee",authUser, deactivateEmployee);
 
 
 

@@ -17,7 +17,8 @@ const AdminDashboard = () => {
     employees, setEmployees, getAllEmployees } = useContext(AppContext)
   const [totalSalary, setTotalSalary] = useState(0);
 
-
+  const [latestMonth, setLatestMonth] = useState("");
+  const [latestYear, setLatestYear] = useState("");
   const [salaryGroups, setSalaryGroups] = useState([]);
   // Defensive fallback if leaves is undefined
   const pendingLeaves = leaves?.filter(leave => leave.status === "Pending") || [];
@@ -31,22 +32,20 @@ const AdminDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const result = await res.json();
-        setSalaryGroups(result.data);
 
-        // ✅ Get current month and year
-        const now = new Date();
-        const currentMonthName = now.toLocaleString('default', { month: 'long' }); // e.g., "June"
-        const currentYear = now.getFullYear();
+        const salaryGroups = result.data || [];
+        setSalaryGroups(salaryGroups);
 
+        // ✅ Get the latest group (already sorted in backend)
+        const latestGroup = salaryGroups[0]; // first one is latest
 
-        // ✅ Find matching group
-        const currentGroup = result.data.find(group =>
-          group.month?.toLowerCase() === currentMonthName.toLowerCase() &&
-          Number(group.year) === currentYear
-        );
-
-        const total = currentGroup.totalAmount || 0;
-        setTotalSalary(total);
+        if (latestGroup) {
+          setTotalSalary(latestGroup.totalAmount || 0);
+          setLatestMonth(latestGroup.month);
+          setLatestYear(latestGroup.year);
+        } else {
+          setTotalSalary(0); // fallback if no data
+        }
       } catch (error) {
         console.error("Error loading salaries:", error);
       }
@@ -84,11 +83,12 @@ const AdminDashboard = () => {
 
           <Card
             title="Total Employees"
-            value={`${employees?.length ?? 0}`}
+            value={`${employees?.filter(emp => emp.status === true).length ?? 0} Active`}
             icon={<UserCircle className="text-green-500 w-12 h-12" />}
             bg="bg-green-100"
             textColor="text-green-600"
           />
+
 
           <Card
             title="Departments"
@@ -99,13 +99,12 @@ const AdminDashboard = () => {
           />
 
           <Card
-            title="Monthly Pay"
+            title={`${latestMonth} ${latestYear} Payment`}
             value={`₦${totalSalary.toLocaleString()}`}
             icon={<DollarSign className="text-purple-500 w-12 h-12" />}
             bg="bg-purple-100"
             textColor="text-purple-600"
           />
-
 
           <Card
             title="Leave Applied"

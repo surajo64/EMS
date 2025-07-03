@@ -220,37 +220,79 @@ const leave = () => {
                 <p>{new Date(item.from).toISOString().split('T')[0]}</p>
                 <p>{new Date(item.to).toISOString().split('T')[0]}</p>
 
-                {/* Status or Resume Countdown */}
+            
+               
+                  {/* Countdown logic */}
                 <p className="hidden sm:block">
-                  {item.resumeStatus ? (
-                    (() => {
-                      const resumeDate = new Date(item.resumeDate);
-                      const addedDays = Math.max(0, Math.ceil((resumeDate - toDate) / (1000 * 60 * 60 * 24)));
-                      return (
-                        <span className={`text-sm font-semibold px-3 py-1 rounded-full ${addedDays > 0 ? "text-green-700 bg-green-100" : "text-blue-700 bg-blue-100"}`}>
-                          Resumed ({addedDays > 0 ? `${addedDays} day(s) added` : "on time"})
-                        </span>
-                      );
-                    })()
-                  ) : (
-                    item.status === "Approved" ? (() => {
+                  {item.resumeStatus ? (() => {
+                    const resumeDate = new Date(item.resumeDate);
+                    const toDate = new Date(item.to);
+
+                    // Normalize time
+                    resumeDate.setHours(0, 0, 0, 0);
+                    toDate.setHours(0, 0, 0, 0);
+
+                    const addedDays = Math.max(
+                      0,
+                      Math.ceil((resumeDate - toDate) / (1000 * 60 * 60 * 24))
+                    );
+ 
+                    return (
+                      <span
+                        className={`text-sm font-semibold px-3 py-1 rounded-full ${addedDays > 0
+                            ? "text-green-700 bg-green-100"
+                            : "text-blue-700 bg-blue-100"
+                          }`}
+                      >
+                        Resumed on {resumeDate.toLocaleDateString()} (
+                        {addedDays > 0 ? `${addedDays} day(s) added` : "No days added"})
+                      </span>
+                    );
+                  })()
+                    : item.status === "Approved" ? (() => {
+                      if (!item.from || !item.to) return "0 Days";
+
                       const today = new Date();
                       const from = new Date(item.from);
                       const to = new Date(item.to);
-                      today.setHours(0, 0, 0, 0);
+
                       from.setHours(0, 0, 0, 0);
                       to.setHours(0, 0, 0, 0);
+                      today.setHours(0, 0, 0, 0);
 
                       if (today < from) {
-                        return <span className="text-yellow-600 font-medium">{Math.ceil((from - today) / (1000 * 60 * 60 * 24))} day(s) to Go</span>;
-                      } else if (today <= to) {
-                        return <span className="text-green-600 font-medium">{Math.ceil((to - today) / (1000 * 60 * 60 * 24))} day(s) left</span>;
+                        const diffToStart = Math.ceil((from - today) / (1000 * 60 * 60 * 24));
+                        return (
+                          <span style={{ color: 'goldenrod', fontWeight: 'bold' }}>
+                            {diffToStart} day(s) to Go
+                          </span>
+                        );
+                      } else if (today >= from && today < to) {
+                        const daysLeft = Math.ceil((to - today) / (1000 * 60 * 60 * 24));
+                        return (
+                          <span style={{ color: 'green', fontWeight: 'bold' }}>
+                            {daysLeft} day(s) remaining
+                          </span>
+                        );
+                      } else if (today.getTime() === to.getTime()) {
+                        return (
+                          <span style={{ color: 'blue', fontWeight: 'bold' }}>
+                            Returning today
+                          </span>
+                        );
                       } else {
-                        return <span className="text-red-500 font-medium">Leave Ended</span>;
+                        const extraDays = Math.ceil((today - to) / (1000 * 60 * 60 * 24));
+                        return (
+                          <span style={{ color: 'red', fontWeight: 'bold' }}>
+                            Leave ended — He/She added {extraDays} day(s)
+                          </span>
+                        );
                       }
-                    })() : "Pending"
-                  )}
+                    })()
+                      : "0 Days"}
+
                 </p>
+
 
                 {/* Actions */}
                 <div className="flex flex-wrap justify-end gap-2 w-full sm:w-auto">

@@ -12,10 +12,12 @@ const employeeSchema = new mongoose.Schema({
   maritalStatus: { type: String},
   designation: { type: String },
   experience: { type: String},
+  type: { type: String, enum: ["permanent", "locum"], required: true },
   qualification: { type: String },
   address: { type: String },
   department: { type: Schema.Types.ObjectId, ref: 'Department', required: true  },
   state: { type: String, required: true },
+  status: { type: Boolean, default: true },
   phone: { type: String, required: true },
   cv: { type: String }, // 🆕 CV attachment
   createdAt: { type: Date, default: Date.now },
