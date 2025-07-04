@@ -1,10 +1,11 @@
 import express from 'express'
 import authUser from '../middlewares/authUser.js';
-import { addDepartment, addEmployee, addLeave, addSalary, adminEvaluation, approveHodLeave, approveLeave,
+import { addDepartment, addEmployee, addLeave, addSalary, adminEvaluation, applyLoan, approveHodLeave, approveLeave,
+     approveRejectLoan,
      changePassword,
      deactivateEmployee,
      deleteDepartment, deleteEmployee, deleteLeave, fetchEmployees, forgotPassword, getAllAttendance, getAllDepartment, 
-     getAllEmployees, getAllevaluations, getAllLeaves,getAllSalaries,getAttendance,getEmployeeDashboardData,getEmployeeLeaves,  
+     getAllEmployees, getAllevaluations, getAllLeaves,getAllSalaries,getAllyLoan,getAttendance,getEmployeeDashboardData,getEmployeeLeaves,  
     getEmployeeSalaries, 
     getEmployeesByStatus, 
     getKpi, 
@@ -14,6 +15,7 @@ import { addDepartment, addEmployee, addLeave, addSalary, adminEvaluation, appro
     hodEvaluation, 
     rejectHodLeave, 
     rejectLeave, resetPassword, resumeLeave, submitKpi, updateAdminEvaluation, updateDepartment, updateEmployee, updateEvaluation, updateLeave,
+    updateLoan,
     uploadAttendance,} from '../controller/adminController.js';
 import upload from '../middlewares/multer.js';
 
@@ -44,7 +46,7 @@ adminRouter.post("/deactivate-employee",authUser, deactivateEmployee);
 // employee leave
 adminRouter.post('/add-leave',authUser, addLeave );
 adminRouter.get('/leave-list', getAllLeaves  );
-adminRouter.post('/update-leave', updateLeave );
+adminRouter.post('/update-leave',authUser, updateLeave );
 adminRouter.delete('/delete-leave/:id',authUser, deleteLeave);
 adminRouter.post('/approve-leave',authUser, approveLeave );
 adminRouter.post('/reject-leave',authUser, rejectLeave );
@@ -91,5 +93,12 @@ adminRouter.get('/get-employees', authUser, getAllEmployees);
 adminRouter.post('/add-attendance', authUser, upload.single('file'), uploadAttendance);
 adminRouter.get('/report/:month', authUser, getAttendance);
 adminRouter.get('/get-Attendance', authUser, getAllAttendance);
+
+// Loan Routers
+adminRouter.post('/apply-loan', authUser, applyLoan);
+adminRouter.get('/get-all-loan', authUser, getAllyLoan);
+adminRouter.post('/approve-loan', authUser, approveRejectLoan);
+adminRouter.post('/update-loan', authUser, updateLoan);
+
 
 export default adminRouter;

@@ -75,6 +75,15 @@ const employeeProfile = () => {
                 { label: "Experience", value: employee.experience },
                 { label: "Qualification", value: employee.qualification },
                 { label: "Role", value: employee.userId?.role },
+                { label: "Employee Type", value: employee.type },
+                {
+                  label: "Employee Status",
+                  value: (
+                    <span className={employee.status ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                      {employee.status ? "Active" : "Inactive"}
+                    </span>
+                  ),
+                },
                 {label: "CV", value: employee.cv ? (
                      <a href={`${backendUrl}/upload/${employee.cv}`}
                       target="_blank" rel="noopener noreferrer"

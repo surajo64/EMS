@@ -67,7 +67,7 @@ const hodDashboard = () => {
           />
 
           <Card
-            title="Monthly Pay"
+             title={`${dashboardData.latestSalary?.month} ${dashboardData.latestSalary?.year} Payment`}
             value={`₦${dashboardData.latestSalary?.netSalary?.toLocaleString() || '0'}`}
             icon={<DollarSign className="text-purple-500 w-12 h-12" />}
             bg="bg-purple-100"

@@ -116,159 +116,168 @@ const employeeKpi = () => {
 
 
   return (
-    <div className='w-full max-w-6xl m-5 text-center'>
-      <p className="text-2xl font-bold text-gray-800">EMPLOYEE KPI</p>
+    <div className="w-full max-w-6xl mx-auto p-4 sm:p-6">
+  <p className="text-xl sm:text-2xl font-bold text-gray-800 text-center">EMPLOYEE KPI</p>
 
-      <div className='flex justify-end mt-4'>
-        <button
-          onClick={handleAddNew}
-          className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition mb-6"
+  {/* Add Button */}
+  <div className="flex justify-end mt-4">
+    <button
+      onClick={handleAddNew}
+      className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition"
+    >
+      Add KPI
+    </button>
+  </div>
+
+  {/* KPI Table */}
+  <div className="bg-white text-sm mt-4 max-h-[80vh] min-h-[60vh] overflow-auto rounded-md shadow-sm">
+    {/* Header: visible only on sm and above */}
+    <div className="hidden sm:grid grid-cols-[0.5fr_2fr_2fr_2fr_1fr] bg-gray-200 py-3 px-4 rounded-t-md border-b-4 border-green-500 font-semibold">
+      <p>#</p>
+      <p>Self Rating</p>
+      <p>HOD Rating</p>
+      <p>Admin Rating</p>
+      <p>Actions</p>
+    </div>
+
+    {/* Data Rows */}
+    {kpi && kpi.length > 0 ? (
+      kpi.map((item, index) => (
+        <div
+          key={index}
+          className="flex flex-wrap sm:grid sm:grid-cols-[0.5fr_2fr_2fr_2fr_1fr] items-center gap-2 sm:gap-0 text-gray-700 py-3 px-4 border-b hover:bg-blue-50"
         >
-          Add KPI
-        </button>
-      </div>
+          <p>{index + 1}</p>
 
-      <div className='bg-white text-sm max-h-[80vh] min-h-[60vh] overflow-auto'>
-        <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_2fr_2fr_1fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
-          <p>#</p>
-          <p>Self Rating</p>
-          <p>HOD Rating</p>
-          <p>Admin Rating</p>
-          <p>Actions</p>
-        </div>
+          <p>{item.kpi?.total || "N/A"}</p>
 
-        {kpi && kpi.length > 0 ? (
-          kpi.map((item, index) => (
-            <div
-              key={index}
-              className="flex flex-wrap justify-between sm:grid sm:grid-cols-[0.5fr_2fr_2fr_2fr_1fr] items-center text-gray-700 py-3 px-6 border-b hover:bg-blue-50"
+          <p>
+            {item.hodEvaluation
+              ? `${item.hodEvaluation.total} (${item.hodEvaluation.grade})`
+              : "Not yet submitted"}
+          </p>
+
+          <p>
+            {item.adminEvaluation
+              ? `${item.adminEvaluation.total} (${item.adminEvaluation.grade})`
+              : "Not yet submitted"}
+          </p>
+
+          <div className="flex justify-start sm:justify-end">
+            <button
+              onClick={() => handleView(item)}
+              className="bg-blue-500 text-white text-sm px-3 py-1 rounded-full"
             >
-              <p>{index + 1}</p>
-
-              {/* Self Rating */}
-              <p>{item.kpi?.total || "N/A"}</p>
-
-              {/* HOD Rating */}
-              <p>
-                {item.hodEvaluation
-                  ? `${item.hodEvaluation.total} (${item.hodEvaluation.grade})`
-                  : "Not yet submitted"}
-              </p>
-
-              {/* Admin Rating */}
-              <p>
-                {item.adminEvaluation
-                  ? `${item.adminEvaluation.total} (${item.adminEvaluation.grade})`
-                  : "Not yet submitted"}
-              </p>
-
-              {/* Actions */}
-              <p>
-                <button
-                  onClick={() => handleView(item)}
-                  className="bg-blue-500 text-white text-sm px-3 py-1 rounded-full"
-                >
-                  View Detail
-                </button>
-              </p>
-            </div>
-          ))
-        ) : (
-          <p className="text-center py-5 text-gray-500">No KPI records found.</p>
-        )}
+              View Detail
+            </button>
+          </div>
+        </div>
+      ))
+    ) : (
+      <p className="text-center py-5 text-gray-500">No KPI records found.</p>
+    )}
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6 relative">
-            <button
-              onClick={() => setShowForm(false)}
-              className="absolute top-3 right-4 text-xl text-red-600 font-bold"
+  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+      <button
+        onClick={() => setShowForm(false)}
+        className="absolute top-3 right-4 text-xl text-red-600 font-bold"
+      >
+        ✕
+      </button>
+
+      <h3 className="text-lg sm:text-xl font-bold mb-4 text-green-600 text-center">
+        Employee Self Evaluation Form
+      </h3>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Month & Year */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block font-medium mb-1">Evaluation Month</label>
+            <select
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              ✕
-            </button>
+              <option value="">Select Month</option>
+              {[
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+              ].map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
 
-            <h3 className="text-lg font-bold mb-4 text-green-600 text-center">Employee Self Evaluation Form</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block font-medium mb-1">Evaluation Month</label>
-                  <select
-                    value={month}
-                    onChange={(e) => setMonth(e.target.value)}
-                    required
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="">Select Month</option>
-                    {[
-                      "January", "February", "March", "April", "May", "June",
-                      "July", "August", "September", "October", "November", "December"
-                    ].map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-medium mb-1">Evaluation Year</label>
-                  <input
-                    type="number"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    min="2000"
-                    max={new Date().getFullYear() + 1}
-                    required
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {criteriaList.map(({ label, key, max }) => (
-                  <div key={key}>
-                    <label className="block font-medium mb-1">
-                      {label} (Max: {max})
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max={max}
-                      value={scores[key]}
-                      onChange={(e) => handleScoreChange(key, e.target.value)}
-                      className="w-full p-2 border rounded"
-                      required
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <textarea
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-                placeholder="Evaluator's Comments"
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
-                rows={3}
-              ></textarea>
-
-              <div className="flex justify-between items-center mb-4">
-                <div><strong>Total Score:</strong> {getTotalScore()} / 100</div>
-                <div><strong>Grade:</strong> {getGrade()}</div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition">
-                Submit Evaluation
-              </button>
-            </form>
+          <div>
+            <label className="block font-medium mb-1">Evaluation Year</label>
+            <input
+              type="number"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              min="2000"
+              max={new Date().getFullYear() + 1}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
           </div>
         </div>
-      )}
+
+        {/* KPI Criteria */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {criteriaList.map(({ label, key, max }) => (
+            <div key={key}>
+              <label className="block font-medium mb-1">
+                {label} (Max: {max})
+              </label>
+              <input
+                type="number"
+                min="0"
+                max={max}
+                value={scores[key]}
+                onChange={(e) => handleScoreChange(key, e.target.value)}
+                required
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Comments */}
+        <textarea
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          placeholder="Evaluator's Comments"
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          rows={3}
+        ></textarea>
+
+        {/* Total & Grade */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div><strong>Total Score:</strong> {getTotalScore()} / 100</div>
+          <div><strong>Grade:</strong> {getGrade()}</div>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition"
+        >
+          Submit Evaluation
+        </button>
+      </form>
+    </div>
+  </div>
+)}
 
 
       {showDetail && selectedRecords && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl relative">
+         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl relative overflow-auto max-h-[95vh]">
             <button
               onClick={() => setShowDetail(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-red-600 text-xl font-bold"

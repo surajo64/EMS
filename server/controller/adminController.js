@@ -16,6 +16,8 @@ import Evaluation from "../models/evaluation.js";
 import Kpi from "../models/Kpi.js";
 import AdminEvaluation from "../models/adminEvaluation.js";
 import Attendance from "../models/attendance.js";
+import Loan from "../models/loan.js";
+
 
 
 const addEmployee = async (req, res) => {
@@ -105,7 +107,7 @@ const updateEmployee = async (req, res) => {
       employeeId, // The _id of the Employee document to update
       name, email, phone, department,
       designation, role, state,
-      maritalStatus, dob, salary,type,
+      maritalStatus, dob, salary, type,
       gender, staffId, address, password
     } = req.body;
 
@@ -648,8 +650,8 @@ const updateLeave = async (req, res) => {
   const { leaveId, leave, reason, from, to, } = req.body;
 
   // Validate input
-  if (leave || reason || from || to) {
-    return res.json({ success: false, message: 'All Field are required!' })
+  if (!leave || !reason || !from || !to) {
+    return res.json({ success: false, message: 'All fields are required!' });
   }
 
   try {
@@ -766,24 +768,24 @@ const rejectLeave = async (req, res) => {
 
 // Mark Leave As Resume 
 const resumeLeave = async (req, res) => {
-   try {
-      const { leaveId } = req.body;
-   
+  try {
+    const { leaveId } = req.body;
+
     if (!leaveId) {
       return res.status(400).json({ success: false, message: 'Leave ID is required' });
     }
 
     await Leave.findByIdAndUpdate(leaveId, {
-  resumeStatus: true,
-  resumeDate: Date.now() 
-});
- 
-     res.json({ success: true, message: "Leave Mark As Resume!" });
-   } catch (error) {
-     console.error(error);
-     res.status(500).json({ success: false, message: "Internal Server Error" });
-   }
- };
+      resumeStatus: true,
+      resumeDate: Date.now()
+    });
+
+    res.json({ success: true, message: "Leave Mark As Resume!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
 
 
 // API to add salary using staffId lookup
@@ -827,6 +829,29 @@ const addSalary = async (req, res) => {
         payDate = new Date(row.payDate);
       }
 
+      // ✅ FIX: Declare loan deduction from Excel
+      const excelLoanDeduction = row.loan || 0;
+      const loan = await Loan.findOne({
+        userId: employee.userId,  // ✅ Use the actual `User` ID, not Employee ID
+        status: 'Approved',
+      });
+
+      if (loan && excelLoanDeduction > 0) {
+        // Prevent overpayment
+        const repayment = Math.min(excelLoanDeduction, loan.amount - loan.totalRepaid);
+
+        loan.totalRepaid += repayment;
+
+        if (loan.totalRepaid >= loan.amount) {
+          loan.totalRepaid = loan.amount;
+          loan.status = 'Completed';
+        }
+
+        await loan.save();
+      }
+
+
+      // ✅ Push salary record (loan field stores Excel deduction for this month)
       salaryData.push({
         employeeId: employee._id,
         basicSalary: row.basicSalary,
@@ -839,7 +864,7 @@ const addSalary = async (req, res) => {
         month: row.month,
         year: row.year,
         overTime: row.overTime,
-        loan: row.loan,
+        loan: excelLoanDeduction,
         payDate: payDate,
       });
     }
@@ -1598,43 +1623,171 @@ const getAttendance = async (req, res) => {
 
 // API to Get All Attendance
 const getAllAttendance = async (req, res) => {
-  /* try {*/
-  const grouped = await Attendance.aggregate([
+  try {
+    const grouped = await Attendance.aggregate([
 
-    {
-      $project: {
-        yearMonth: {
-          $dateToString: { format: "%Y-%m", date: "$date" }
-        },
-        employeeId: 1,
-        date: 1,
-        status: 1
-      }
-    },
-    {
-      $group: {
-        _id: "$yearMonth",
-        records: {
-          $push: {
-            employeeId: "$employeeId",
-            date: "$date",
-            status: "$status"
+      {
+        $project: {
+          yearMonth: {
+            $dateToString: { format: "%Y-%m", date: "$date" }
+          },
+          employeeId: 1,
+          date: 1,
+          status: 1
+        }
+      },
+      {
+        $group: {
+          _id: "$yearMonth",
+          records: {
+            $push: {
+              employeeId: "$employeeId",
+              date: "$date",
+              status: "$status"
+            }
           }
         }
+      },
+      {
+        $sort: { _id: -1 } // Newest month first
       }
-    },
-    {
-      $sort: { _id: -1 } // Newest month first
+
+    ])
+
+    res.json({ success: true, groupedAttendance: grouped });
+  } catch (error) {
+    console.error("Group Error:", error);
+    res.status(500).json({ success: false, message: 'Failed to group attendance' });
+  }
+};
+
+// Apply for a loan
+const applyLoan = async (req, res) => {
+  const { amount, durationInMonths, reason } = req.body;
+  const userId = req.userId;
+
+  try {
+    const monthDeduction = Math.ceil(amount / durationInMonths);
+
+    const newLoan = new Loan({
+      userId,
+      amount,
+      durationInMonths,
+      monthDeduction,
+      reason,
+      createdAt: Date.now(),
+
+    });
+
+    await newLoan.save();
+
+    res.json({ success: true, message: "Loan application submitted", loan: newLoan });
+  } catch (error) {
+    console.error(error); // Log it
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+
+// Update an existing loan
+const updateLoan = async (req, res) => {
+  const { loanId, amount, durationInMonths, reason } = req.body;
+  const userId = req.userId;
+
+  try {
+    const loan = await Loan.findById(loanId);
+
+    if (!loan) {
+      return res.status(404).json({ success: false, message: "Loan not found" });
     }
 
-  ])
+    // Optional: Ensure the loan belongs to the authenticated user
+    if (loan.userId.toString() !== userId) {
+      return res.status(403).json({ success: false, message: "Unauthorized update" });
+    }
 
-  res.json({ success: true, groupedAttendance: grouped });
-  /* } catch (error) {
-     console.error("Group Error:", error);
-     res.status(500).json({ success: false, message: 'Failed to group attendance' });
-   }*/
+    // Update fields
+    loan.amount = amount;
+    loan.durationInMonths = durationInMonths;
+    loan.reason = reason;
+    loan.monthDeduction = Math.ceil(amount / durationInMonths);
+
+    await loan.save();
+
+    res.json({ success: true, message: "Loan updated successfully", loan });
+  } catch (error) {
+    console.error("Loan update error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
 };
+
+
+
+// Get all loans (admin)
+const getAllyLoan = async (req, res) => {
+  try {
+    const loans = await Loan.find().populate("userId", "name email")
+    res.json({ success: true, loans });
+
+  } catch (error) {
+    res.status(500).json({ success: false, error });
+  }
+};
+
+// Approve or Reject Loan
+const approveRejectLoan = async (req, res) => {
+  const { loanId, status } = req.body;
+
+  try {
+    const loan = await Loan.findById(loanId);
+    if (!loan) return res.status(404).json({ success: false, message: "Loan not found" });
+
+    loan.status = status;
+
+    if (status === 'Approved') {
+      loan.approvedAt = new Date();
+    }
+
+    await loan.save();
+
+    res.json({ success: true, message: `Loan ${status.toLowerCase()}`, loan });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+
+
+// GET /api/loans/history/:employeeId
+const getLoanHistory = async (req, res) => {
+  try {
+    const loans = await Loan.find({ employeeId: req.params.employeeId }).sort({ createdAt: -1 });
+    res.json({ success: true, loans });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// To be used when generating salary for an employee
+const applyLoanDeduction = async (employeeId) => {
+  const loan = await Loan.findOne({ employeeId, status: 'Approved' });
+
+  if (!loan) return { loanDeduction: 0 };
+
+  // Deduct repayment
+  loan.totalRepaid += loan.monthlyRepayment;
+  loan.balance -= loan.monthlyRepayment;
+
+  if (loan.balance <= 0) {
+    loan.status = 'Completed';
+    loan.balance = 0;
+  }
+
+  await loan.save();
+
+  return { loanDeduction: loan.monthlyRepayment };
+};
+
 
 
 
@@ -1646,6 +1799,6 @@ export {
   changePassword, forgotPassword, resetPassword, getLeaveToHod, approveHodLeave, rejectHodLeave,
   getAllevaluations, updateEvaluation, getUsers, getEmployeeDashboardData, fetchEmployees,
   submitKpi, getKpi, hodEvaluation, getKpiByDepartment, adminEvaluation, updateAdminEvaluation,
-  uploadAttendance, getAttendance, getAllAttendance,resumeLeave,deactivateEmployee,getEmployeesByStatus,
-
+  uploadAttendance, getAttendance, getAllAttendance, resumeLeave, deactivateEmployee, getEmployeesByStatus,
+  applyLoan, getAllyLoan, approveRejectLoan, getLoanHistory, applyLoanDeduction, updateLoan,
 }

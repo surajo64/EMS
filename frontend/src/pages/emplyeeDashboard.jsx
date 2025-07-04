@@ -40,7 +40,7 @@ const emplyeeDashboard = () => {
   }, [token]);
 
   const totalLeaves = dashboardData.leaves.length;
-  
+
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -65,7 +65,7 @@ const emplyeeDashboard = () => {
           />
 
           <Card
-            title="Monthly Pay"
+            title={`${dashboardData.latestSalary?.month} ${dashboardData.latestSalary?.year} Payment`}
             value={`₦${dashboardData.latestSalary?.netSalary?.toLocaleString() || '0'}`}
             icon={<DollarSign className="text-purple-500 w-12 h-12" />}
             bg="bg-purple-100"

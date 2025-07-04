@@ -154,28 +154,30 @@ const employeeLeave = () => {
 
 
   return (
-    <div className='w-full max-w-6xl m-5 text-center'>
-      <p className="text-2xl font-bold text-gray-800">EMPLOYEE LEAVE</p>
+    <div className='w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8'>
+      <p className="text-2xl font-bold text-gray-800 text-center">EMPLOYEE LEAVE</p>
 
-      <div className='flex justify-between items-center mt-4'>
+      {/* Search & Button */}
+      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 gap-4'>
         <input
           type='text'
           placeholder='Search by Department Name...'
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className='mb-6 px-4 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-1/4'
+          className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/2'
         />
-
         <button
           onClick={handleAddNew}
-          className="bg-blue-500 text-white py-2 px-4 rounded-md text-sm hover:bg-blue-600 transition mb-6"
+          className="bg-blue-500 text-white py-2 px-4 rounded-md text-sm hover:bg-blue-600 transition"
         >
           Apply Leave
         </button>
       </div>
 
-      <div className='bg-white border-rounded text-sm max-h-[80vh] min-h-[60vh] overflow-scroll'>
-        <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_2fr_1.5fr_1.5fr_1.5fr_1.5fr_2fr_2fr] py-3 px-6 rounded-xl border-b-4 border-green-500'>
+      {/* Table Scroll Wrapper */}
+      <div className='bg-white mt-6 rounded-md overflow-x-auto max-h-[80vh] min-h-[60vh] text-sm'>
+        {/* Table Header */}
+        <div className='hidden sm:grid grid-cols-[0.5fr_2fr_2fr_1.5fr_1.5fr_1.5fr_1.5fr_2fr_2fr] py-3 px-6 bg-gray-200 border-b-4 border-green-500 rounded-t-lg'>
           <p>#</p>
           <p>Leave Type</p>
           <p>Reasons</p>
@@ -187,109 +189,79 @@ const employeeLeave = () => {
           <p>Actions</p>
         </div>
 
+        {/* Leave List */}
         {paginatedLeaves.length > 0 ? (
-          paginatedLeaves.map((item, index) => {
+          paginatedLeaves.map((item, index) => (
+            <div
+              key={index}
+              className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_2fr_1.5fr_1.5fr_1.5fr_1.5fr_2fr_2fr] gap-2 sm:gap-0 py-3 px-4 sm:px-6 border-b hover:bg-blue-50 text-gray-700"
+            >
+              <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
+              <p>{item.leave}</p>
+              <p>{item.reason}</p>
+              <p>{new Date(item.from).toISOString().split('T')[0]}</p>
+              <p>{new Date(item.to).toISOString().split('T')[0]}</p>
+              <p>{new Date(item.appliedAt).toISOString().split('T')[0]}</p>
+              <p>
+                <span className={`font-semibold ${item.status === "Approved"
+                  ? "text-green-600"
+                  : item.status === "Rejected"
+                    ? "text-red-500"
+                    : "text-yellow-600"}`}>
+                  {item.status}
+                </span>
+              </p>
+              <p>
+                {item.resumeStatus ? (() => {
+                  const resumeDate = new Date(item.resumeDate);
+                  const toDate = new Date(item.to);
+                  resumeDate.setHours(0, 0, 0, 0);
+                  toDate.setHours(0, 0, 0, 0);
 
-            return (
-              <div key={index} className="flex flex-wrap justify-between sm:grid sm:grid-cols-[0.5fr_2fr_2fr_1.5fr_1.5fr_1.5fr_1.5fr_2fr_2fr] items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50">
-                <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
-                <p>{item.leave}</p>
-                <p>{item.reason}</p>
-                <p>{new Date(item.from).toISOString().split('T')[0]}</p>
-                <p>{new Date(item.to).toISOString().split('T')[0]}</p>
-                <p>{new Date(item.appliedAt).toISOString().split('T')[0]}</p>
-                <p>
-                  <span
-                    className={`font-semibold ${item.status === "Approved"
-                      ? "text-green-600" : item.status === "Rejected" ? "text-red-500"
-                        : "text-yellow-600"}`}>{item.status}
-                  </span>
-                </p>
-                <p>
-                  {item.resumeStatus ? (() => {
-                    const resumeDate = new Date(item.resumeDate);
-                    const toDate = new Date(item.to);
+                  const addedDays = Math.max(0, Math.ceil((resumeDate - toDate) / (1000 * 60 * 60 * 24)));
 
-                    // Normalize time
-                    resumeDate.setHours(0, 0, 0, 0);
-                    toDate.setHours(0, 0, 0, 0);
+                  return (
+                    <span className={`text-sm font-semibold px-3 py-1 rounded-full ${addedDays > 0
+                      ? "text-green-700 bg-green-100"
+                      : "text-blue-700 bg-blue-100"}`}>
+                      Resumed on {resumeDate.toLocaleDateString()} ({addedDays > 0 ? `${addedDays} day(s) added` : "No days added"})
+                    </span>
+                  );
+                })() : item.status === "Approved" ? (() => {
+                  const today = new Date();
+                  const from = new Date(item.from);
+                  const to = new Date(item.to);
+                  from.setHours(0, 0, 0, 0);
+                  to.setHours(0, 0, 0, 0);
+                  today.setHours(0, 0, 0, 0);
 
-                    const addedDays = Math.max(
-                      0,
-                      Math.ceil((resumeDate - toDate) / (1000 * 60 * 60 * 24))
-                    );
+                  if (today < from) {
+                    const diffToStart = Math.ceil((from - today) / (1000 * 60 * 60 * 24));
+                    return <span className="text-yellow-700 font-bold">{diffToStart} day(s) to Go</span>;
+                  } else if (today >= from && today < to) {
+                    const daysLeft = Math.ceil((to - today) / (1000 * 60 * 60 * 24));
+                    return <span className="text-green-700 font-bold">{daysLeft} day(s) remaining</span>;
+                  } else if (today.getTime() === to.getTime()) {
+                    return <span className="text-blue-700 font-bold">Returning today</span>;
+                  } else {
+                    const extraDays = Math.ceil((today - to) / (1000 * 60 * 60 * 24));
+                    return <span className="text-red-600 font-bold">Leave ended — You added {extraDays} day(s)</span>;
+                  }
+                })() : "0 Days"}
+              </p>
 
-                    return (
-                      <span
-                        className={`text-sm font-semibold px-3 py-1 rounded-full ${addedDays > 0
-                            ? "text-green-700 bg-green-100"
-                            : "text-blue-700 bg-blue-100"
-                          }`}
-                      >
-                        Resumed on {resumeDate.toLocaleDateString()} (
-                        {addedDays > 0 ? `${addedDays} day(s) added` : "No days added"})
-                      </span>
-                    );
-                  })()
-                    : item.status === "Approved" ? (() => {
-                      if (!item.from || !item.to) return "0 Days";
+              <div className="flex flex-wrap sm:justify-end gap-2 mt-2 sm:mt-0">
+                <button onClick={() => handleView(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full">View</button>
 
-                      const today = new Date();
-                      const from = new Date(item.from);
-                      const to = new Date(item.to);
-
-                      from.setHours(0, 0, 0, 0);
-                      to.setHours(0, 0, 0, 0);
-                      today.setHours(0, 0, 0, 0);
-
-                      if (today < from) {
-                        const diffToStart = Math.ceil((from - today) / (1000 * 60 * 60 * 24));
-                        return (
-                          <span style={{ color: 'goldenrod', fontWeight: 'bold' }}>
-                            {diffToStart} day(s) to Go
-                          </span>
-                        );
-                      } else if (today >= from && today < to) {
-                        const daysLeft = Math.ceil((to - today) / (1000 * 60 * 60 * 24));
-                        return (
-                          <span style={{ color: 'green', fontWeight: 'bold' }}>
-                            {daysLeft} day(s) remaining
-                          </span>
-                        );
-                      } else if (today.getTime() === to.getTime()) {
-                        return (
-                          <span style={{ color: 'blue', fontWeight: 'bold' }}>
-                            Returning today
-                          </span>
-                        );
-                      } else {
-                        const extraDays = Math.ceil((today - to) / (1000 * 60 * 60 * 24));
-                        return (
-                          <span style={{ color: 'red', fontWeight: 'bold' }}>
-                            Leave ended — You added {extraDays} day(s)
-                          </span>
-                        );
-                      }
-                    })()
-                      : "0 Days"}
-
-                </p>
-
-                <div className="flex justify-end gap-2">
-
-                  <button onClick={() => handleView(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full">View</button>
-
-                  {item.hodStatus === "Pending" && (
+                {item.hodStatus === "Pending" && (
+                  <>
                     <button onClick={() => handleUpdate(item)} className="bg-green-500 text-white text-sm px-3 py-1 rounded-full">Update</button>
-                  )}
-
-                  {item.hodStatus === "Pending" && (
                     <button onClick={() => setConfirmDeleteId(item._id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded-full">Delete</button>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
-            );
-          })
+            </div>
+          ))
         ) : (
           <p className="text-center py-5 text-gray-500">No departments found.</p>
         )}
@@ -334,25 +306,31 @@ const employeeLeave = () => {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md relative">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4 sm:p-6">
+          <div className="w-full max-w-md bg-white p-4 sm:p-6 rounded-lg shadow-md relative">
+
+            {/* Close Button */}
             <button
               onClick={handleClose}
               className="font-bold text-3xl absolute top-2 right-4 text-red-700 hover:text-red-800"
             >
               ✕
             </button>
-            <h2 className="text-2xl font-bold text-center mb-6 text-gray-700">
+
+            {/* Modal Title */}
+            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 text-gray-700">
               {editingLeave ? "Update Leave Request" : "Apply for Leave"}
             </h2>
 
+            {/* Form */}
             <form onSubmit={onSubmitHandler} className="space-y-4">
 
+              {/* Leave Type */}
               <select
                 value={leave}
                 onChange={(e) => setLeave(e.target.value)}
                 required
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
               >
                 <option value="">-- Select Leave Type --</option>
                 <option value="Annual Leave">Annual Leave</option>
@@ -364,19 +342,20 @@ const employeeLeave = () => {
                 <option value="Sabbatical Leave">Sabbatical Leave</option>
                 <option value="Sick Leave">Sick Leave</option>
                 <option value="Study Leave">Study Leave</option>
-
               </select>
 
-
+              {/* Reason */}
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 required
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                 placeholder="Reason for leave"
+                rows={3}
               />
 
-              <div className="flex gap-4">
+              {/* Date Inputs */}
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <label className="block mb-1 text-sm text-gray-700">From</label>
                   <input
@@ -385,9 +364,8 @@ const employeeLeave = () => {
                     onChange={(e) => setFrom(e.target.value)}
                     required
                     min={minFromDate}
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                   />
-
                 </div>
 
                 <div className="flex-1">
@@ -397,16 +375,16 @@ const employeeLeave = () => {
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
                     required
-                    min={from || new Date().toISOString().split("T")[0]} // ✅ To date can't be before From date
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    min={from || new Date().toISOString().split("T")[0]}
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                   />
                 </div>
               </div>
 
-
+              {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition"
+                className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition text-sm"
               >
                 {editingLeave ? "Update Leave" : "Submit Leave Request"}
               </button>
@@ -417,21 +395,22 @@ const employeeLeave = () => {
 
       {/* Delete Confirmation */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded shadow-md w-80">
-            <p className="text-red-500 mb-4 text-center font-semibold">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white w-full max-w-sm p-6 rounded-lg shadow-md relative">
+            <p className="text-red-500 mb-6 text-center font-semibold text-base sm:text-lg">
               Are you sure you want to delete this department?
             </p>
-            <div className="flex justify-between">
+
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
               <button
                 onClick={() => setConfirmDeleteId(null)}
-                className="bg-gray-300 px-8 py-2 rounded-full hover:bg-gray-400"
+                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-full hover:bg-gray-400 transition w-full sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(confirmDeleteId)}
-                className="bg-red-500 text-white px-8 py-2 rounded-full hover:bg-red-600"
+                className="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition w-full sm:w-auto"
               >
                 Delete
               </button>
@@ -442,9 +421,12 @@ const employeeLeave = () => {
 
 
       {selectedLeave && leaves && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div id="print-salary-table" className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-8 relative">
-            {/* Close button */}
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-4 sm:p-6">
+          <div
+            id="print-salary-table"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-4 sm:p-8 relative overflow-y-auto max-h-[90vh]"
+          >
+            {/* Close Button */}
             <button
               onClick={() => setSelectedLeave(null)}
               className="absolute top-3 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold"
@@ -453,98 +435,101 @@ const employeeLeave = () => {
             </button>
 
             {/* Header */}
-            <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-              {selectedLeave.userId?.name ? selectedLeave.userId?.name.toUpperCase() : "N/A"}
+            <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-4 sm:mb-6">
+              {selectedLeave.userId?.name?.toUpperCase() || "N/A"}
             </h2>
 
-            {/* Employee Profile Section */}
+            {/* Profile Image */}
             <div className="flex justify-center mb-4">
               <img
                 src={backendUrl + `/upload/${selectedLeave.userId?.profileImage}`}
                 alt="Profile"
-                className="w-24 h-24 rounded-full object-cover border"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border"
               />
             </div>
 
-            <div className='flex justify-center gap-8 mb-6'>
+            {/* Email & Department */}
+            <div className="flex flex-col sm:flex-row justify-center sm:gap-8 mb-6 text-center sm:text-left">
               <p className="text-sm text-gray-800">
-                <span className='text-xl font-semibold text-green-800'>Emai:  </span>
+                <span className="text-base font-semibold text-green-800">Email: </span>
                 {selectedLeave.userId?.email || "N/A"}
               </p>
               <p className="text-sm text-gray-800">
-                <span className='text-xl font-semibold text-green-800'>  Department:  </span>  {selectedLeave.userId?.department?.name || "N/A"}
+                <span className="text-base font-semibold text-green-800">Department: </span>
+                {selectedLeave.userId?.department?.name || "N/A"}
               </p>
             </div>
 
-
-
-            {/* Table-like Layout */}
+            {/* Table-like Info */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left text-gray-700 border border-gray-200 rounded-md">
                 <tbody>
-                  <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50 w-40">Leave Type</th>
-                    <td className="px-4 py-2">{selectedLeave?.leave || "N/A"}</td>
-                  </tr>
-                  <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50">Reason</th>
-                    <td className="px-4 py-2">{selectedLeave?.reason || "N/A"}</td>
-                  </tr>
-                  <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50">From</th>
-                    <td className="px-4 py-2">
-                      {selectedLeave?.from
+                  {[
+                    { label: "Leave Type", value: selectedLeave?.leave },
+                    { label: "Reason", value: selectedLeave?.reason },
+                    {
+                      label: "From",
+                      value: selectedLeave?.from
                         ? new Date(selectedLeave?.from).toISOString().split("T")[0]
-                        : "N/A"}
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50">To</th>
-                    <td className="px-4 py-2">
-                      {selectedLeave?.to
+                        : "N/A",
+                    },
+                    {
+                      label: "To",
+                      value: selectedLeave?.to
                         ? new Date(selectedLeave?.to).toISOString().split("T")[0]
-                        : "N/A"}
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50">Applied On</th>
-                    <td className="px-4 py-2">
-                      {selectedLeave?.appliedAt
+                        : "N/A",
+                    },
+                    {
+                      label: "Applied On",
+                      value: selectedLeave?.appliedAt
                         ? new Date(selectedLeave?.appliedAt).toISOString().split("T")[0]
-                        : "N/A"}
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50">Relieving Staff</th>
-                    <td className="px-4 py-2">{selectedLeave.relievingEId?.name || "N/A"}</td>
-                  </tr>
+                        : "N/A",
+                    },
+                    { label: "Relieving Staff", value: selectedLeave.relievingEId?.name || "N/A" },
+                  ].map((row, i) => (
+                    <tr key={i} className="border-b">
+                      <th className="px-4 py-2 font-medium bg-gray-50 w-40">{row.label}</th>
+                      <td className="px-4 py-2">{row.value || "N/A"}</td>
+                    </tr>
+                  ))}
+
+                  {/* HOD Approval */}
                   <tr className="border-b">
                     <th className="px-4 py-2 font-medium bg-gray-50">HOD Approval</th>
                     <td className="px-4 py-2">
                       <span
                         className={`font-semibold px-2 py-1 rounded 
-        ${selectedLeave.hodStatus === 'Approved' ? 'text-green-600 bg-green-100' :
-                            selectedLeave.hodStatus === 'Rejected' ? 'text-red-600 bg-red-100' :
-                              'text-yellow-600 bg-yellow-100'}`}
+                    ${selectedLeave.hodStatus === 'Approved'
+                            ? 'text-green-600 bg-green-100'
+                            : selectedLeave.hodStatus === 'Rejected'
+                              ? 'text-red-600 bg-red-100'
+                              : 'text-yellow-600 bg-yellow-100'
+                          }`}
                       >
                         {selectedLeave.hodStatus}
                       </span>
                     </td>
                   </tr>
 
+                  {/* Admin Approval */}
                   <tr className="border-b">
                     <th className="px-4 py-2 font-medium bg-gray-50">Admin Approval</th>
                     <td className="px-4 py-2">
                       <span
                         className={`font-semibold px-2 py-1 rounded 
-                  ${selectedLeave.status === 'Approved' ? 'text-green-600 bg-green-100' :
-                            selectedLeave.status === 'Rejected' ? 'text-red-600 bg-red-100' :
-                              'text-yellow-600 bg-yellow-100'}`}
+                    ${selectedLeave.status === 'Approved'
+                            ? 'text-green-600 bg-green-100'
+                            : selectedLeave.status === 'Rejected'
+                              ? 'text-red-600 bg-red-100'
+                              : 'text-yellow-600 bg-yellow-100'
+                          }`}
                       >
                         {selectedLeave.status}
                       </span>
                     </td>
                   </tr>
+
+                  {/* Resume Status */}
                   <tr>
                     <th className="px-4 py-2 font-medium bg-gray-50">Status</th>
                     <td className="px-4 py-2">
@@ -562,55 +547,34 @@ const employeeLeave = () => {
                           day(s) added)
                         </span>
                       ) : selectedLeave.status === "Approved" ? (() => {
-                        if (!selectedLeave.from || !selectedLeave.to) return "0 Days";
-
                         const today = new Date();
                         const from = new Date(selectedLeave.from);
                         const to = new Date(selectedLeave.to);
-
                         from.setHours(0, 0, 0, 0);
                         to.setHours(0, 0, 0, 0);
                         today.setHours(0, 0, 0, 0);
 
                         if (today < from) {
                           const diffToStart = Math.ceil((from - today) / (1000 * 60 * 60 * 24));
-                          return (
-                            <span style={{ color: 'goldenrod', fontWeight: 'bold' }}>
-                              {diffToStart} day(s) to Go
-                            </span>
-                          );
+                          return <span className="text-yellow-700 font-bold">{diffToStart} day(s) to Go</span>;
                         } else if (today >= from && today < to) {
                           const daysLeft = Math.ceil((to - today) / (1000 * 60 * 60 * 24));
-                          return (
-                            <span style={{ color: 'green', fontWeight: 'bold' }}>
-                              {daysLeft} day(s) remaining
-                            </span>
-                          );
+                          return <span className="text-green-700 font-bold">{daysLeft} day(s) remaining</span>;
                         } else if (today.getTime() === to.getTime()) {
-                          return (
-                            <span style={{ color: 'blue', fontWeight: 'bold' }}>
-                              Returning today
-                            </span>
-                          );
+                          return <span className="text-blue-700 font-bold">Returning today</span>;
                         } else {
                           const extraDays = Math.ceil((today - to) / (1000 * 60 * 60 * 24));
-                          return (
-                            <span style={{ color: 'red', fontWeight: 'bold' }}>
-                              Leave ended — You added {extraDays} day(s)
-                            </span>
-                          );
+                          return <span className="text-red-700 font-bold">Leave ended — You added {extraDays} day(s)</span>;
                         }
                       })() : "0 Days"}
                     </td>
                   </tr>
-
-
                 </tbody>
               </table>
             </div>
-            <br></br>
-            {/* Print Button at Bottom Center */}
-            <div className="flex justify-center">
+
+            {/* Print Button */}
+            <div className="flex justify-center mt-6">
               <button
                 onClick={() => {
                   const content = document.getElementById("print-salary-table").innerHTML;
@@ -624,7 +588,7 @@ const employeeLeave = () => {
                   printWindow.focus();
                   printWindow.print();
                 }}
-                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
               >
                 Print
               </button>
@@ -632,6 +596,7 @@ const employeeLeave = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

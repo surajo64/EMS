@@ -335,8 +335,8 @@ const evaluation = () => {
 
 
             {showDetail && selectedRecords && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl relative">
+                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl relative overflow-auto max-h-[95vh]">
                         <button
                             onClick={handleClose}
                             className="absolute top-4 right-4 text-gray-500 hover:text-red-600 text-xl font-bold"

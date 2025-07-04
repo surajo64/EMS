@@ -25,6 +25,8 @@ import KPI from './pages/employeeKpi.jsx'
 import AdminEvaluation from './pages/adminEvaluation.jsx'
 import ForgetPassword  from './pages/ForgotPassword.jsx'
 import ResetPassword from './pages/resetPassword.jsx'
+import EmployeeLoan from './pages/employeeLoan.jsx'
+import Loan from './pages/loan.jsx'
 
 const App = () => {
   const { token } = useContext(AppContext);
@@ -45,11 +47,13 @@ const App = () => {
               <Route path='/employee' element={<Employee/>} />
               <Route path='/department' element={<Department/>} />
               <Route path='/leave' element={<Leave/>} />
+              <Route path='/loan' element={<Loan/>} />
               <Route path='/salary' element={<Salary/>} />
               <Route path='/setting' element={<Setting/>} />
           
               <Route path='/profile' element={<Profile/>} />
               <Route path='/employee-leave' element={<EmployeeLeave/>} />
+              <Route path='/employee-loan' element={<EmployeeLoan/>} />
               <Route path='/employee-salary' element={<EmployeeSalary/>} />
               <Route path='/hod-leave' element={<HodLeave/>} />
               <Route path='/employee-kpi' element={<KPI/>} />

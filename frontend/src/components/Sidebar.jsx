@@ -16,6 +16,7 @@ const Sidebar = () => {
             <SidebarLink to="/employee" label="Employee" icon={assets.Emplyees} />
             <SidebarLink to="/department" label="Department" icon={assets.Department} />
             <SidebarLink to="/leave" label="Leave" icon={assets.Leave} />
+            <SidebarLink to="/loan" label="Loan" icon={assets.Salary} />
             <SidebarLink to="/salary" label="Salary" icon={assets.Salary} />
             <SidebarLink to="/attendence" label="Attendance" icon={assets.Attend} />
             <SidebarLink to="/admin-evaluation" label="Performance" icon={assets.Evaluation} />
@@ -32,9 +33,11 @@ const Sidebar = () => {
             <SidebarLink to="/employee-dashboard" label="Dashboard" icon={assets.Home} />
             <SidebarLink to="/profile" label="My Profile" icon={assets.Emplyees} />
             <SidebarLink to="/employee-leave" label="Leave" icon={assets.Leave} />
+            <SidebarLink to="/employee-loan" label="Loan" icon={assets.Salary} />
             <SidebarLink to="/employee-salary" label="Salary" icon={assets.Salary} />
              <SidebarLink to="/employee-kpi" label="KPI" icon={assets.Evaluation} />
             <SidebarLink to="/setting" label="Change Password" icon={assets.Setting} />
+            
            
           </ul>
         </nav>
