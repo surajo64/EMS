@@ -44,7 +44,6 @@ const loan = () => {
             let data;
 
             if (editingLoan) {
-                // ✅ Update existing loan
                 const response = await axios.post(
                     backendUrl + "/api/admin/update-loan",
                     {
@@ -166,8 +165,18 @@ const loan = () => {
         currentPage * itemsPerPage
     );
 
+    const handlePrint = () => {
+        const printContents = document.getElementById("print-Loan-table").innerHTML;
+        const originalContents = document.body.innerHTML;
 
-    return (
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+        window.location.reload(); // Optional: reload to restore event bindings
+    };
+
+
+    return loans && (
 
 
         <div className='w-full max-w-6xl mx-auto px-4 text-center'>
@@ -194,14 +203,19 @@ const loan = () => {
             {/* Table container */}
             <div className='bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]'>
                 {/* Header */}
-                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
+                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
                     <p className="hidden sm:block">#</p>
                     <p>Employee</p>
-                    <p>Loan Amount</p>
                     <p>Reason</p>
-                    <p>Loan Repaid</p>
-                    <p>Loan Balance </p>
-                    <p>Apply Date</p>
+                    <p>
+                        {loans.length > 0 && loans[0].status != "Pending"
+                            ? "Approved Amount"
+                            : "Requested Amount"}
+                    </p>
+                    <p>Duration (Months)</p>
+                    <p>Monthly Deductions</p>
+                    <p>Total Repaid</p>
+                    <p>Outstanding Balance</p>
                     <p>Actions</p>
                 </div>
 
@@ -210,17 +224,23 @@ const loan = () => {
                     paginatedLoans.map((item, index) => (
                         <div
                             key={index}
-                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
+                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
                         >
                             <p className="hidden sm:block">{(currentPage - 1) * itemsPerPage + index + 1}</p>
                             <p>{item.userId?.name}</p>
-                            <p>₦{item.amount.toLocaleString()}</p>
                             <p>{item.reason}</p>
+                            <p>₦{item.amount.toLocaleString()}</p>
+                            <p>{item.durationInMonths}</p>
+                            <p>{item.monthDeduction}</p>
                             <p>₦{item.totalRepaid.toLocaleString()}</p>
                             <p>₦{(item.amount - item.totalRepaid).toLocaleString()}</p>
-                            <p>{new Date(item.createdAt).toISOString().split('T')[0]}</p>
 
                             <div className="flex sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+
+                                {item.status === "Completed" && (
+                                    <p className="text-green-600 font-semibold">Loan Payment Completed</p>
+                                )}
+
 
                                 <button
                                     onClick={() => handleView(item)}
@@ -240,7 +260,7 @@ const loan = () => {
                         </div>
                     ))
                 ) : (
-                    <p className="text-center py-5 text-gray-500">No departments found.</p>
+                    <p className="text-center py-5 text-gray-500">No Loans found.</p>
                 )}
 
                 {/* Pagination */}
@@ -378,97 +398,111 @@ const loan = () => {
                         >
                             &times;
                         </button>
+                        <div id="print-Loan-table">
+                            {/* Header */}
+                            <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+                                {selectedLoan.userId?.name?.toUpperCase() || "N/A"}
+                            </h2>
 
-                        {/* Header */}
-                        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-                            {selectedLoan.userId?.name?.toUpperCase() || "N/A"}
-                        </h2>
+                            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-8 mb-6 text-center sm:text-left">
+                                <p className="text-sm text-gray-800 break-words">
+                                    <span className="font-semibold text-green-800">Email: </span>
+                                    {selectedLoan.userId?.email || "N/A"}
+                                </p>
 
-                        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-8 mb-6 text-center sm:text-left">
-                            <p className="text-sm text-gray-800 break-words">
-                                <span className="font-semibold text-green-800">Email: </span>
-                                {selectedLoan.userId?.email || "N/A"}
-                            </p>
+                            </div>
 
-                        </div>
-
-                        {/* Table-like Layout */}
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left text-gray-700 border border-gray-200 rounded-md">
-                                <tbody>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 font-medium bg-gray-50 w-40">Loan Amount</th>
-                                        <td className="px-4 py-2">₦{selectedLoan.amount?.toLocaleString() || "N/A"}</td>
-                                    </tr>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 font-medium bg-gray-50 w-40">Payment Duration</th>
-                                        <td className="px-4 py-2">{selectedLoan.durationInMonths?.toLocaleString() || "N/A"}</td>
-                                    </tr>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 font-medium bg-gray-50 w-40">Monthly Deductions</th>
-                                        <td className="px-4 py-2">₦{selectedLoan.monthDeduction?.toLocaleString() || "N/A"}</td>
-                                    </tr>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 font-medium bg-gray-50">Reason</th>
-                                        <td className="px-4 py-2">{selectedLoan.reason || "N/A"}</td>
-                                    </tr>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 font-medium bg-gray-50">Loan Repaid</th>
-                                        <td className="px-4 py-2">₦{selectedLoan.totalRepaid?.toLocaleString() || "0"}</td>
-                                    </tr>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 font-medium bg-gray-50">Loan Balance</th>
-                                        <td className="px-4 py-2">
-                                            ₦{(selectedLoan.amount - selectedLoan.totalRepaid)?.toLocaleString() || "N/A"}
-                                        </td>
-                                    </tr>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 font-medium bg-gray-50">Applied On</th>
-                                        <td className="px-4 py-2">
-                                            {selectedLoan.createdAt
-                                                ? new Date(selectedLoan.createdAt).toISOString().split("T")[0]
-                                                : "N/A"}
-                                        </td>
-                                    </tr>
-                                    <tr className="border-b">
-                                        <th className="px-4 py-2 font-medium bg-gray-50">Loan Status</th>
-                                        <td className="px-4 py-2">
-                                            <span
-                                                className={`font-semibold px-2 py-1 rounded 
+                            {/* Table-like Layout */}
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left text-gray-700 border border-gray-200 rounded-md">
+                                    <tbody>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">
+                                                {selectedLoan.status != "Pending" ? "Approved Amount" : "Requested Amount"}
+                                            </th>
+                                            <td className="px-4 py-2">₦{selectedLoan.amount?.toLocaleString() || "N/A"}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">Payment Duration</th>
+                                            <td className="px-4 py-2">{selectedLoan.durationInMonths?.toLocaleString() || "N/A"}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">Monthly Deductions</th>
+                                            <td className="px-4 py-2">₦{selectedLoan.monthDeduction?.toLocaleString() || "N/A"}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50">Reason</th>
+                                            <td className="px-4 py-2">{selectedLoan.reason || "N/A"}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50">Total Repaid</th>
+                                            <td className="px-4 py-2">₦{selectedLoan.totalRepaid?.toLocaleString() || "0"}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50">Outstanding Balance</th>
+                                            <td className="px-4 py-2">
+                                                ₦{(selectedLoan.amount - selectedLoan.totalRepaid)?.toLocaleString() || "N/A"}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50">Applied On</th>
+                                            <td className="px-4 py-2">
+                                                {selectedLoan.createdAt
+                                                    ? new Date(selectedLoan.createdAt).toISOString().split("T")[0]
+                                                    : "N/A"}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50">Loan Status</th>
+                                            <td className="px-4 py-2">
+                                                <span
+                                                    className={`font-semibold px-2 py-1 rounded 
                     ${selectedLoan.status === 'Approved' ? 'text-green-600 bg-green-100' :
-                                                        selectedLoan.status === 'Rejected' ? 'text-red-600 bg-red-100' :
-                                                            'text-yellow-600 bg-yellow-100'}`}
-                                            >
-                                                {selectedLoan.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                                            selectedLoan.status === 'Rejected' ? 'text-red-600 bg-red-100' :
+                                                                'text-yellow-600 bg-yellow-100'}`}
+                                                >
+                                                    {selectedLoan.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
 
-                            <br />
+
+                                <br />
+                            </div>
+
+                            {/* Action Buttons */}
+                            {selectedLoan.status === "Pending" && (
+                                <div className="flex flex-col sm:flex-row justify-end sm:gap-3 gap-2 mt-6">
+                                    <button
+                                        onClick={() => setSelectedLoan(null)}
+                                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => updateStatus(selectedLoan._id, "Approved")}
+                                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
+                                    >
+                                        Approve
+                                    </button>
+                                    <button
+                                        onClick={() => updateStatus(selectedLoan._id, "Rejected")}
+                                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
+                                    >
+                                        Reject
+                                    </button>
+                                </div>
+                            )}
                         </div>
-
-                        {/* Action Buttons */}
-                        {selectedLoan.status === "Pending" && (
-                            <div className="flex flex-col sm:flex-row justify-end sm:gap-3 gap-2 mt-6">
+                        {selectedLoan.status != "Pending" && (
+                            <div className="mt-6 flex justify-center">
                                 <button
-                                    onClick={() => setSelectedLoan(null)}
-                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
+                                    onClick={handlePrint}
+                                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
                                 >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => updateStatus(selectedLoan._id, "Approved")}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
-                                >
-                                    Approve
-                                </button>
-                                <button
-                                    onClick={() => updateStatus(selectedLoan._id, "Rejected")}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
-                                >
-                                    Reject
+                                    Print
                                 </button>
                             </div>
                         )}

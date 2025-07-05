@@ -50,6 +50,7 @@ const Sidebar = () => {
             <SidebarLink to="/hod-dashboard" label="Dashboard" icon={assets.Home} />
             <SidebarLink to="/profile" label="My Profile" icon={assets.Emplyees} />
             <SidebarLink to="/hod-leave" label="Leave" icon={assets.Leave} />
+            <SidebarLink to="/employee-loan" label="Loan" icon={assets.Salary} />
             <SidebarLink to="/employee-salary" label="Salary" icon={assets.Salary} />
             <SidebarLink to="/attendence" label="Attendance" icon={assets.Attend} />
             <SidebarLink to="/evaluation" label="Performance" icon={assets.Evaluation} />

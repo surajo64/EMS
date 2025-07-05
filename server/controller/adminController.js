@@ -832,7 +832,7 @@ const addSalary = async (req, res) => {
       // ✅ FIX: Declare loan deduction from Excel
       const excelLoanDeduction = row.loan || 0;
       const loan = await Loan.findOne({
-        userId: employee.userId,  // ✅ Use the actual `User` ID, not Employee ID
+        userId: employee.userId, 
         status: 'Approved',
       });
 
@@ -895,7 +895,7 @@ const getEmployeeSalaries = async (req, res) => {
     const salaries = await Salary.find()
       .populate({
         path: 'employeeId',
-        select: 'staffId designation userId department',
+        select: 'staffId designation type userId department',
         populate: [
           { path: 'userId', select: 'name' },
           { path: 'department', select: 'name' },
@@ -944,7 +944,7 @@ const getAllSalaries = async (req, res) => {
     const salaries = await Salary.find()
       .populate({
         path: 'employeeId',
-        select: 'staffId designation userId department',
+        select: 'staffId designation type userId department',
         populate: [
           { path: 'userId', select: 'name' },
           { path: 'department', select: 'name' },
@@ -1734,6 +1734,21 @@ const getAllyLoan = async (req, res) => {
   }
 };
 
+// Get loans for the logged-in user only
+const getEmployeeLoan = async (req, res) => {
+  try {
+    const userId = req.userId; // Ensure your auth middleware sets this
+
+    const loans = await Loan.find({ userId }).populate("userId", "name email");
+
+    res.json({ success: true, loans });
+  } catch (error) {
+    console.error("Error fetching user loans:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+
 // Approve or Reject Loan
 const approveRejectLoan = async (req, res) => {
   const { loanId, status } = req.body;
@@ -1758,35 +1773,6 @@ const approveRejectLoan = async (req, res) => {
 
 
 
-// GET /api/loans/history/:employeeId
-const getLoanHistory = async (req, res) => {
-  try {
-    const loans = await Loan.find({ employeeId: req.params.employeeId }).sort({ createdAt: -1 });
-    res.json({ success: true, loans });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-// To be used when generating salary for an employee
-const applyLoanDeduction = async (employeeId) => {
-  const loan = await Loan.findOne({ employeeId, status: 'Approved' });
-
-  if (!loan) return { loanDeduction: 0 };
-
-  // Deduct repayment
-  loan.totalRepaid += loan.monthlyRepayment;
-  loan.balance -= loan.monthlyRepayment;
-
-  if (loan.balance <= 0) {
-    loan.status = 'Completed';
-    loan.balance = 0;
-  }
-
-  await loan.save();
-
-  return { loanDeduction: loan.monthlyRepayment };
-};
 
 
 
@@ -1800,5 +1786,6 @@ export {
   getAllevaluations, updateEvaluation, getUsers, getEmployeeDashboardData, fetchEmployees,
   submitKpi, getKpi, hodEvaluation, getKpiByDepartment, adminEvaluation, updateAdminEvaluation,
   uploadAttendance, getAttendance, getAllAttendance, resumeLeave, deactivateEmployee, getEmployeesByStatus,
-  applyLoan, getAllyLoan, approveRejectLoan, getLoanHistory, applyLoanDeduction, updateLoan,
+  applyLoan, getAllyLoan, approveRejectLoan, updateLoan,  getEmployeeLoan,
+ 
 }

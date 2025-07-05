@@ -593,6 +593,7 @@ const employee = () => {
                       <option value="">Employee Type</option>
                       <option value="permanent">Permanent</option>
                       <option value="locum">locum/Contract</option>
+                       <option value="consultant">Consuntant</option>
 
                     </select>
                   </div>
@@ -845,7 +846,8 @@ const employee = () => {
                   >
                     <option value="all">All Types</option>
                     <option value="permanent">Permanent</option>
-                    <option value="locum">Locum</option>
+                    <option value="locum">Locum/Contract</option>
+                    <option value="consultant">Consultant</option>
                   </select>
 
                   <button
