@@ -32,7 +32,7 @@ const employeeSalary = () => {
         });
         const result = await res.json();
         setSalaryGroups(result.data);
-        console.error('Group of salaries:',result.data );
+        console.error('Group of salaries:', result.data);
       } catch (error) {
         console.error('Error loading salaries:', error);
       }
@@ -40,19 +40,19 @@ const employeeSalary = () => {
 
     fetchSalaries();
   }, []);
-  
 
 
-const handlePrintSlip = (group) => {
-  const currentUserId = JSON.parse(localStorage.getItem('user'))?.id;
-  const salaryRecord = group.records.find(
-    rec => rec?.employeeId?.userId?._id === currentUserId
-  );
 
-  if (!salaryRecord) return toast.warning("No salary record found for current user.");
+  const handlePrintSlip = (group) => {
+    const currentUserId = JSON.parse(localStorage.getItem('user'))?.id;
+    const salaryRecord = group.records.find(
+      rec => rec?.employeeId?.userId?._id === currentUserId
+    );
 
-  
-  const content = `
+    if (!salaryRecord) return toast.warning("No salary record found for current user.");
+
+
+    const content = `
  
   <!DOCTYPE html>
 <html>
@@ -65,15 +65,9 @@ const handlePrintSlip = (group) => {
     }
   </style>
 </head>
-<body class="p-6 text-sm font-sans text-gray-700 bg-gray-100">
-<div class="flex justify-end gap-2 mb-4 no-print">
-      <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600">
-        Print
-      </button>
-      
-    </div>
+<body id="pay-slip" class="p-6 text-sm font-sans text-gray-700 bg-gray-100">
 
-        <div id="pay-slip" class="max-w-2xl mx-auto bg-white border border-gray-300 p-6 rounded shadow">
+        <div class="max-w-2xl mx-auto bg-white border border-gray-300 p-6 rounded shadow">
           <div class="text-center mb-6">
         <img src="/public/logo.svg" class="w-12 mx-auto mb-4" />
         <h2 class="text-2xl font-bold text-gray-800 mb-10">KIRCT Employee Pay Slip</h2>
@@ -98,25 +92,25 @@ const handlePrintSlip = (group) => {
     <hr class="my-4" />
     <div class="grid grid-cols-2 gap-4 mb-6">
       <div>
-        <h3 class="font-semibold text-gray-800 mb-2">Earnings</h3>
+        <h3 class="font-bold text-xl text-green-700 mb-2">Earnings</h3>
         <p><strong>Basic Salary:</strong> ₦${salaryRecord.basicSalary.toLocaleString()}</p>
         <p><strong>Meal Allowance:</strong> ₦${(salaryRecord.mealAllowance || 0).toLocaleString()}</p>
         <p><strong>Transport Allowance:</strong> ₦${(salaryRecord.transportAllowance || 0).toLocaleString()}</p>
         <p><strong>Over Time:</strong> ₦${(salaryRecord.overTime || 0).toLocaleString()}</p>
+        <p class=" text-gray-700"><strong>Gross Salary: ₦${salaryRecord.growthSalary.toLocaleString()}</strong></p>
         
       </div>
       <div>
-        <h3 class="font-semibold text-gray-800 mb-2">Deductions</h3>
+        <h3 class="text-red-600 text-xl font-bold mb-2">Deductions</h3>
         <p><strong>Pension:</strong> ₦${(salaryRecord.pension || 0).toLocaleString()}</p>
         <p><strong>PAYE:</strong> ₦${(salaryRecord.paye || 0).toLocaleString()}</p>
         <p><strong>Loan:</strong> ₦${(salaryRecord.loan || 0).toLocaleString()}</p>
-        <p class="text-red-600"><strong>Total Deductions:</strong> ₦${((salaryRecord.pension || 0) + (salaryRecord.paye || 0)+ (salaryRecord.loan || 0)).toLocaleString()}</p>
-      </div>
+        <p class="text-gray-700"><strong>Total Deductions: ₦${((salaryRecord.pension || 0) + (salaryRecord.paye || 0) + (salaryRecord.loan || 0)).toLocaleString()}</strong></p>
+        
+        </div>
       
       </div>
-      <div class="text-center">
-      <p class=" text-green-600"><strong>Gross Salary:</strong> ₦${salaryRecord.growthSalary.toLocaleString()}</p>
-       </div>
+      
        
     <hr class="my-4" />
     <p class="text-green-700 font-bold text-lg text-center">
@@ -146,14 +140,23 @@ const handlePrintSlip = (group) => {
     }
   </script>
 </body>
+
+
 </html>
+<br/>
+<div class="flex justify-center gap-4 mb-4 no-print">
+      <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600">
+        Print
+      </button>
+      
+    </div>
 
 `;
 
-  const printWindow = window.open("", "_blank", "height=800,width=600");
-  printWindow.document.write(content);
-  printWindow.document.close();
-};
+    const printWindow = window.open("", "_blank", "height=800,width=600");
+    printWindow.document.write(content);
+    printWindow.document.close();
+  };
 
 
 
@@ -161,77 +164,77 @@ const handlePrintSlip = (group) => {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 sm:p-6">
-  <p className="text-xl sm:text-2xl font-bold text-gray-800 text-center">MANAGE SALARIES</p>
+      <p className="text-xl sm:text-2xl font-bold text-gray-800 text-center">MANAGE SALARIES</p>
 
-  {/* Search Bar */}
-  <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
-    <input
-      type="text"
-      placeholder="Search by Employee Name or ID..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="w-full sm:w-1/2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-    />
-  </div>
+      {/* Search Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
+        <input
+          type="text"
+          placeholder="Search by Employee Name or ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full sm:w-1/2 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+        />
+      </div>
 
-  {/* Salary Table */}
-  <div className="bg-white rounded-md shadow-sm mt-6 text-sm max-h-[80vh] min-h-[60vh] overflow-y-auto">
-    {/* Table Header (only visible on sm and up) */}
-    <div className="bg-gray-200 hidden sm:grid grid-cols-[0.5fr_1fr_1fr_1fr_1fr_2fr] py-3 px-4 rounded-t-md border-b-4 border-green-500 font-semibold">
-      <p>#</p>
-      <p>Salary Month</p>
-      <p>Salary Year</p>
-      <p>Paid Date</p>
-      <p>Amount Paid</p>
-      <p>Actions</p>
-    </div>
+      {/* Salary Table */}
+      <div className="bg-white rounded-md shadow-sm mt-6 text-sm max-h-[80vh] min-h-[60vh] overflow-y-auto">
+        {/* Table Header (only visible on sm and up) */}
+        <div className="bg-gray-200 hidden sm:grid grid-cols-[0.5fr_1fr_1fr_1fr_1fr_2fr] py-3 px-4 rounded-t-md border-b-4 border-green-500 font-semibold">
+          <p>#</p>
+          <p>Salary Month</p>
+          <p>Salary Year</p>
+          <p>Paid Date</p>
+          <p>Amount Paid</p>
+          <p>Actions</p>
+        </div>
 
-    {/* Table Rows */}
-    {salaryGroups?.length > 0 ? (
-      salaryGroups
-        .filter((item) =>
-          `${item.month} ${item.year} ${new Date(item.payDate).toLocaleDateString()}`.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        .sort((a, b) => {
-          const monthOrder = [
-            'january', 'february', 'march', 'april', 'may', 'june',
-            'july', 'august', 'september', 'october', 'november', 'december'
-          ];
-          const monthA = monthOrder.indexOf(a.month.toLowerCase());
-          const monthB = monthOrder.indexOf(b.month.toLowerCase());
+        {/* Table Rows */}
+        {salaryGroups?.length > 0 ? (
+          salaryGroups
+            .filter((item) =>
+              `${item.month} ${item.year} ${new Date(item.payDate).toLocaleDateString()}`.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .sort((a, b) => {
+              const monthOrder = [
+                'january', 'february', 'march', 'april', 'may', 'june',
+                'july', 'august', 'september', 'october', 'november', 'december'
+              ];
+              const monthA = monthOrder.indexOf(a.month.toLowerCase());
+              const monthB = monthOrder.indexOf(b.month.toLowerCase());
 
-          return a.year !== b.year ? b.year - a.year : monthB - monthA;
-        })
-        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-        .map((item, index) => (
-          <div
-            key={index}
-            className="flex flex-wrap sm:grid sm:grid-cols-[0.5fr_1fr_1fr_1fr_1fr_2fr] items-center gap-4 sm:gap-0 py-3 px-4 border-b hover:bg-blue-50 text-gray-600"
-          >
-            <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
-            <p>{item.month}</p>
-            <p>{item.year}</p>
-            <p>{new Date(item.payDate).toLocaleDateString()}</p>
-            <p>₦{item.netPay.toLocaleString()}</p>
-            <div className="flex gap-2 justify-start sm:justify-end flex-wrap">
-              <button
-                onClick={() => handleView(item)}
-                className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full"
+              return a.year !== b.year ? b.year - a.year : monthB - monthA;
+            })
+            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+            .map((item, index) => (
+              <div
+                key={index}
+                className="flex flex-wrap sm:grid sm:grid-cols-[0.5fr_1fr_1fr_1fr_1fr_2fr] items-center gap-4 sm:gap-0 py-3 px-4 border-b hover:bg-blue-50 text-gray-600"
               >
-                View Detail
-              </button>
-              <button
-                onClick={() => handlePrintSlip(item)}
-                className="bg-blue-600 text-white text-sm px-3 py-1 rounded-full"
-              >
-                Pay Slip
-              </button>
-            </div>
-          </div>
-        ))
-    ) : (
-      <p className="text-center text-gray-500 py-6">No salary records found.</p>
-    )}
+                <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
+                <p>{item.month}</p>
+                <p>{item.year}</p>
+                <p>{new Date(item.payDate).toLocaleDateString()}</p>
+                <p>₦{item.netPay.toLocaleString()}</p>
+                <div className="flex gap-2 justify-start sm:justify-end flex-wrap">
+                  <button
+                    onClick={() => handleView(item)}
+                    className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full"
+                  >
+                    View Detail
+                  </button>
+                  <button
+                    onClick={() => handlePrintSlip(item)}
+                    className="bg-blue-600 text-white text-sm px-3 py-1 rounded-full"
+                  >
+                    Pay Slip
+                  </button>
+                </div>
+              </div>
+            ))
+        ) : (
+          <p className="text-center text-gray-500 py-6">No salary records found.</p>
+        )}
 
         {/* Pagination Controls */}
         <div className="flex justify-center items-center mt-4 gap-4">
@@ -261,67 +264,67 @@ const handlePrintSlip = (group) => {
 
 
       {showDetailModal && selectedSalaryRecords && (
-  <div
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-    onClick={() => setShowDetailModal(false)}
-  >
-    <div
-      className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-auto max-h-[90vh] relative p-4 sm:p-6"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Close Button */}
-      <button
-        onClick={() => setShowDetailModal(false)}
-        className="absolute top-2 right-4 text-red-600 text-2xl font-bold hover:text-red-800"
-      >
-        ✕
-      </button>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+          onClick={() => setShowDetailModal(false)}
+        >
+          <div
+            className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-auto max-h-[90vh] relative p-4 sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowDetailModal(false)}
+              className="absolute top-2 right-4 text-red-600 text-2xl font-bold hover:text-red-800"
+            >
+              ✕
+            </button>
 
-      {/* Title */}
-      <h2 className="text-lg sm:text-xl font-bold text-gray-800 text-center mb-4">
-        Detailed Salaries for: {selectedSalaryRecords.month} {selectedSalaryRecords.year}
-      </h2>
+            {/* Title */}
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 text-center mb-4">
+              Detailed Salaries for: {selectedSalaryRecords.month} {selectedSalaryRecords.year}
+            </h2>
 
-      {/* Scrollable Table */}
-      <div id="print-salary-table" className="overflow-x-auto">
-        <table className="w-full text-sm border border-gray-300 mb-6 min-w-[800px]">
-          <thead className="bg-gray-100">
-            <tr className="text-center border-b">
-              <th className="py-2 px-2">#</th>
-              <th className="py-2 px-2">Staff ID</th>
-              <th className="py-2 px-2">Full Name</th>
-              <th className="py-2 px-2">Department</th>
-              <th className="py-2 px-2 text-green-500">Basic</th>
-              <th className="py-2 px-2 text-green-500">Allowances</th>
-              <th className="py-2 px-2 text-yellow-500">Growth Salary</th>
-              <th className="py-2 px-2 text-red-500">Deductions</th>
-              <th className="py-2 px-2 text-green-500">Net Pay</th>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedSalaryRecords.records.map((salary, idx) => (
-              <tr key={salary._id} className="border-b hover:bg-gray-50 text-center">
-                <td className="py-2 px-2">{idx + 1}</td>
-                <td className="py-2 px-2">{salary?.employeeId?.staffId || 'N/A'}</td>
-                <td className="py-2 px-2">{salary?.employeeId?.userId?.name || 'N/A'}</td>
-                <td className="py-2 px-2">{salary?.employeeId?.department?.name || 'N/A'}</td>
-                <td className="py-2 px-2 text-green-500">₦{salary.basicSalary.toLocaleString()}</td>
-                <td className="py-2 px-2 text-green-500">
-                  ₦{((salary.transportAllowance || 0) + (salary.mealAllowance || 0) + (salary.overTime || 0)).toLocaleString()}
-                </td>
-                <td className="py-2 px-2 text-yellow-500">₦{salary.growthSalary.toLocaleString()}</td>
-                <td className="py-2 px-2 text-red-500">
-                  ₦{((salary.pension || 0) + (salary.paye || 0) + (salary.loan || 0)).toLocaleString()}
-                </td>
-                <td className="py-2 px-2 text-green-500">₦{salary.netSalary.toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-)}
+            {/* Scrollable Table */}
+            <div id="print-salary-table" className="overflow-x-auto">
+              <table className="w-full text-sm border border-gray-300 mb-6 min-w-[800px]">
+                <thead className="bg-gray-100">
+                  <tr className="text-center border-b">
+                    <th className="py-2 px-2">#</th>
+                    <th className="py-2 px-2">Staff ID</th>
+                    <th className="py-2 px-2">Full Name</th>
+                    <th className="py-2 px-2">Department</th>
+                    <th className="py-2 px-2 text-green-500">Basic</th>
+                    <th className="py-2 px-2 text-green-500">Allowances</th>
+                    <th className="py-2 px-2 text-yellow-500">Growth Salary</th>
+                    <th className="py-2 px-2 text-red-500">Deductions</th>
+                    <th className="py-2 px-2 text-green-500">Net Pay</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedSalaryRecords.records.map((salary, idx) => (
+                    <tr key={salary._id} className="border-b hover:bg-gray-50 text-center">
+                      <td className="py-2 px-2">{idx + 1}</td>
+                      <td className="py-2 px-2">{salary?.employeeId?.staffId || 'N/A'}</td>
+                      <td className="py-2 px-2">{salary?.employeeId?.userId?.name || 'N/A'}</td>
+                      <td className="py-2 px-2">{salary?.employeeId?.department?.name || 'N/A'}</td>
+                      <td className="py-2 px-2 text-green-500">₦{salary.basicSalary.toLocaleString()}</td>
+                      <td className="py-2 px-2 text-green-500">
+                        ₦{((salary.transportAllowance || 0) + (salary.mealAllowance || 0) + (salary.overTime || 0)).toLocaleString()}
+                      </td>
+                      <td className="py-2 px-2 text-yellow-500">₦{salary.growthSalary.toLocaleString()}</td>
+                      <td className="py-2 px-2 text-red-500">
+                        ₦{((salary.pension || 0) + (salary.paye || 0) + (salary.loan || 0)).toLocaleString()}
+                      </td>
+                      <td className="py-2 px-2 text-green-500">₦{salary.netSalary.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
 
 

@@ -235,14 +235,14 @@ const hodLeave = () => {
 
       <div className='bg-white border rounded-md mt-4 text-sm max-h-[80vh] min-h-[60vh] overflow-y-auto'>
         {/* Header */}
-        <div className='hidden sm:grid grid-cols-[0.5fr_2fr_2fr_2fr_1.5fr_1.5fr_1fr_2.5fr_2fr] bg-gray-200 py-3 px-6 border-b-4 border-green-500 rounded-t-md'>
+        <div className='hidden sm:grid grid-cols-[0.5fr_2fr_2fr_2fr_1.5fr_1.5fr_2.5fr_2fr] bg-gray-200 py-3 px-6 border-b-4 border-green-500 rounded-t-md'>
           <p>#</p>
           <p>Name</p>
           <p>Leave Type</p>
           <p>Reasons</p>
           <p>From</p>
           <p>To</p>
-          <p>Approval</p>
+         
           <p>Status</p>
           <p>Actions</p>
         </div>
@@ -257,7 +257,7 @@ const hodLeave = () => {
             return (
               <div
                 key={index}
-                className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_2fr_2fr_1.5fr_1.5fr_1fr_2.5fr_2fr] gap-y-2 items-start sm:items-center text-gray-700 py-3 px-6 border-b hover:bg-blue-50"
+                className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_2fr_2fr_1.5fr_1.5fr_2.5fr_2fr] gap-y-2 items-start sm:items-center text-gray-700 py-3 px-6 border-b hover:bg-blue-50"
               >
                 <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
                 <p className="truncate">{item.userId.name}</p>
@@ -267,13 +267,7 @@ const hodLeave = () => {
                 <p>{new Date(item.to).toISOString().split('T')[0]}</p>
 
                 {/* Admin Approval */}
-                <p>
-                  <span className={`font-semibold ${item.status === "Approved"
-                    ? "text-green-600" : item.status === "Rejected"
-                      ? "text-red-500" : "text-yellow-600"}`}>
-                    {item.status}
-                  </span>
-                </p>
+               
 
                 {/* Status Logic */}
                 <p>
@@ -317,7 +311,7 @@ const hodLeave = () => {
                 </p>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2 mt-2 sm:mt-0">
+                <div className="flex justify-end gap-2 mt-2 sm:mt-0">
                   <button
                     onClick={() => handleView(item)}
                     className="bg-yellow-500 text-white text-xs px-3 py-1 rounded-full"

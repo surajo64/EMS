@@ -234,7 +234,7 @@ const adminEvaluation = () => {
                     <p>Employee</p>
                     <p>Self Rating (KPI)</p>
                     <p>HOD Rating</p>
-                    <p>Admin Rating</p>
+                    <p>HR Rating</p>
                     <p>Final Grade</p>
                     <p>Comments</p>
                     <p>Actions</p>
@@ -478,7 +478,7 @@ const adminEvaluation = () => {
                                 <div className="mb-6">
                                     {selectedRecords.adminEvaluation && !isEditing ? (
                                         <>
-                                            <h3 className="text-lg font-bold mb-4 text-green-600 text-center">Admin Evaluation</h3>
+                                            <h3 className="text-lg font-bold mb-4 text-green-600 text-center">HR Evaluation</h3>
                                             <table className="w-full text-sm text-left border border-gray-200 rounded-lg bg-white shadow">
                                                 <tbody>
 

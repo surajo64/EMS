@@ -136,7 +136,7 @@ const employeeKpi = () => {
       <p>#</p>
       <p>Self Rating</p>
       <p>HOD Rating</p>
-      <p>Admin Rating</p>
+      <p>HR Rating</p>
       <p>Actions</p>
     </div>
 
@@ -435,7 +435,7 @@ const employeeKpi = () => {
               {/* ✅ RIGHT COLUMN: ADMIN Evaluation */}
               <div className="col-span-1 border rounded-lg p-4 bg-gray-50 shadow-inner overflow-auto max-h-[600px]">
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold mb-4 text-green-600 text-center">Admin Evaluation</h3>
+                  <h3 className="text-lg font-bold mb-4 text-green-600 text-center">HR Evaluation</h3>
 
                   {selectedRecords.adminEvaluation ? (
                     <table className="w-full text-sm text-start border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">

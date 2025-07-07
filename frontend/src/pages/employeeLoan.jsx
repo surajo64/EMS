@@ -175,25 +175,25 @@ const employeeLoan = () => {
                     className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/3'
                 />
 
-                <button
-                    onClick={handleAddNew}
-                    className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
-                >
-                    Apply Loan
-                </button>
+                {(!loans || loans.status === "Completed") && (
+                    <button
+                        onClick={handleAddNew}
+                        className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
+                    >
+                        Apply Loan
+                    </button>
+                )}
+
             </div>
 
             {/* Table container */}
             <div className='bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]'>
                 {/* Header */}
-                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
+                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
                     <p className="hidden sm:block">#</p>
                     <p>Reason</p>
-                   <p>
-                        {loans.length > 0 && loans[0].status != "Pending"
-                            ? "Approved Amount"
-                            : "Requested Amount"}
-                    </p>
+                    <p>Requested Amount</p>
+                    <p>Approved Amount</p>
                     <p>Duration (Months)</p>
                     <p>Monthly Deductions</p>
                     <p>Total Repaid</p>
@@ -207,15 +207,18 @@ const employeeLoan = () => {
                     paginatedLoans.map((item, index) => (
                         <div
                             key={index}
-                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
+                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
                         >
                             <p className="hidden sm:block">{(currentPage - 1) * itemsPerPage + index + 1}</p>
                             <p>{item.reason}</p>
                             <p>₦{item.amount.toLocaleString()}</p>
+                            <p>
+                                ₦ {item.status === "Approved" ? (item.approvedAmount || item.amount)?.toLocaleString() : "Pending"}
+                            </p>
                             <p>{item.durationInMonths}</p>
                             <p>{item.monthDeduction}</p>
                             <p>₦{item.totalRepaid.toLocaleString()}</p>
-                            <p>₦{(item.amount - item.totalRepaid).toLocaleString()}</p>
+                            <p>₦{(item.approvedAmount - item.totalRepaid).toLocaleString()}</p>
                             <p>{new Date(item.createdAt).toISOString().split('T')[0]}</p>
 
                             <div className="flex sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
@@ -398,10 +401,12 @@ const employeeLoan = () => {
                                 <table className="w-full text-sm text-left text-gray-700 border border-gray-200 rounded-md">
                                     <tbody>
                                         <tr className="border-b">
-                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">
-                                                {selectedLoan.status != "Pending" ? "Approved Amount" : "Requested Amount"}
-                                            </th>
+                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">Requested Amount</th>
                                             <td className="px-4 py-2">₦{selectedLoan.amount?.toLocaleString() || "N/A"}</td>
+                                        </tr>
+                                        <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">Approved Amount</th>
+                                            <td className="px-4 py-2">₦ {selectedLoan.approvedAmount?.toLocaleString() || "Pending"}</td>
                                         </tr>
                                         <tr className="border-b">
                                             <th className="px-4 py-2 font-medium bg-gray-50 w-40">Payment Duration</th>
@@ -422,7 +427,7 @@ const employeeLoan = () => {
                                         <tr className="border-b">
                                             <th className="px-4 py-2 font-medium bg-gray-50">Outstanding Balance</th>
                                             <td className="px-4 py-2">
-                                                ₦{(selectedLoan.amount - selectedLoan.totalRepaid)?.toLocaleString() || "N/A"}
+                                                ₦{(selectedLoan.approvedAmount - selectedLoan.totalRepaid)?.toLocaleString() || "N/A"}
                                             </td>
                                         </tr>
                                         <tr className="border-b">
@@ -452,18 +457,18 @@ const employeeLoan = () => {
 
                             </div>
                         </div>
-                         {selectedLoan.status != "Pending" && (
-                        <div className="mt-6 flex justify-center">
-                        <button
-                            onClick={handlePrint}
-                            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-                        >
-                            Print
-                        </button>
+                        {selectedLoan.status != "Pending" && (
+                            <div className="mt-6 flex justify-center">
+                                <button
+                                    onClick={handlePrint}
+                                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+                                >
+                                    Print
+                                </button>
+                            </div>
+                        )}
                     </div>
-                         )}
-                    </div>
-                    
+
                 </div>
 
             )}

@@ -140,7 +140,7 @@ const attendance = () => {
           <p>Absent</p>
           <p>on Leave</p>
           <p>Over Time</p>
-          <p>on Shift</p>
+          <p>off Duty</p>
           <p>Actions</p>
         </div>
         {attendance.length > 0 ? (
@@ -151,7 +151,7 @@ const attendance = () => {
               const absentCount = monthGroup.records.filter(r => r.status === 'Absent').length;
               const leaveCount = monthGroup.records.filter(r => r.status === 'Leave').length;
               const overTimeCount = monthGroup.records.filter(r => r.status === 'overTime').length;
-              const shiftCount = monthGroup.records.filter(r => r.status === 'Shift').length;
+              const offCount = monthGroup.records.filter(r => r.status === 'offDuty').length;
 
               const [year, month] = monthGroup._id.split("-");
 
@@ -168,7 +168,7 @@ const attendance = () => {
                   <p className="text-red-700">{absentCount}</p>
                   <p className="text-yellow-700">{leaveCount}</p>
                   <p className="text-blue-700">{overTimeCount}</p>
-                  <p className="text-gray-700">{shiftCount}</p>
+                  <p className="text-gray-700">{offCount}</p>
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => handleView()}
@@ -312,7 +312,7 @@ const attendance = () => {
               <th className="border p-2">Absent</th>
               <th className="border p-2">On Leave</th>
               <th className="border p-2">Over Time</th>
-              <th className="border p-2">On Shift</th>
+              <th className="border p-2">Off Duty</th>
               <th className="border p-2">Action</th>
             </tr>
           </thead>
@@ -327,7 +327,7 @@ const attendance = () => {
                     absent: 0,
                     leave: 0,
                     overTime: 0,
-                    shift: 0,
+                    offDuty: 0,
                     records: [],
                   };
                 }
@@ -336,7 +336,7 @@ const attendance = () => {
                 if (rec.status === 'Absent') acc[id].absent++;
                 if (rec.status === 'Leave') acc[id].leave++;
                 if (rec.status === 'overTime') acc[id].overTime++;
-                if (rec.status === 'Shift') acc[id].shift++;
+                if (rec.status === 'offDuty') acc[id].offDuty++;
                 return acc;
               }, {})
             ).map((emp, idx) => (
@@ -348,7 +348,7 @@ const attendance = () => {
                 <td className="border p-2 text-red-700">{emp.absent}</td>
                 <td className="border p-2 text-yellow-700">{emp.leave}</td>
                 <td className="border p-2 text-blue-700">{emp.overTime}</td>
-                <td className="border p-2 text-gray-700">{emp.shift}</td>
+                <td className="border p-2 text-gray-700">{emp.offDuty}</td>
                 <td className="border p-2">
                   <button
                     onClick={() => {
@@ -392,7 +392,7 @@ const attendance = () => {
                   rec.status === "Absent" ? "text-red-600" :
                   rec.status === "Leave" ? "text-yellow-600" :
                   rec.status === "overTime" ? "text-blue-600" :
-                  rec.status === "Shift" ? "text-gray-700" : "text-black"
+                  rec.status === "offDuty" ? "text-gray-700" : "text-black"
                 }`}>
                   {rec.status}
                 </td>

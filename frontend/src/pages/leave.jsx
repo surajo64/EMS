@@ -515,7 +515,7 @@ const leave = () => {
                 )
               },
               {
-                label: "Admin Approval",
+                label: "HR Approval",
                 value: (
                   <span className={`font-semibold px-2 py-1 rounded 
                     ${selectedLeave.status === 'Approved' ? 'text-green-600 bg-green-100' :

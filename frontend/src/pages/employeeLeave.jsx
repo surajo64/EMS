@@ -184,7 +184,7 @@ const employeeLeave = () => {
           <p>From</p>
           <p>To</p>
           <p>Applied Date</p>
-          <p>Admin Approval</p>
+          <p>Approval</p>
           <p>Status</p>
           <p>Actions</p>
         </div>
@@ -203,14 +203,16 @@ const employeeLeave = () => {
               <p>{new Date(item.to).toISOString().split('T')[0]}</p>
               <p>{new Date(item.appliedAt).toISOString().split('T')[0]}</p>
               <p>
-                <span className={`font-semibold ${item.status === "Approved"
-                  ? "text-green-600"
-                  : item.status === "Rejected"
+                <span className={`font-semibold ${(item.hodStatus === "Rejected" || item.status === "Rejected")
                     ? "text-red-500"
-                    : "text-yellow-600"}`}>
-                  {item.status}
+                    : item.status === "Approved"
+                      ? "text-green-600"
+                      : "text-yellow-600"
+                  }`}>
+                  {item.hodStatus === "Rejected" ? item.hodStatus : item.status}
                 </span>
               </p>
+
               <p>
                 {item.resumeStatus ? (() => {
                   const resumeDate = new Date(item.resumeDate);
@@ -513,19 +515,18 @@ const employeeLeave = () => {
 
                   {/* Admin Approval */}
                   <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50">Admin Approval</th>
+                    <th className="px-4 py-2 font-medium bg-gray-50">HR Approval</th>
                     <td className="px-4 py-2">
-                      <span
-                        className={`font-semibold px-2 py-1 rounded 
-                    ${selectedLeave.status === 'Approved'
-                            ? 'text-green-600 bg-green-100'
-                            : selectedLeave.status === 'Rejected'
-                              ? 'text-red-600 bg-red-100'
-                              : 'text-yellow-600 bg-yellow-100'
-                          }`}
-                      >
-                        {selectedLeave.status}
-                      </span>
+                    
+                <span className={`font-semibold ${(selectedLeave.hodStatus === "Rejected" || selectedLeave.status === "Rejected")
+                    ? "text-red-500"
+                    : selectedLeave.status === "Approved"
+                      ? "text-green-600"
+                      : "text-yellow-600"
+                  }`}>
+                  {selectedLeave.hodStatus === "Rejected" ? selectedLeave.hodStatus : selectedLeave.status}
+                </span>
+       
                     </td>
                   </tr>
 

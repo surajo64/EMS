@@ -7,6 +7,7 @@ import { AppContext } from "../context/AppContext";
 const loan = () => {
     const [editingLoan, setEditingLoan] = useState(null);
     const [selectedLoan, setSelectedLoan] = useState(null);
+    const [approvedAmount, setApprovedAmount] = useState('');
     const [loans, setLoans] = useState([]);
     const [amount, setAmount] = useState('');
     const [durationInMonths, setDurationInMonths] = useState('');
@@ -26,8 +27,9 @@ const loan = () => {
         setEditingLoan(loan);
         setAmount(loan.amount);
         setReason(loan.reason);
+        setApprovedAmount(loan.approvedAmount);
         setDurationInMonths(loan.durationInMonths);
-        setMonthDeduction(Math.ceil(loan.amount / loan.durationInMonths)); // Optional
+        setMonthDeduction(Math.ceil(loan.amount / loan.durationInMonths)); 
         setShowForm(true);
     };
 
@@ -38,16 +40,17 @@ const loan = () => {
             amount,
             durationInMonths,
             reason,
+            approvedAmount
         };
 
-        try {
+      /*  try {*/
             let data;
 
             if (editingLoan) {
                 const response = await axios.post(
                     backendUrl + "/api/admin/update-loan",
                     {
-                        loanId: editingLoan._id, // or editingState._id
+                        loanId: editingLoan._id,
                         ...loanPayload,
                     },
                     {
@@ -55,6 +58,10 @@ const loan = () => {
                     }
                 );
                 data = response.data;
+                if (data.success) {
+                    await updateStatus(editingLoan._id, "Approved"); // ✅ Explicit status update
+                }
+
             } else {
                 // ✅ Create new loan
                 const response = await axios.post(
@@ -79,10 +86,10 @@ const loan = () => {
             } else {
                 toast.error(data.message || "Something went wrong");
             }
-        } catch (error) {
+       /* } catch (error) {
             console.error("Loan apply/update error:", error);
             toast.error("Loan request failed");
-        }
+        }*/
     };
 
 
@@ -121,6 +128,7 @@ const loan = () => {
         setReason("");
         setDurationInMonths("");
         setMonthDeduction("");
+        setApprovedAmount("");
     };
 
 
@@ -130,8 +138,6 @@ const loan = () => {
         setDurationInMonths("")
         setShowForm(true);
     };
-
-
     // Automatically calculate monthly deduction
     useEffect(() => {
         if (amount && durationInMonths) {
@@ -141,6 +147,16 @@ const loan = () => {
             setMonthDeduction('');
         }
     }, [amount, durationInMonths]);
+
+
+   useEffect(() => {
+    if (editingLoan && approvedAmount && durationInMonths) {
+        const deduction = Number(approvedAmount) / Number(durationInMonths);
+        setMonthDeduction(deduction.toFixed(2)); // keeps 2 decimal places
+    }
+}, [approvedAmount, durationInMonths, editingLoan]);
+
+
 
     const handleView = (loans) => {
         setSelectedLoan(loans);
@@ -203,15 +219,12 @@ const loan = () => {
             {/* Table container */}
             <div className='bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]'>
                 {/* Header */}
-                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
+                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_1.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
                     <p className="hidden sm:block">#</p>
                     <p>Employee</p>
                     <p>Reason</p>
-                    <p>
-                        {loans.length > 0 && loans[0].status != "Pending"
-                            ? "Approved Amount"
-                            : "Requested Amount"}
-                    </p>
+                    <p>Requested Amount</p>
+                    <p>Approved Amount</p>
                     <p>Duration (Months)</p>
                     <p>Monthly Deductions</p>
                     <p>Total Repaid</p>
@@ -224,16 +237,19 @@ const loan = () => {
                     paginatedLoans.map((item, index) => (
                         <div
                             key={index}
-                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
+                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_1.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
                         >
                             <p className="hidden sm:block">{(currentPage - 1) * itemsPerPage + index + 1}</p>
                             <p>{item.userId?.name}</p>
                             <p>{item.reason}</p>
                             <p>₦{item.amount.toLocaleString()}</p>
+                            <p>
+                             ₦ {item.status === "Approved" ? (item.approvedAmount || item.amount)?.toLocaleString(): "Pending"}
+                            </p>
                             <p>{item.durationInMonths}</p>
                             <p>{item.monthDeduction}</p>
                             <p>₦{item.totalRepaid.toLocaleString()}</p>
-                            <p>₦{(item.amount - item.totalRepaid).toLocaleString()}</p>
+                            <p>₦{(item.approvedAmount - item.totalRepaid).toLocaleString()}</p>
 
                             <div className="flex sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
 
@@ -323,19 +339,38 @@ const loan = () => {
                         </h2>
 
                         <form onSubmit={handleApply} className="space-y-4 max-w-md mx-auto">
+                            {/* Requested Amount */}
                             <div>
-                                <label className="block font-semibold mb-1">Loan Amount (₦)</label>
+                                <label className="block font-semibold mb-1">Requested Amount (₦)</label>
                                 <input
                                     type="number"
                                     min="1000"
                                     step="100"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    className="w-full border rounded px-4 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                                    className={`w-full border rounded px-4 py-2 focus:outline-none focus:ring focus:ring-blue-200 ${editingLoan ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''}`}
                                     required
+                                    readOnly={editingLoan} // Make it uneditable when updating
                                 />
                             </div>
 
+                            {/* Approved Amount - only when editing */}
+                            {editingLoan && (
+                                <div>
+                                    <label className="block font-semibold mb-1">Approved Amount (₦)</label>
+                                    <input
+                                        type="number"
+                                        min="1000"
+                                        step="100"
+                                        value={approvedAmount}
+                                        onChange={(e) => setApprovedAmount(e.target.value)}
+                                        className="w-full border rounded px-4 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                                        required
+                                    />
+                                </div>
+                            )}
+
+                            {/* Duration */}
                             <div>
                                 <label className="block font-semibold mb-1">Duration (Months)</label>
                                 <select
@@ -345,7 +380,7 @@ const loan = () => {
                                     required
                                 >
                                     <option value="">-- Select Duration --</option>
-                                    {[3, 6, 9, 12, 18, 24].map((m) => (
+                                    {[3, 6, 9, 12, 18, 24, 36, 48, 60].map((m) => (
                                         <option key={m} value={m}>
                                             {m} month{m > 1 && 's'}
                                         </option>
@@ -353,6 +388,7 @@ const loan = () => {
                                 </select>
                             </div>
 
+                            {/* Monthly Deduction */}
                             <div>
                                 <label className="block font-semibold mb-1">Monthly Deduction (₦)</label>
                                 <input
@@ -363,6 +399,7 @@ const loan = () => {
                                 />
                             </div>
 
+                            {/* Reason */}
                             <div>
                                 <label className="block font-semibold mb-1">Reason for Loan</label>
                                 <textarea
@@ -379,9 +416,10 @@ const loan = () => {
                                 type="submit"
                                 className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition"
                             >
-                                {editingLoan ? "Update Loan" : "Apply"}
+                                {editingLoan ? "Approve Loan" : "Apply"}
                             </button>
                         </form>
+
                     </div>
                 </div>
             )}
@@ -417,10 +455,12 @@ const loan = () => {
                                 <table className="w-full text-sm text-left text-gray-700 border border-gray-200 rounded-md">
                                     <tbody>
                                         <tr className="border-b">
-                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">
-                                                {selectedLoan.status != "Pending" ? "Approved Amount" : "Requested Amount"}
-                                            </th>
+                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">Requested Amount</th>
                                             <td className="px-4 py-2">₦{selectedLoan.amount?.toLocaleString() || "N/A"}</td>
+                                        </tr>
+                                         <tr className="border-b">
+                                            <th className="px-4 py-2 font-medium bg-gray-50 w-40">Approved Amount</th>
+                                            <td className="px-4 py-2">₦ {selectedLoan.approvedAmount?.toLocaleString() || "Pending"}</td>
                                         </tr>
                                         <tr className="border-b">
                                             <th className="px-4 py-2 font-medium bg-gray-50 w-40">Payment Duration</th>
@@ -441,7 +481,7 @@ const loan = () => {
                                         <tr className="border-b">
                                             <th className="px-4 py-2 font-medium bg-gray-50">Outstanding Balance</th>
                                             <td className="px-4 py-2">
-                                                ₦{(selectedLoan.amount - selectedLoan.totalRepaid)?.toLocaleString() || "N/A"}
+                                                ₦{(selectedLoan.approvedAmount - selectedLoan.totalRepaid)?.toLocaleString() || "N/A"}
                                             </td>
                                         </tr>
                                         <tr className="border-b">

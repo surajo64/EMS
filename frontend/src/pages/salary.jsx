@@ -6,6 +6,8 @@ import axios from 'axios';
 const salary = () => {
   const { token, backendUrl, getAllSalary, } = useContext(AppContext);
   const [selectedSalaryRecords, setSelectedSalaryRecords] = useState([])
+  const [tempFilterType, setTempFilterType] = useState(""); // for dropdown
+  const [viewClicked, setViewClicked] = useState(false);
   const [filterType, setFilterType] = useState("all");
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,12 +78,18 @@ const salary = () => {
 
   useEffect(() => {
     fetchSalaries();
-  }, []);
+  }, [tempFilterType]);
 
-  const filteredRecords = selectedSalaryRecords?.records?.filter((salary) => {
-  const type = salary?.employeeId?.type;
-  return filterType === "all" || type === filterType;
-}) || [];
+
+  const filteredRecords = viewClicked
+  ? selectedSalaryRecords?.records?.filter((salary) => {
+      const type = salary?.employeeId?.type;
+      return filterType === "all" || type === filterType;
+    }) || []
+  : [];
+
+
+
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-5 text-center">
@@ -240,21 +248,37 @@ const salary = () => {
           >
             {/* Close Button */}
             <button
-              onClick={() => setShowDetailModal(false)}
+              onClick={() => {setShowDetailModal(false), setTempFilterType("")}}
               className="absolute top-2 right-4 text-red-600 text-2xl font-bold hover:text-red-800"
             >
               ✕
             </button>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="p-2 border border-green-300 rounded"
-            >
-              <option value="all">All Employee</option>
-              <option value="permanent">Permanent</option>
-              <option value="locum">Locum/Contract</option>
-              <option value="consultant">Consultant</option>
-            </select>
+
+            {/* Filter Dropdown with View Button */}
+            <div className="flex justify-center items-center gap-2 mb-4">
+              <select
+                value={tempFilterType}
+                onChange={(e) => setTempFilterType(e.target.value)}
+                className="p-2 border border-green-300 rounded"
+              >
+                <option>--Select Employee Type--</option>
+                <option value="all">All Employee</option>
+                <option value="permanent">Permanent</option>
+                <option value="locum">Locum/Contract</option>
+                <option value="consultant">Consultant</option>
+              </select>
+              <button
+                onClick={() => {
+                  setFilterType(tempFilterType); // Apply temp filter
+                  setViewClicked(true);          // Show table
+                }}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+              >
+                View
+              </button>
+            </div>
+
+
             <div id="print-salary-table" className="mt-4">
               {/* Header */}
               <h2 className="text-lg sm:text-xl font-bold text-gray-800 text-center mb-4">
@@ -278,35 +302,38 @@ const salary = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRecords.length > 0 ? (
-                      filteredRecords.map((salary, idx) => (
-
-                        <tr key={salary._id} className="border-b hover:bg-gray-50 text-center">
-                          <td className="py-2 px-2">{idx + 1}</td>
-                          <td className="py-2 px-2">{salary?.employeeId?.staffId || 'N/A'}</td>
-                          <td className="py-2 px-2">{salary?.employeeId?.userId?.name || 'N/A'}</td>
-                          <td className="py-2 px-2">{salary?.employeeId?.department?.name || 'N/A'}</td>
-                          <td className="py-2 px-2 text-green-500">₦{salary.basicSalary.toLocaleString()}</td>
-                          <td className="py-2 px-2 text-green-500">
-                            ₦{((salary.transportAllowance || 0) + (salary.mealAllowance || 0) + (salary.overTime || 0)).toLocaleString()}
-                          </td>
-                          <td className="py-2 px-2 text-yellow-500">₦{salary.growthSalary.toLocaleString()}</td>
-                          <td className="py-2 px-2 text-red-500">
-                            ₦{((salary.pension || 0) + (salary.paye || 0) + (salary.loan || 0)).toLocaleString()}
-                          </td>
-                          <td className="py-2 px-2 text-green-500">₦{salary.netSalary.toLocaleString()}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="9" className="text-center py-4 text-gray-500">
-                          No records match the selected employee type.
-                        </td>
-                      </tr>
+                    {viewClicked && (
+                      <>
+                        {filteredRecords.length > 0 ? (
+                          filteredRecords.map((salary, idx) => (
+                            <tr key={salary._id} className="border-b hover:bg-gray-50 text-center">
+                              <td className="py-2 px-2">{idx + 1}</td>
+                              <td className="py-2 px-2">{salary?.employeeId?.staffId || 'N/A'}</td>
+                              <td className="py-2 px-2">{salary?.employeeId?.userId?.name || 'N/A'}</td>
+                              <td className="py-2 px-2">{salary?.employeeId?.department?.name || 'N/A'}</td>
+                              <td className="py-2 px-2 text-green-500">₦{salary.basicSalary.toLocaleString()}</td>
+                              <td className="py-2 px-2 text-green-500">
+                                ₦{((salary.transportAllowance || 0) + (salary.mealAllowance || 0) + (salary.overTime || 0)).toLocaleString()}
+                              </td>
+                              <td className="py-2 px-2 text-yellow-500">₦{salary.growthSalary.toLocaleString()}</td>
+                              <td className="py-2 px-2 text-red-500">
+                                ₦{((salary.pension || 0) + (salary.paye || 0) + (salary.loan || 0)).toLocaleString()}
+                              </td>
+                              <td className="py-2 px-2 text-green-500">₦{salary.netSalary.toLocaleString()}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="9" className="text-center py-4 text-gray-500">
+                              No records match the selected employee type.
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     )}
+
                   </tbody>
                 </table>
-
               </div>
 
               {/* Print Button */}

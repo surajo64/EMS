@@ -1577,7 +1577,7 @@ const uploadAttendance = async (req, res) => {
     else if (statusCode === '-1') status = 'Absent';
     else if (statusCode === '2') status = 'Leave';
     else if (statusCode === '3') status = 'overTime';
-    else if (statusCode === '4') status = 'Shift';
+    else if (statusCode === '4') status = 'offDuty';
     else {
       console.warn(`Invalid status '${statusCode}' for staffId ${staffId}`);
       continue;
@@ -1667,7 +1667,7 @@ const applyLoan = async (req, res) => {
   const userId = req.userId;
 
   try {
-    const monthDeduction = Math.ceil(amount / durationInMonths);
+    const monthDeduction = (amount / durationInMonths);
 
     const newLoan = new Loan({
       userId,
@@ -1691,7 +1691,7 @@ const applyLoan = async (req, res) => {
 
 // Update an existing loan
 const updateLoan = async (req, res) => {
-  const { loanId, amount, durationInMonths, reason } = req.body;
+  const { loanId, durationInMonths, reason, approvedAmount } = req.body;
   const userId = req.userId;
 
   try {
@@ -1701,16 +1701,13 @@ const updateLoan = async (req, res) => {
       return res.status(404).json({ success: false, message: "Loan not found" });
     }
 
-    // Optional: Ensure the loan belongs to the authenticated user
-    if (loan.userId.toString() !== userId) {
-      return res.status(403).json({ success: false, message: "Unauthorized update" });
-    }
-
-    // Update fields
-    loan.amount = amount;
-    loan.durationInMonths = durationInMonths;
+    // Only update reason, approvedAmount, and duration
     loan.reason = reason;
-    loan.monthDeduction = Math.ceil(amount / durationInMonths);
+    loan.approvedAmount = approvedAmount;
+    loan.durationInMonths = durationInMonths;
+
+    // Calculate monthly deduction using approved amount
+    loan.monthDeduction = (approvedAmount / durationInMonths).toFixed(2);
 
     await loan.save();
 
@@ -1720,6 +1717,7 @@ const updateLoan = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+
 
 
 
@@ -1755,12 +1753,19 @@ const approveRejectLoan = async (req, res) => {
 
   try {
     const loan = await Loan.findById(loanId);
-    if (!loan) return res.status(404).json({ success: false, message: "Loan not found" });
+    if (!loan) {
+      return res.status(404).json({ success: false, message: "Loan not found" });
+    }
 
     loan.status = status;
 
-    if (status === 'Approved') {
+    if (
+      status === 'Approved' &&
+      (!loan.approvedAmount || loan.approvedAmount === "") // if not set
+    ) {
+      loan.approvedAmount = loan.amount; // fallback to requested amount
       loan.approvedAt = new Date();
+      loan.monthDeduction = Math.ceil(loan.approvedAmount / loan.durationInMonths); // optional: auto set monthly deduction
     }
 
     await loan.save();
@@ -1770,6 +1775,7 @@ const approveRejectLoan = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 
 
