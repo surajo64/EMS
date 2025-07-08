@@ -2,8 +2,10 @@ import React, { useState, useContext, useEffect } from 'react';
 import { toast } from "react-toastify";
 import { AppContext } from '../context/AppContext';
 import axios from 'axios';
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 const salary = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const { token, backendUrl, getAllSalary, } = useContext(AppContext);
   const [selectedSalaryRecords, setSelectedSalaryRecords] = useState([])
   const [tempFilterType, setTempFilterType] = useState(""); // for dropdown
@@ -22,6 +24,8 @@ const salary = () => {
 
   const handleUpload = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
     if (!file) return toast.warning("Please select a file.");
 
     const formData = new FormData();
@@ -48,17 +52,26 @@ const salary = () => {
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || "Something went wrong.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleAddNew = () => {
-    setShowForm(true);
-
+    setIsLoading(true);
+    setTimeout(() => {
+      setShowForm(true);
+      setIsLoading(false);
+    }, 300);
   };
 
   const handleView = (group) => {
-    setSelectedSalaryRecords({ month: group.month, year: group.year, records: group.records });
-    setShowDetailModal(true);
+    setIsLoading(true);
+    setTimeout(() => {
+      setSelectedSalaryRecords({ month: group.month, year: group.year, records: group.records });
+      setShowDetailModal(true);
+      setIsLoading(false);
+    }, 300);
   };
 
   const fetchSalaries = async () => {
@@ -82,11 +95,11 @@ const salary = () => {
 
 
   const filteredRecords = viewClicked
-  ? selectedSalaryRecords?.records?.filter((salary) => {
+    ? selectedSalaryRecords?.records?.filter((salary) => {
       const type = salary?.employeeId?.type;
       return filterType === "all" || type === filterType;
     }) || []
-  : [];
+    : [];
 
 
 
@@ -171,7 +184,13 @@ const salary = () => {
         <div className="flex justify-center items-center mt-4 gap-4">
           <button
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
+            onClick={() => {
+              setIsLoading(true);
+              setTimeout(() => {
+                setCurrentPage((prev) => prev - 1)
+                setIsLoading(false);
+              }, 300);
+            }}
             className={`px-4 py-1 rounded ${currentPage === 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'}`}
           >
             Previous
@@ -183,7 +202,13 @@ const salary = () => {
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase())
             ).length}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
+            onClick={() => {
+              setIsLoading(true);
+              setTimeout(() => {
+                setCurrentPage((prev) => prev + 1)
+                setIsLoading(false);
+              }, 300);
+            }}
             className={`px-4 py-1 rounded ${currentPage * itemsPerPage >= salaryGroups.length ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'}`}
           >
             Next
@@ -248,7 +273,7 @@ const salary = () => {
           >
             {/* Close Button */}
             <button
-              onClick={() => {setShowDetailModal(false), setTempFilterType("")}}
+              onClick={() => { setShowDetailModal(false), setTempFilterType("") }}
               className="absolute top-2 right-4 text-red-600 text-2xl font-bold hover:text-red-800"
             >
               ✕
@@ -269,8 +294,12 @@ const salary = () => {
               </select>
               <button
                 onClick={() => {
-                  setFilterType(tempFilterType); // Apply temp filter
-                  setViewClicked(true);          // Show table
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setFilterType(tempFilterType); // Apply temp filter
+                    setViewClicked(true);
+                    setIsLoading(false);
+                  }, 300);
                 }}
                 className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
               >
@@ -288,39 +317,47 @@ const salary = () => {
               {/* Table */}
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm border border-gray-300 mb-6">
-                  <thead className="bg-gray-100 text-center">
-                    <tr className="border-b">
-                      <th className="py-2 px-2">#</th>
-                      <th className="py-2 px-2">Staff ID</th>
-                      <th className="py-2 px-2">Full Name</th>
-                      <th className="py-2 px-2">Department</th>
-                      <th className="py-2 px-2 text-green-500">Basic</th>
-                      <th className="py-2 px-2 text-green-500">Allowances</th>
-                      <th className="py-2 px-2 text-yellow-500">Growth Salary</th>
-                      <th className="py-2 px-2 text-red-500">Deductions</th>
-                      <th className="py-2 px-2 text-green-500">Net Pay</th>
-                    </tr>
-                  </thead>
+                  <thead className="bg-gray-100">
+                  <tr className="text-center border-b">
+                    <th className="py-2 px-2">#</th>
+                    <th className="py-2 px-2">Staff ID</th>
+                    <th className="py-2 px-2">Full Name</th>
+                    <th className="py-2 px-2">Department</th>
+                    <th className="py-2 px-2 text-green-500">Basic</th>
+                    <th className="py-2 px-2 text-green-500">Transport Allowance</th>
+                    <th className="py-2 px-2 text-green-500">Meal Allowance</th>
+                    <th className="py-2 px-2 text-green-500">Over Time</th>
+                    <th className="py-2 px-2 text-yellow-500">Growth Salary</th>
+                    <th className="py-2 px-2 text-red-500">Paye</th>
+                    <th className="py-2 px-2 text-red-500">Loan Deduction</th>
+                    <th className="py-2 px-2 text-red-500">Pension</th>
+                    <th className="py-2 px-2 text-green-500">Net Pay</th>
+                  </tr>
+                </thead>
                   <tbody>
                     {viewClicked && (
                       <>
                         {filteredRecords.length > 0 ? (
                           filteredRecords.map((salary, idx) => (
-                            <tr key={salary._id} className="border-b hover:bg-gray-50 text-center">
-                              <td className="py-2 px-2">{idx + 1}</td>
-                              <td className="py-2 px-2">{salary?.employeeId?.staffId || 'N/A'}</td>
-                              <td className="py-2 px-2">{salary?.employeeId?.userId?.name || 'N/A'}</td>
-                              <td className="py-2 px-2">{salary?.employeeId?.department?.name || 'N/A'}</td>
-                              <td className="py-2 px-2 text-green-500">₦{salary.basicSalary.toLocaleString()}</td>
-                              <td className="py-2 px-2 text-green-500">
-                                ₦{((salary.transportAllowance || 0) + (salary.mealAllowance || 0) + (salary.overTime || 0)).toLocaleString()}
-                              </td>
-                              <td className="py-2 px-2 text-yellow-500">₦{salary.growthSalary.toLocaleString()}</td>
-                              <td className="py-2 px-2 text-red-500">
-                                ₦{((salary.pension || 0) + (salary.paye || 0) + (salary.loan || 0)).toLocaleString()}
-                              </td>
-                              <td className="py-2 px-2 text-green-500">₦{salary.netSalary.toLocaleString()}</td>
-                            </tr>
+                           <tr key={salary._id} className="border-b hover:bg-gray-50 text-center">
+      <td className="py-2 px-2">{idx + 1}</td>
+      <td className="py-2 px-2">{salary?.employeeId?.staffId || 'N/A'}</td>
+      <td className="py-2 px-2">{salary?.employeeId?.userId?.name || 'N/A'}</td>
+      <td className="py-2 px-2">{salary?.employeeId?.department?.name || 'N/A'}</td>
+
+      <td className="py-2 px-2 text-green-600 font-medium">₦{(salary.basicSalary ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-green-600 font-medium">₦{(salary.transportAllowance ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-green-600 font-medium">₦{(salary.mealAllowance ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-green-600 font-medium">₦{(salary.overTime ?? 0).toLocaleString()}</td>
+      
+      <td className="py-2 px-2 text-yellow-600 font-medium">₦{(salary.growthSalary ?? 0).toLocaleString()}</td>
+      
+      <td className="py-2 px-2 text-red-500 font-medium">₦{(salary.paye ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-red-500 font-medium">₦{(salary.loan ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-red-500 font-medium">₦{(salary.pension ?? 0).toLocaleString()}</td>
+      
+      <td className="py-2 px-2 text-green-700 font-semibold bg-green-50">₦{(salary.netSalary ?? 0).toLocaleString()}</td>
+    </tr>
                           ))
                         ) : (
                           <tr>
@@ -360,7 +397,7 @@ const salary = () => {
           </div>
         </div>
       )}
-
+      {isLoading && <LoadingOverlay />}
     </div>
   )
 }

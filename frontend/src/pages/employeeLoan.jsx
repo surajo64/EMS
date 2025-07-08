@@ -2,9 +2,11 @@ import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
 const employeeLoan = () => {
+    const [isLoading, setIsLoading] = useState(false);
     const [selectedLoan, setSelectedLoan] = useState(null);
     const [editingLoan, setEditingLoan] = useState(null);
     const [loans, setLoans] = useState([]);
@@ -22,7 +24,7 @@ const employeeLoan = () => {
 
     const handleApply = async (e) => {
         e.preventDefault();
-
+        setIsLoading(true);
         const loanPayload = {
             amount,
             durationInMonths,
@@ -72,17 +74,24 @@ const employeeLoan = () => {
             console.error("Loan apply/update error:", error);
             toast.error("Loan request failed");
         }
+        finally {
+            setIsLoading(false);
+        }
     };
 
 
     // When editing a loan (e.g. on Edit button click)
     const handleEdit = (loan) => {
-        setEditingLoan(loan);
-        setAmount(loan.amount);
-        setReason(loan.reason);
-        setDurationInMonths(loan.durationInMonths);
-        setMonthDeduction(Math.ceil(loan.amount / loan.durationInMonths)); // Optional
-        setShowForm(true);
+        setIsLoading(true);
+        setTimeout(() => {
+            setEditingLoan(loan);
+            setAmount(loan.amount);
+            setReason(loan.reason);
+            setDurationInMonths(loan.durationInMonths);
+            setMonthDeduction(Math.ceil(loan.amount / loan.durationInMonths)); // Optional
+            setShowForm(true);
+            setIsLoading(false);
+        }, 300);
     };
 
     const fetchLoans = async () => {
@@ -95,12 +104,16 @@ const employeeLoan = () => {
     };
 
     const closeForm = () => {
-        setShowForm(false);
-        setEditingLoan(null);
-        setAmount("");
-        setReason("");
-        setDurationInMonths("");
-        setMonthDeduction("");
+        setIsLoading(true);
+        setTimeout(() => {
+            setShowForm(false);
+            setEditingLoan(null);
+            setAmount("");
+            setReason("");
+            setDurationInMonths("");
+            setMonthDeduction("");
+            setIsLoading(false);
+        }, 300);
     };
 
     useEffect(() => {
@@ -109,10 +122,14 @@ const employeeLoan = () => {
 
 
     const handleAddNew = () => {
-        setAmount("");
-        setReason("");
-        setDurationInMonths("")
-        setShowForm(true);
+        setIsLoading(true);
+        setTimeout(() => {
+            setAmount("");
+            setReason("");
+            setDurationInMonths("")
+            setShowForm(true);
+            setIsLoading(false);
+        }, 300);
     };
 
 
@@ -127,8 +144,12 @@ const employeeLoan = () => {
     }, [amount, durationInMonths]);
 
     const handleView = (loans) => {
-        setSelectedLoan(loans);
-        fetchLoans();
+        setIsLoading(true);
+        setTimeout(() => {
+            setSelectedLoan(loans);
+            fetchLoans();
+            setIsLoading(false);
+        }, 300);
     };
 
     // Filter departments based on search
@@ -175,14 +196,25 @@ const employeeLoan = () => {
                     className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/3'
                 />
 
-                {(!loans || loans.status === "Completed") && (
+                <div className="flex flex-col gap-2">
                     <button
                         onClick={handleAddNew}
-                        className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
+                        disabled={loans && loans.status !== "Completed"}
+                        className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${loans && loans.status !== "Completed"
+                                ? "bg-gray-400 text-white cursor-not-allowed"
+                                : "bg-green-500 hover:bg-green-600 text-white"
+                            }`}
                     >
                         Apply Loan
                     </button>
-                )}
+
+                    {loans && loans.status !== "Completed" && (
+                        <p className="text-sm text-red-600 font-medium">
+                            You have an outstanding loan to pay
+                        </p>
+                    )}
+                </div>
+
 
             </div>
 
@@ -253,7 +285,13 @@ const employeeLoan = () => {
                     <>
                         <div className="flex justify-center items-center flex-wrap gap-2 mt-4 px-4 pb-4">
                             <button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                onClick={() => {
+                                    setIsLoading(true);
+                                    setTimeout(() => {
+                                        setCurrentPage(prev => Math.max(prev - 1, 1))
+                                        setIsLoading(false);
+                                    }, 300);
+                                }}
                                 disabled={currentPage === 1}
                                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
                             >
@@ -274,7 +312,13 @@ const employeeLoan = () => {
                             ))}
 
                             <button
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                onClick={() => {
+                                    setIsLoading(true);
+                                    setTimeout(() => {
+                                        setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                                        setIsLoading(false);
+                                    }, 300);
+                                }}
                                 disabled={currentPage === totalPages}
                                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
                             >
@@ -472,7 +516,7 @@ const employeeLoan = () => {
                 </div>
 
             )}
-
+            {isLoading && <LoadingOverlay />}
 
         </div>
     );

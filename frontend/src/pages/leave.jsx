@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { toast } from "react-toastify";
 import axios from 'axios';
 import { AppContext } from '../context/AppContext';
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
 const leave = () => {
@@ -12,6 +13,7 @@ const leave = () => {
   const [reason, setReason] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [editingLeave, setEditingLeave] = useState(null);
   const [filteredLeaves, setFilteredLeaves] = useState([]);
   const [selectedLeave, setSelectedLeave] = useState(null);
@@ -22,51 +24,53 @@ const leave = () => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+    setIsLoading(true);
     const formData = { leave, reason, from, to };
-    /*  try {*/
-    if (editingLeave && editingLeave._id) {
-      const { data } = await axios.post(
-        backendUrl + '/api/admin/update-leave',
-        { leaveid: editingLeave._id, ...formData },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    try {
+      if (editingLeave && editingLeave._id) {
+        const { data } = await axios.post(
+          backendUrl + '/api/admin/update-leave',
+          { leaveid: editingLeave._id, ...formData },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      if (data.success) {
-        toast.success("Leave updated successfully!");
-        setSelectedLeave(null);
-        getAllLeaves();
-      }
-    } else {
-      const { data } = await axios.post(
-        backendUrl + "/api/admin/add-leave",
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (data.success) {
-        toast.success("Leave added successfully!");
-        setLeave("");
-        setReason("");
-        setFrom("");
-        setTo("")
-        getAllLeaves();
-        setSelectedLeave(null);
+        if (data.success) {
+          toast.success("Leave updated successfully!");
+          setSelectedLeave(null);
+          getAllLeaves();
+        }
       } else {
-        toast.error(data.message);
-      }
-    }
-    /*  } catch (error) {
-        
-        toast.error(error.response?.data?.message || error.message);
-      }*/
+        const { data } = await axios.post(
+          backendUrl + "/api/admin/add-leave",
+          formData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
+        if (data.success) {
+          toast.success("Leave added successfully!");
+          setLeave("");
+          setReason("");
+          setFrom("");
+          setTo("")
+          getAllLeaves();
+          setSelectedLeave(null);
+        } else {
+          toast.error(data.message);
+        }
+      }
+    } catch (error) {
+
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
 
 
   // Mark Leave As Resumed
   const markLeaveResumed = async (leaveId) => {
-
+    setIsLoading(true)
     try {
       const { data } = await axios.post(backendUrl + '/api/admin/leave-resumed', { leaveId },
         {
@@ -81,26 +85,38 @@ const leave = () => {
       }
     } catch (error) {
       console.error("Error approving appointment:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
 
 
   const handleUpdate = (item) => {
-    setEditingLeave(item);
-    setLeave(item.leave);
-    setReason(item.reason);
-    setFrom(new Date(item.from).toISOString().split('T')[0]);
-    setTo(new Date(item.to).toISOString().split('T')[0]);
-    setShowForm(true);
+    setIsLoading(true);
+    setTimeout(() => {
+      setEditingLeave(item);
+      setLeave(item.leave);
+      setReason(item.reason);
+      setFrom(new Date(item.from).toISOString().split('T')[0]);
+      setTo(new Date(item.to).toISOString().split('T')[0]);
+      setShowForm(true);
+      setIsLoading(false);
+    }, 300);
   };
 
 
   const handleView = (leaves) => {
-    setSelectedLeave(leaves);
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setSelectedLeave(leaves);
+      setIsLoading(false);
+    }, 300);
   };
 
   const handleApproved = async (leaveId) => {
+    setIsLoading(true);
     try {
       const { data } = await axios.post(backendUrl + '/api/admin/approve-leave', { leaveId: selectedLeave._id }, { headers: { Authorization: `Bearer ${token}` } })
       console.log("Leave ID:", leaveId)
@@ -113,10 +129,13 @@ const leave = () => {
       }
     } catch (error) {
       console.error("Error approving appointment:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleReject = async (leaveId) => {
+    setIsLoading(true);
     try {
       const { data } = await axios.post(backendUrl + '/api/admin/reject-leave', { leaveId: selectedLeave._id }, { headers: { Authorization: `Bearer ${token}` } })
       console.log("Leave iD", leaveId)
@@ -129,6 +148,8 @@ const leave = () => {
       }
     } catch (error) {
       console.error("Error approving appointment:", error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -220,9 +241,9 @@ const leave = () => {
                 <p>{new Date(item.from).toISOString().split('T')[0]}</p>
                 <p>{new Date(item.to).toISOString().split('T')[0]}</p>
 
-            
-               
-                  {/* Countdown logic */}
+
+
+                {/* Countdown logic */}
                 <p className="hidden sm:block">
                   {item.resumeStatus ? (() => {
                     const resumeDate = new Date(item.resumeDate);
@@ -236,12 +257,12 @@ const leave = () => {
                       0,
                       Math.ceil((resumeDate - toDate) / (1000 * 60 * 60 * 24))
                     );
- 
+
                     return (
                       <span
                         className={`text-sm font-semibold px-3 py-1 rounded-full ${addedDays > 0
-                            ? "text-green-700 bg-green-100"
-                            : "text-blue-700 bg-blue-100"
+                          ? "text-green-700 bg-green-100"
+                          : "text-blue-700 bg-blue-100"
                           }`}
                       >
                         Resumed on {resumeDate.toLocaleDateString()} (
@@ -305,7 +326,13 @@ const leave = () => {
                     </button>
                   )}
                   <button
-                    onClick={() => handleView(item)}
+                    onClick={() => {
+                      setIsLoading(true);
+                      setTimeout(() => {
+                        handleView(item)
+                        setIsLoading(false);
+                      }, 300);
+                    }}
                     className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full"
                   >
                     View
@@ -337,165 +364,256 @@ const leave = () => {
             {/* Pagination controls */}
             <div className="flex justify-center items-center mt-2 gap-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                onClick={() => {
+                   setIsLoading(true);
+              setTimeout(() => {
+                  setCurrentPage(prev => Math.max(prev - 1, 1))
+                  setIsLoading(false);
+                }, 300);
+                }}
+              disabled={currentPage === 1}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
-                Prev
-              </button>
-
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-green-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                  {i + 1}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
-                Next
-              </button>
-            </div>
-            <div className="flex justify-end mt-2 text-sm  text-gray-800">
-              Showing {(currentPage - 1) * itemsPerPage + 1}–
-              {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
-            </div>
-          </>
-        )}
-
-      </div>
-
-      {showForm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 px-2">
-          <div className="w-full max-w-md bg-white p-4 sm:p-6 rounded-lg shadow-md relative max-h-[90vh] overflow-y-auto">
-            {/* Close Button */}
-            <button
-              onClick={() => setShowForm(false)}
-              className="font-bold text-3xl absolute top-2 right-4 text-red-700 hover:text-red-800"
-            >
-              ✕
+              Prev
             </button>
 
-            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 text-gray-700">
-              {editingLeave ? "Update Leave Request" : "Apply for Leave"}
-            </h2>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-green-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                {i + 1}
+              </button>
+            ))}
 
-            <form onSubmit={onSubmitHandler} className="space-y-4">
-              {/* Leave Type */}
-              <select
-                value={leave}
-                onChange={(e) => setLeave(e.target.value)}
-                required
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="">-- Select Leave Type --</option>
-                <option value="Annual Leave">Annual Leave</option>
-                <option value="Casual Leave">Casual Leave</option>
-                <option value="Compassionate Leave">Compassionate Leave</option>
-                <option value="Leave of Absence">Leave of Absence</option>
-                <option value="Maternity Leave">Maternity Leave</option>
-                <option value="Paternity Leave">Paternity Leave</option>
-                <option value="Sabbatical Leave">Sabbatical Leave</option>
-                <option value="Sick Leave">Sick Leave</option>
-                <option value="Study Leave">Study Leave</option>
-              </select>
+            <button
+              onClick={() => {
+                 setIsLoading(true);
+              setTimeout(() => {
+                setCurrentPage(prev => Math.min(prev + 1, totalPages))
+               setIsLoading(false);
+              }, 300);
+              }}
+              disabled={currentPage === totalPages}
+              className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
+              Next
+            </button>
+          </div>
+        <div className="flex justify-end mt-2 text-sm  text-gray-800">
+          Showing {(currentPage - 1) * itemsPerPage + 1}–
+          {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+        </div>
+      </>
+        )}
 
-              {/* Reason */}
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                required
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Reason for leave"
-              />
+    </div>
 
-              {/* From / To Dates */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <label className="block mb-1 text-sm text-gray-700">From</label>
-                  <input
-                    type="date"
-                    value={from}
-                    onChange={(e) => setFrom(e.target.value)}
-                    required
-                    min={new Date().toISOString().split("T")[0]}
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
+      {
+    showForm && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 px-2">
+        <div className="w-full max-w-md bg-white p-4 sm:p-6 rounded-lg shadow-md relative max-h-[90vh] overflow-y-auto">
+          {/* Close Button */}
+          <button
+            onClick={() => setShowForm(false)}
+            className="font-bold text-3xl absolute top-2 right-4 text-red-700 hover:text-red-800"
+          >
+            ✕
+          </button>
 
-                <div className="flex-1">
-                  <label className="block mb-1 text-sm text-gray-700">To</label>
-                  <input
-                    type="date"
-                    value={to}
-                    onChange={(e) => setTo(e.target.value)}
-                    required
-                    min={from || new Date().toISOString().split("T")[0]}
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 text-gray-700">
+            {editingLeave ? "Update Leave Request" : "Apply for Leave"}
+          </h2>
+
+          <form onSubmit={onSubmitHandler} className="space-y-4">
+            {/* Leave Type */}
+            <select
+              value={leave}
+              onChange={(e) => setLeave(e.target.value)}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">-- Select Leave Type --</option>
+              <option value="Annual Leave">Annual Leave</option>
+              <option value="Casual Leave">Casual Leave</option>
+              <option value="Compassionate Leave">Compassionate Leave</option>
+              <option value="Leave of Absence">Leave of Absence</option>
+              <option value="Maternity Leave">Maternity Leave</option>
+              <option value="Paternity Leave">Paternity Leave</option>
+              <option value="Sabbatical Leave">Sabbatical Leave</option>
+              <option value="Sick Leave">Sick Leave</option>
+              <option value="Study Leave">Study Leave</option>
+            </select>
+
+            {/* Reason */}
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              required
+              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Reason for leave"
+            />
+
+            {/* From / To Dates */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block mb-1 text-sm text-gray-700">From</label>
+                <input
+                  type="date"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                  required
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
               </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition"
-              >
-                {editingLeave ? "Update Leave" : "Submit Leave Request"}
-              </button>
-            </form>
+              <div className="flex-1">
+                <label className="block mb-1 text-sm text-gray-700">To</label>
+                <input
+                  type="date"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  required
+                  min={from || new Date().toISOString().split("T")[0]}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className="w-full bg-green-500 text-white py-2 rounded-md font-semibold hover:bg-green-600 transition"
+            >
+              {editingLeave ? "Update Leave" : "Submit Leave Request"}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
+
+  {
+    selectedLeave && getAllLeaves && (
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-60 overflow-y-auto px-4 sm:px-0 py-6 flex justify-center items-start sm:items-center">
+        <div
+          id="print-salary-table"
+          className="bg-white w-full max-w-2xl rounded-xl shadow-2xl p-4 sm:p-8 relative"
+        >
+          {/* Close Button */}
+          <button
+            onClick={() => setSelectedLeave(null)}
+            className="absolute top-3 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold"
+          >
+            &times;
+          </button>
+
+          {/* Name */}
+          <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-4 break-words">
+            {selectedLeave.userId?.name?.toUpperCase() || "N/A"}
+          </h2>
+
+          {/* Profile Image */}
+          <div className="flex justify-center mb-4">
+            <img
+              src={`${backendUrl}/upload/${selectedLeave.userId?.profileImage}`}
+              alt="Profile"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border"
+            />
           </div>
-        </div>
-      )}
 
+          {/* Email & Department */}
+          <div className="flex flex-col sm:flex-row justify-center sm:gap-8 gap-2 text-sm text-gray-800 mb-6 text-center">
+            <div>
+              <span className="font-semibold text-green-800">Email:</span>{" "}
+              {selectedLeave.userId?.email || "N/A"}
+            </div>
+            <div>
+              <span className="font-semibold text-green-800">Department:</span>{" "}
+              {selectedLeave.userId?.department?.name || "N/A"}
+            </div>
+          </div>
 
-    {selectedLeave && getAllLeaves && (
-  <div className="fixed inset-0 z-50 bg-black bg-opacity-60 overflow-y-auto px-4 sm:px-0 py-6 flex justify-center items-start sm:items-center">
-    <div
-      id="print-salary-table"
-      className="bg-white w-full max-w-2xl rounded-xl shadow-2xl p-4 sm:p-8 relative"
-    >
-      {/* Close Button */}
-      <button
-        onClick={() => setSelectedLeave(null)}
-        className="absolute top-3 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold"
-      >
-        &times;
-      </button>
+          {/* Table for Desktop */}
+          <div className="hidden sm:block">
+            <table className="w-full text-sm text-left text-gray-700 border border-gray-200 rounded-md">
+              <tbody>
+                {[
+                  { label: "Leave Type", value: selectedLeave.leave },
+                  { label: "Reason", value: selectedLeave.reason },
+                  { label: "From", value: new Date(selectedLeave.from).toISOString().split("T")[0] },
+                  { label: "To", value: new Date(selectedLeave.to).toISOString().split("T")[0] },
+                  { label: "Applied On", value: new Date(selectedLeave.appliedAt).toISOString().split("T")[0] },
+                  { label: "Relieving Staff", value: selectedLeave.relievingEId?.name || "N/A" },
+                  {
+                    label: "HOD Approval",
+                    value: (
+                      <span className={`font-semibold px-2 py-1 rounded 
+                    ${selectedLeave.hodStatus === 'Approved' ? 'text-green-600 bg-green-100' :
+                          selectedLeave.hodStatus === 'Rejected' ? 'text-red-600 bg-red-100' :
+                            'text-yellow-600 bg-yellow-100'}`}>
+                        {selectedLeave.hodStatus}
+                      </span>
+                    )
+                  },
+                  {
+                    label: "HR Approval",
+                    value: (
+                      <span className={`font-semibold px-2 py-1 rounded 
+                    ${selectedLeave.status === 'Approved' ? 'text-green-600 bg-green-100' :
+                          selectedLeave.status === 'Rejected' ? 'text-red-600 bg-red-100' :
+                            'text-yellow-600 bg-yellow-100'}`}>
+                        {selectedLeave.status}
+                      </span>
+                    )
+                  },
+                  {
+                    label: "Status",
+                    value: selectedLeave.resumeStatus ? (
+                      <span className="text-green-700 text-sm font-semibold bg-green-100 px-3 py-1 rounded-full">
+                        Resumed on {new Date(selectedLeave.resumeDate).toLocaleDateString()} (
+                        {Math.max(
+                          0,
+                          Math.ceil(
+                            (new Date(selectedLeave.resumeDate).setHours(0, 0, 0, 0) -
+                              new Date(selectedLeave.to).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)
+                          )
+                        )} day(s) added)
+                      </span>
+                    ) : (() => {
+                      const today = new Date();
+                      const from = new Date(selectedLeave.from);
+                      const to = new Date(selectedLeave.to);
+                      today.setHours(0, 0, 0, 0);
+                      from.setHours(0, 0, 0, 0);
+                      to.setHours(0, 0, 0, 0);
 
-      {/* Name */}
-      <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-4 break-words">
-        {selectedLeave.userId?.name?.toUpperCase() || "N/A"}
-      </h2>
+                      if (today < from) {
+                        const days = Math.ceil((from - today) / (1000 * 60 * 60 * 24));
+                        return <span style={{ color: "goldenrod", fontWeight: "bold" }}>{days} day(s) to Go</span>;
+                      } else if (today >= from && today < to) {
+                        const days = Math.ceil((to - today) / (1000 * 60 * 60 * 24));
+                        return <span style={{ color: "green", fontWeight: "bold" }}>{days} day(s) remaining</span>;
+                      } else if (today.getTime() === to.getTime()) {
+                        return <span style={{ color: "blue", fontWeight: "bold" }}>Returning today</span>;
+                      } else {
+                        const days = Math.ceil((today - to) / (1000 * 60 * 60 * 24));
+                        return <span style={{ color: "red", fontWeight: "bold" }}>Leave ended — He/She added {days} day(s)</span>;
+                      }
+                    })()
+                  }
+                ].map((item, idx) => (
+                  <tr key={idx} className="border-b">
+                    <th className="px-4 py-2 font-medium bg-gray-50 w-40">{item.label}</th>
+                    <td className="px-4 py-2">{item.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Profile Image */}
-      <div className="flex justify-center mb-4">
-        <img
-          src={`${backendUrl}/upload/${selectedLeave.userId?.profileImage}`}
-          alt="Profile"
-          className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border"
-        />
-      </div>
-
-      {/* Email & Department */}
-      <div className="flex flex-col sm:flex-row justify-center sm:gap-8 gap-2 text-sm text-gray-800 mb-6 text-center">
-        <div>
-          <span className="font-semibold text-green-800">Email:</span>{" "}
-          {selectedLeave.userId?.email || "N/A"}
-        </div>
-        <div>
-          <span className="font-semibold text-green-800">Department:</span>{" "}
-          {selectedLeave.userId?.department?.name || "N/A"}
-        </div>
-      </div>
-
-      {/* Table for Desktop */}
-      <div className="hidden sm:block">
-        <table className="w-full text-sm text-left text-gray-700 border border-gray-200 rounded-md">
-          <tbody>
+          {/* Mobile-Friendly Version */}
+          <div className="sm:hidden space-y-4 text-sm text-gray-700 mt-4">
             {[
               { label: "Leave Type", value: selectedLeave.leave },
               { label: "Reason", value: selectedLeave.reason },
@@ -503,151 +621,71 @@ const leave = () => {
               { label: "To", value: new Date(selectedLeave.to).toISOString().split("T")[0] },
               { label: "Applied On", value: new Date(selectedLeave.appliedAt).toISOString().split("T")[0] },
               { label: "Relieving Staff", value: selectedLeave.relievingEId?.name || "N/A" },
-              {
-                label: "HOD Approval",
-                value: (
-                  <span className={`font-semibold px-2 py-1 rounded 
-                    ${selectedLeave.hodStatus === 'Approved' ? 'text-green-600 bg-green-100' :
-                      selectedLeave.hodStatus === 'Rejected' ? 'text-red-600 bg-red-100' :
-                        'text-yellow-600 bg-yellow-100'}`}>
-                    {selectedLeave.hodStatus}
-                  </span>
-                )
-              },
-              {
-                label: "HR Approval",
-                value: (
-                  <span className={`font-semibold px-2 py-1 rounded 
-                    ${selectedLeave.status === 'Approved' ? 'text-green-600 bg-green-100' :
-                      selectedLeave.status === 'Rejected' ? 'text-red-600 bg-red-100' :
-                        'text-yellow-600 bg-yellow-100'}`}>
-                    {selectedLeave.status}
-                  </span>
-                )
-              },
+              { label: "HOD Approval", value: selectedLeave.hodStatus },
+              { label: "Admin Approval", value: selectedLeave.status },
               {
                 label: "Status",
-                value: selectedLeave.resumeStatus ? (
-                  <span className="text-green-700 text-sm font-semibold bg-green-100 px-3 py-1 rounded-full">
-                    Resumed on {new Date(selectedLeave.resumeDate).toLocaleDateString()} (
-                    {Math.max(
-                      0,
-                      Math.ceil(
-                        (new Date(selectedLeave.resumeDate).setHours(0, 0, 0, 0) -
-                          new Date(selectedLeave.to).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)
-                      )
-                    )} day(s) added)
-                  </span>
-                ) : (() => {
-                  const today = new Date();
-                  const from = new Date(selectedLeave.from);
-                  const to = new Date(selectedLeave.to);
-                  today.setHours(0, 0, 0, 0);
-                  from.setHours(0, 0, 0, 0);
-                  to.setHours(0, 0, 0, 0);
-
-                  if (today < from) {
-                    const days = Math.ceil((from - today) / (1000 * 60 * 60 * 24));
-                    return <span style={{ color: "goldenrod", fontWeight: "bold" }}>{days} day(s) to Go</span>;
-                  } else if (today >= from && today < to) {
-                    const days = Math.ceil((to - today) / (1000 * 60 * 60 * 24));
-                    return <span style={{ color: "green", fontWeight: "bold" }}>{days} day(s) remaining</span>;
-                  } else if (today.getTime() === to.getTime()) {
-                    return <span style={{ color: "blue", fontWeight: "bold" }}>Returning today</span>;
-                  } else {
-                    const days = Math.ceil((today - to) / (1000 * 60 * 60 * 24));
-                    return <span style={{ color: "red", fontWeight: "bold" }}>Leave ended — He/She added {days} day(s)</span>;
-                  }
-                })()
+                value: selectedLeave.resumeStatus
+                  ? `Resumed on ${new Date(selectedLeave.resumeDate).toLocaleDateString()}`
+                  : "Ongoing"
               }
             ].map((item, idx) => (
-              <tr key={idx} className="border-b">
-                <th className="px-4 py-2 font-medium bg-gray-50 w-40">{item.label}</th>
-                <td className="px-4 py-2">{item.value}</td>
-              </tr>
+              <div key={idx} className="border-b pb-2">
+                <div className="text-gray-500 font-semibold">{item.label}</div>
+                <div className="text-gray-800">{item.value}</div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile-Friendly Version */}
-      <div className="sm:hidden space-y-4 text-sm text-gray-700 mt-4">
-        {[
-          { label: "Leave Type", value: selectedLeave.leave },
-          { label: "Reason", value: selectedLeave.reason },
-          { label: "From", value: new Date(selectedLeave.from).toISOString().split("T")[0] },
-          { label: "To", value: new Date(selectedLeave.to).toISOString().split("T")[0] },
-          { label: "Applied On", value: new Date(selectedLeave.appliedAt).toISOString().split("T")[0] },
-          { label: "Relieving Staff", value: selectedLeave.relievingEId?.name || "N/A" },
-          { label: "HOD Approval", value: selectedLeave.hodStatus },
-          { label: "Admin Approval", value: selectedLeave.status },
-          {
-            label: "Status",
-            value: selectedLeave.resumeStatus
-              ? `Resumed on ${new Date(selectedLeave.resumeDate).toLocaleDateString()}`
-              : "Ongoing"
-          }
-        ].map((item, idx) => (
-          <div key={idx} className="border-b pb-2">
-            <div className="text-gray-500 font-semibold">{item.label}</div>
-            <div className="text-gray-800">{item.value}</div>
           </div>
-        ))}
-      </div>
 
-      {/* Print Button */}
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={() => {
-            const content = document.getElementById("print-salary-table").innerHTML;
-            const printWindow = window.open("", "", "height=800,width=1000");
-            printWindow.document.write("<html><head><title>Leave Details History</title>");
-            printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">');
-            printWindow.document.write("</head><body>");
-            printWindow.document.write(content);
-            printWindow.document.write("</body></html>");
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-          }}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
-        >
-          Print
-        </button>
-      </div>
+          {/* Print Button */}
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => {
+                const content = document.getElementById("print-salary-table").innerHTML;
+                const printWindow = window.open("", "", "height=800,width=1000");
+                printWindow.document.write("<html><head><title>Leave Details History</title>");
+                printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">');
+                printWindow.document.write("</head><body>");
+                printWindow.document.write(content);
+                printWindow.document.write("</body></html>");
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+              }}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
+            >
+              Print
+            </button>
+          </div>
 
-      {/* Action Buttons */}
-      {selectedLeave.status === "Pending" && (
-        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
-          <button
-            onClick={() => setSelectedLeave(null)}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-2 rounded-full font-medium w-full sm:w-auto"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => handleApproved(selectedLeave._id, "Approved")}
-            className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-full font-medium w-full sm:w-auto"
-          >
-            Approve
-          </button>
-          <button
-            onClick={() => handleReject(selectedLeave._id, "Rejected")}
-            className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-full font-medium w-full sm:w-auto"
-          >
-            Reject
-          </button>
+          {/* Action Buttons */}
+          {selectedLeave.status === "Pending" && (
+            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+              <button
+                onClick={() => setSelectedLeave(null)}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-2 rounded-full font-medium w-full sm:w-auto"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleApproved(selectedLeave._id, "Approved")}
+                className="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-full font-medium w-full sm:w-auto"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleReject(selectedLeave._id, "Rejected")}
+                className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-full font-medium w-full sm:w-auto"
+              >
+                Reject
+              </button>
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  </div>
-)}
-
-
-
-
-
-
+      </div>
+    )
+  }
+  { isLoading && <LoadingOverlay /> }
     </div >
   );
 };

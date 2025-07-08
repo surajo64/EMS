@@ -4,10 +4,13 @@ import { AppContext } from '../context/AppContext';
 import { useEffect } from 'react';
 import axios from 'axios';
 import { toast } from "react-toastify";
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 const employee = () => {
   const { token, backendUrl, getAllDepartment, department,
     employees, setEmployees, getAllEmployees } = useContext(AppContext)
+  const [isLoading, setIsLoading] = useState(false);
+
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [report, setReport] = useState([]);
@@ -61,74 +64,103 @@ const employee = () => {
   };
 
   const handleViewDetail = () => {
-    setShowDetailModal(true);
-
+    setIsLoading(true);
+    setTimeout(() => {
+      setShowDetailModal(true);
+      setIsLoading(false);
+    }, 300);
   };
+
+
   const handleView = (employee) => {
-    setSelectedEmployee(employee);
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setSelectedEmployee(employee);
+      setIsLoading(false);
+    }, 300);
   };
 
   const handleClose = () => {
-    setShowForm(false)
-    getAllEmployees();
-    // Reset form
-    setName(""); setEmail(""); setStaffId(""); setDob(""); setGender("");
-    setMaritalStatus(""); setSelectedDepartment(""); setDesignation("");
-    setSalary(""); setPassword(""); setRole(""); setAddress(""); setPhone("");
-    setSelectedImageFile(null); setState(""); setQualification(""); setExperience("");
-    setSelectedCVFile(""); setSelectedImageFile(""); setJoinDate("");
-    setShowForm(false); setType(""),
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setShowForm(false)
       getAllEmployees();
+      // Reset form
+      setName(""); setEmail(""); setStaffId(""); setDob(""); setGender("");
+      setMaritalStatus(""); setSelectedDepartment(""); setDesignation("");
+      setSalary(""); setPassword(""); setRole(""); setAddress(""); setPhone("");
+      setSelectedImageFile(null); setState(""); setQualification(""); setExperience("");
+      setSelectedCVFile(""); setSelectedImageFile(""); setJoinDate("");
+      setShowForm(false); setType(""),
+        getAllEmployees();
+      setIsLoading(false);
+    }, 300);
   }
 
   const handleAddNew = () => {
-    setEditingAdmin(null);
-    setShowForm(true);
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setEditingAdmin(null);
+      setShowForm(true);
+      setIsLoading(false);
+    }, 300); // adjust to your preference
   };
 
+
   const handleCloseDetail = () => {
-    setShowDetailModal(false)
-    setSelectedEmployee(null);
-    setEmployeeDetails([]);
-    setFilterStatus('')
-    setFilterType('')
-    getAllEmployees();
-    
+    setIsLoading(true);
+    setTimeout(() => {
+      setShowDetailModal(false)
+      setSelectedEmployee(null);
+      setEmployeeDetails([]);
+      setFilterStatus('')
+      setFilterType('')
+      getAllEmployees();
+      setIsLoading(false);
+    }, 300);
+
   }
 
   const handleUpdate = (item) => {
-    setEditingAdmin(item);
-    setName(item.userId.name);
-    setEmail(item.userId.email);
-    setStaffId(item.staffId);
-    setType(item.type);
-    setRole(item.userId.role)
-    const formattedjoinDate = new Date(item.joinDate).toISOString().split('T')[0];
-    setJoinDate(formattedjoinDate)
-    const formattedDob = new Date(item.dob).toISOString().split('T')[0];
-    setDob(formattedDob);
-    setGender(item.gender);
-    setMaritalStatus(item.maritalStatus);
-    setSelectedDepartment(item.department?._id || item.department?.name);
-    if (item.department?._id) {
-      setSelectedDepartment(item.department._id);
-      handleDepartmentChange({ target: { value: item.department._id } });
-    }
-    setDesignation(item.designation || '');
-    setSelectedCVFile(item.cv || null);
-    setSelectedImageFile(item.userId?.profileImage || null);
-    setAddress(item.address);
-    setPhone(item.phone);
-    setQualification(item.qualification)
-    setExperience(item.experience)
-    setState(item.state);
-    setShowForm(true);
+    setIsLoading(true);
+    setTimeout(() => {
+      setEditingAdmin(item);
+      setName(item.userId.name);
+      setEmail(item.userId.email);
+      setStaffId(item.staffId);
+      setType(item.type);
+      setRole(item.userId.role)
+      const formattedjoinDate = new Date(item.joinDate).toISOString().split('T')[0];
+      setJoinDate(formattedjoinDate)
+      const formattedDob = new Date(item.dob).toISOString().split('T')[0];
+      setDob(formattedDob);
+      setGender(item.gender);
+      setMaritalStatus(item.maritalStatus);
+      setSelectedDepartment(item.department?._id || item.department?.name);
+      if (item.department?._id) {
+        setSelectedDepartment(item.department._id);
+        handleDepartmentChange({ target: { value: item.department._id } });
+      }
+      setDesignation(item.designation || '');
+      setSelectedCVFile(item.cv || null);
+      setSelectedImageFile(item.userId?.profileImage || null);
+      setAddress(item.address);
+      setPhone(item.phone);
+      setQualification(item.qualification)
+      setExperience(item.experience)
+      setState(item.state);
+      setShowForm(true);
+      setIsLoading(false);
+    }, 300);
   };
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+     setIsLoading(true);
     // Validate CV file
     // Validate profile image file
     if (
@@ -137,6 +169,7 @@ const employee = () => {
       !['image/jpeg', 'image/png', 'image/jpg'].includes(selectedImageFile.type)
     ) {
       toast.error("Profile image must be JPG, JPEG, or PNG format.");
+      setIsLoading(false);
       return;
     }
 
@@ -147,6 +180,7 @@ const employee = () => {
     const staffIdPattern = /^KIRCT\d{3}$/;
     if (!staffIdPattern.test(normalizedId)) {
       toast.error("Staff ID must be in the format KIRCT followed by 3 digits (e.g., KIRCT001)");
+      setIsLoading(false);
       return;
     }
 
@@ -225,7 +259,9 @@ const employee = () => {
     } catch (error) {
       console.error('Employee Add/Update failed', error);
       toast.error(error.response?.data?.message || error.message);
-    }
+    } finally {
+    setIsLoading(false); 
+  }
   };
 
   const handleDeactivate = async () => {
@@ -400,7 +436,15 @@ const employee = () => {
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-4 gap-2 flex-wrap px-4 pb-4">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => {
+                setIsLoading(true);
+
+                setTimeout(() => {
+                  setCurrentPage(prev => Math.max(prev - 1, 1))
+
+                  setIsLoading(false);
+                }, 300);
+              }}
               disabled={currentPage === 1}
               className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
             >
@@ -418,7 +462,13 @@ const employee = () => {
             ))}
 
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => {
+                setIsLoading(true);
+                setTimeout(() => {
+                  setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                  setIsLoading(false);
+                }, 300);
+              }}
               disabled={currentPage === totalPages}
               className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
             >
@@ -593,7 +643,7 @@ const employee = () => {
                       <option value="">Employee Type</option>
                       <option value="permanent">Permanent</option>
                       <option value="locum">locum/Contract</option>
-                       <option value="consultant">Consuntant</option>
+                      <option value="consultant">Consuntant</option>
 
                     </select>
                   </div>
@@ -852,8 +902,13 @@ const employee = () => {
 
                   <button
                     onClick={() => {
-                      fetchEmployeesByStatus(filterStatus, filterType);
-                      setViewClicked(true); // Set to true after clicking
+                      setIsLoading(true);
+
+                      setTimeout(() => {
+                        fetchEmployeesByStatus(filterStatus, filterType);
+                        setViewClicked(true); // Set to true after clicking
+                        setIsLoading(false);
+                      }, 300);
                     }}
                     className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
                   >
@@ -910,7 +965,16 @@ const employee = () => {
                             <td className="border p-2">{emp.type}</td>
                             <td className="border p-2">
                               <button
-                                onClick={() => setSelectedEmployee(emp)}
+                                onClick={() => {
+
+                                  setIsLoading(true);
+                                  setTimeout(() => {
+                                    setSelectedEmployee(emp);
+                                    setIsLoading(false);
+                                  }, 300);
+                                }
+
+                                }
                                 className="text-blue-600 hover:underline text-sm"
                               >
                                 View
@@ -1029,8 +1093,9 @@ const employee = () => {
             </div>
           </div>
         </div>
-      )}
-
+      )
+      }
+      {isLoading && <LoadingOverlay />}
 
     </div >
   );

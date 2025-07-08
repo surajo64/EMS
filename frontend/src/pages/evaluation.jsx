@@ -4,7 +4,7 @@ import { AppContext, useAuth } from '../context/AppContext';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import axios from "axios";
-
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
 
@@ -19,7 +19,7 @@ const criteriaList = [
 
 const evaluation = () => {
 
-
+    const [isLoading, setIsLoading] = useState(false);
     const { token, getAllEmployees, employees, fetchDepartmentKpi, departmentKpi, evaluations, setEvaluations, backendUrl } = useContext(AppContext);
     const [userId, setUserId] = useState(null); // for saving selected user's ID
     const [searchResults, setSearchResults] = useState([]);
@@ -81,8 +81,9 @@ const evaluation = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
 
+        e.preventDefault();
+        setIsLoading(true);
         const userId = selectedRecords.kpi.userId._id || selectedRecords?.employeeId;
         const kpiId = selectedRecords.kpi._id
 
@@ -101,6 +102,7 @@ const evaluation = () => {
 
         if (!userId || !scores || formData.total == null || !formData.grade || !kpiId) {
             toast.error("Missing required field. Please fill all evaluation inputs.");
+            setIsLoading(false);
             return;
         }
 
@@ -155,6 +157,8 @@ const evaluation = () => {
         } catch (err) {
             console.error("Error submitting evaluation:", err);
             toast.error("Server error while submitting evaluation.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -170,13 +174,13 @@ const evaluation = () => {
 
 
     const handleAddNew = () => {
-        setIsEditing(null);
-        setShowForm(true);
+        setIsLoading(true);
+        setTimeout(() => {
+            setIsEditing(null);
+            setShowForm(true);
+            setIsLoading(false);
+        }, 300);
     };
-
-
-
-
 
 
     useEffect(() => {
@@ -186,21 +190,28 @@ const evaluation = () => {
 
 
     const handleView = (item) => {
-        setShowDetail(true);
-        setSelectedRecords(item)
+        setIsLoading(true);
+        setTimeout(() => {
+            setShowDetail(true);
+            setSelectedRecords(item)
+            setIsLoading(false);
+        }, 300);
     };
 
     const handleClose = () => {
-        // Reset state
-        setShowDetail(false)
-        setShowForm(false);
-        setIsEditing(false);
-        setYear('')
-        setMonth('')
-        setScores({});
-        setComments('');
-        fetchDepartmentKpi();
-
+        setIsLoading(true);
+        setTimeout(() => {
+            // Reset state
+            setShowDetail(false)
+            setShowForm(false);
+            setIsEditing(false);
+            setYear('')
+            setMonth('')
+            setScores({});
+            setComments('');
+            fetchDepartmentKpi();
+            setIsLoading(false);
+        }, 300);
     }
 
 
@@ -301,7 +312,13 @@ const evaluation = () => {
                         {/* Pagination controls */}
                         <div className="flex justify-center items-center mt-2 gap-2">
                             <button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                onClick={() => {
+                                    setIsLoading(true);
+                                    setTimeout(() => {
+                                        setCurrentPage(prev => Math.max(prev - 1, 1))
+                                        setIsLoading(false);
+                                    }, 300);
+                                }}
                                 disabled={currentPage === 1}
                                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                                 Prev
@@ -317,7 +334,13 @@ const evaluation = () => {
                             ))}
 
                             <button
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                onClick={() => {
+                                    setIsLoading(true);
+                                    setTimeout(() => {
+                                        setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                                        setIsLoading(false);
+                                    }, 300);
+                                }}
                                 disabled={currentPage === totalPages}
                                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                                 Next
@@ -335,7 +358,7 @@ const evaluation = () => {
 
 
             {showDetail && selectedRecords && (
-                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl relative overflow-auto max-h-[95vh]">
                         <button
                             onClick={handleClose}
@@ -347,7 +370,7 @@ const evaluation = () => {
                         <h2 className="text-2xl font-bold text-center text-gray-700 col-span-3">
                             Evaluation Summary For<span className="text-2xl font-bold mb-6 text-center text-green-700 col-span-3"> {selectedRecords.kpi?.userId.name}</span>
                         </h2>
-                         <h2 className="text-2xl font-bold mb-6 text-center text-blue-700 col-span-3">
+                        <h2 className="text-2xl font-bold mb-6 text-center text-blue-700 col-span-3">
                             {selectedRecords.hodEvaluation?.month} {selectedRecords.hodEvaluation?.year}
                         </h2>
 
@@ -386,24 +409,24 @@ const evaluation = () => {
                                                 <td className="px-4 py-2">{selectedRecords.kpi?.scores.communication}</td>
                                             </tr>
                                             <tr className="border-b">
-                                                        <td className="px-4 py-2 font-semibold text-black">Total Score</td>
-                                                        <td className="px-4 py-2 font-semibold text-black">{selectedRecords.kpi.total} / 100</td>
-                                                    </tr>
-                                            
+                                                <td className="px-4 py-2 font-semibold text-black">Total Score</td>
+                                                <td className="px-4 py-2 font-semibold text-black">{selectedRecords.kpi.total} / 100</td>
+                                            </tr>
+
                                             <tr className="border-b">
-                                              <td className="px-4 py-2 font-bold">Grade</td>
+                                                <td className="px-4 py-2 font-bold">Grade</td>
                                                 <td className={`px-4 py-2 font-bold 
                                                              ${selectedRecords.kpi.total >= 80
-                                                                ? 'text-green-600'
-                                                                : selectedRecords.kpi.total >= 70
-                                                                    ? 'text-blue-600'
-                                                                    : selectedRecords.kpi.total >= 60
-                                                                        ? 'text-yellow-600'
-                                                                        : 'text-red-600'
-                                                            }`}
-                                                    >
-                                                        {selectedRecords.kpi.grade}
-                                                    </td>
+                                                        ? 'text-green-600'
+                                                        : selectedRecords.kpi.total >= 70
+                                                            ? 'text-blue-600'
+                                                            : selectedRecords.kpi.total >= 60
+                                                                ? 'text-yellow-600'
+                                                                : 'text-red-600'
+                                                    }`}
+                                                >
+                                                    {selectedRecords.kpi.grade}
+                                                </td>
 
                                             </tr>
                                             <tr className="border-b">
@@ -424,7 +447,7 @@ const evaluation = () => {
                                             <h3 className="text-lg font-bold mb-4 text-green-600 text-center">HOD Evaluation</h3>
                                             <table className="w-full text-sm text-start border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
                                                 <tbody>
-                                                   
+
                                                     <tr className="bg-gray-50 border-b">
                                                         <td className="px-4 py-2 font-medium text-gray-600">Punctuality</td>
                                                         <td className="px-4 py-2">{selectedRecords.hodEvaluation.scores?.punctuality}</td>
@@ -454,7 +477,7 @@ const evaluation = () => {
                                                         <td className="px-4 py-2 font-semibold text-black">{selectedRecords.hodEvaluation.total} / 100</td>
                                                     </tr>
                                                     <tr className="border-b">
-                                                          <td className="px-4 py-2 font-bold">Grade</td>
+                                                        <td className="px-4 py-2 font-bold">Grade</td>
                                                         <td className={`px-4 py-2 font-bold 
                                                              ${selectedRecords.hodEvaluation.total >= 80
                                                                 ? 'text-green-600'
@@ -464,9 +487,9 @@ const evaluation = () => {
                                                                         ? 'text-yellow-600'
                                                                         : 'text-red-600'
                                                             }`}
-                                                    >
-                                                        {selectedRecords.hodEvaluation.grade}
-                                                    </td>
+                                                        >
+                                                            {selectedRecords.hodEvaluation.grade}
+                                                        </td>
                                                     </tr>
                                                     <tr className="bg-gray-50 border-b">
                                                         <td className="px-4 py-2 font-medium text-gray-600">Comments</td>
@@ -590,7 +613,7 @@ const evaluation = () => {
                                     {selectedRecords.adminEvaluation ? (
                                         <table className="w-full text-sm text-start border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
                                             <tbody>
-                                               
+
                                                 <tr className="bg-gray-50 border-b">
                                                     <td className="px-4 py-2 font-medium text-gray-600">Punctuality</td>
                                                     <td className="px-4 py-2">{selectedRecords.adminEvaluation.scores?.punctuality}</td>
@@ -664,6 +687,8 @@ const evaluation = () => {
                 </div >
             )
             }
+
+            {isLoading && <LoadingOverlay />}
         </div >
     );
 };

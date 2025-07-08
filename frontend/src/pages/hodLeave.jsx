@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { toast } from "react-toastify";
 import axios from 'axios';
 import { AppContext } from '../context/AppContext';
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
 const hodLeave = () => {
@@ -11,7 +12,7 @@ const hodLeave = () => {
   const decodedToken = token ? JSON.parse(atob(token.split('.')[1])) : null;
   const userId = decodedToken?.id; // or decodedToken._id depending on your backend payload
 
-
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [employee, setEmployee] = useState([null])
@@ -29,77 +30,97 @@ const hodLeave = () => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+    setIsLoading(true);
     const formData = { leave, reason, from, to };
-    /*  try {*/
-    if (editingLeave && editingLeave._id) {
-      const { data } = await axios.post(
-        backendUrl + '/api/admin/update-leave',
-        { leaveId: editingLeave._id, ...formData },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    try {
+      if (editingLeave && editingLeave._id) {
+        const { data } = await axios.post(
+          backendUrl + '/api/admin/update-leave',
+          { leaveId: editingLeave._id, ...formData },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      if (data.success) {
-        toast.success("Leave updated successfully!");
-        setLeave("");
-        setReason("");
-        setFrom("");
-        setTo("")
-        setSelectedLeave(null);
-        fetchHodLeaves();
-        setShowForm(false);
-      }
-    } else {
-      const { data } = await axios.post(
-        backendUrl + "/api/admin/add-leave",
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (data.success) {
-        toast.success("Leave added successfully!");
-        setLeave("");
-        setReason("");
-        setFrom("");
-        setTo("")
-        fetchHodLeaves();
-        setSelectedLeave(null);
-        setShowForm(false);
+        if (data.success) {
+          toast.success("Leave updated successfully!");
+          setLeave("");
+          setReason("");
+          setFrom("");
+          setTo("")
+          setSelectedLeave(null);
+          fetchHodLeaves();
+          setShowForm(false);
+        }
       } else {
-        toast.error(data.message);
+        const { data } = await axios.post(
+          backendUrl + "/api/admin/add-leave",
+          formData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (data.success) {
+          toast.success("Leave added successfully!");
+          setLeave("");
+          setReason("");
+          setFrom("");
+          setTo("")
+          fetchHodLeaves();
+          setSelectedLeave(null);
+          setShowForm(false);
+        } else {
+          toast.error(data.message);
+        }
       }
+    } catch (error) {
+
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setIsLoading(false);
     }
-    /*  } catch (error) {
-        
-        toast.error(error.response?.data?.message || error.message);
-      }*/
 
   }
 
   const handleClose = () => {
-    setShowForm(false);
-    fetchHodLeaves();
+    setIsLoading(true);
+    setTimeout(() => {
+      setShowForm(false);
+      fetchHodLeaves();
+      setIsLoading(false);
+    }, 300);
   };
 
   const handleAddNew = () => {
-    setShowForm(true);
-    setEditingLeave(null)
+    setIsLoading(true);
+    setTimeout(() => {
+      setShowForm(true);
+      setEditingLeave(null)
+      setIsLoading(false);
+    }, 300);
   };
 
   const handleUpdate = (item) => {
-    setEditingLeave(item);
-    setLeave(item.leave);
-    setReason(item.reason);
-    setFrom(new Date(item.from).toISOString().split('T')[0]);
-    setTo(new Date(item.to).toISOString().split('T')[0]);
-    setShowForm(true);
+    setIsLoading(true);
+    setTimeout(() => {
+      setEditingLeave(item);
+      setLeave(item.leave);
+      setReason(item.reason);
+      setFrom(new Date(item.from).toISOString().split('T')[0]);
+      setTo(new Date(item.to).toISOString().split('T')[0]);
+      setShowForm(true);
+      setIsLoading(false);
+    }, 300);
   };
 
   const handleView = (hodLeaves) => {
-    setSelectedLeave(hodLeaves);
-    fetchEmployees();
+    setIsLoading(true);
+    setTimeout(() => {
+      setSelectedLeave(hodLeaves);
+      fetchEmployees();
+      setIsLoading(false);
+    }, 300);
   };
 
   const handleApproved = async (leaveId) => {
+    setIsLoading(true);
     try {
 
       if (!relievingStaff) {
@@ -118,10 +139,13 @@ const hodLeave = () => {
       }
     } catch (error) {
       console.error("Error approving appointment:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleReject = async (leaveId) => {
+    setIsLoading(true);
     try {
       const { data } = await axios.post(backendUrl + '/api/admin/hod-reject', { leaveId: selectedLeave._id }, { headers: { Authorization: `Bearer ${token}` } })
       console.log("Leave iD", leaveId)
@@ -134,24 +158,26 @@ const hodLeave = () => {
       }
     } catch (error) {
       console.error("Error approving appointment:", error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
   const fetchEmployees = async () => {
-    /*try {*/
+    try {
 
-    const { data } = await axios.get(`${backendUrl}/api/admin/employee-list`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (data.success) {
-      setEmployee(data.employee);
-      console.log("List Of Employee", data.employee)
-    } else {
-      console.log(data.message);
-    }
-    /*} catch (err) {
+      const { data } = await axios.get(`${backendUrl}/api/admin/employee-list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success) {
+        setEmployee(data.employee);
+        console.log("List Of Employee", data.employee)
+      } else {
+        console.log(data.message);
+      }
+    } catch (err) {
       console.error(err);
-    }*/
+    }
   };
 
   useEffect(() => {
@@ -242,7 +268,7 @@ const hodLeave = () => {
           <p>Reasons</p>
           <p>From</p>
           <p>To</p>
-         
+
           <p>Status</p>
           <p>Actions</p>
         </div>
@@ -267,7 +293,7 @@ const hodLeave = () => {
                 <p>{new Date(item.to).toISOString().split('T')[0]}</p>
 
                 {/* Admin Approval */}
-               
+
 
                 {/* Status Logic */}
                 <p>
@@ -341,7 +367,13 @@ const hodLeave = () => {
             {/* Pagination controls */}
             <div className="flex justify-center items-center mt-2 gap-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setCurrentPage(prev => Math.max(prev - 1, 1))
+                    setIsLoading(false);
+                  }, 300);
+                }}
                 disabled={currentPage === 1}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                 Prev
@@ -357,7 +389,13 @@ const hodLeave = () => {
               ))}
 
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                    setIsLoading(false);
+                  }, 300);
+                }}
                 disabled={currentPage === totalPages}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                 Next
@@ -698,8 +736,7 @@ const hodLeave = () => {
           </div>
         </div>
       )}
-
-
+{isLoading && <LoadingOverlay />}
     </div>
   );
 };

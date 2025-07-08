@@ -22,10 +22,6 @@ const Navbar = () => {
 
     };
 
-
-
-
-
   }
   return (
     <div className="bg-white border-b rounded px-4 sm:px-10 py-4 shadow-sm">

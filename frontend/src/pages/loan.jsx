@@ -2,9 +2,12 @@ import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
 const loan = () => {
+    const [hasPendingLoan, setHasPendingLoan] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [editingLoan, setEditingLoan] = useState(null);
     const [selectedLoan, setSelectedLoan] = useState(null);
     const [approvedAmount, setApprovedAmount] = useState('');
@@ -13,7 +16,7 @@ const loan = () => {
     const [durationInMonths, setDurationInMonths] = useState('');
     const [monthDeduction, setMonthDeduction] = useState('');
     const [reason, setReason] = useState('');
-    const { token, backendUrl } = useContext(AppContext);
+    const { token, user, backendUrl } = useContext(AppContext);
     const [showForm, setShowForm] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredLoans, setFilteredLoan] = useState([]);
@@ -24,18 +27,23 @@ const loan = () => {
 
     // When editing a loan (e.g. on Edit button click)
     const handleEdit = (loan) => {
-        setEditingLoan(loan);
-        setAmount(loan.amount);
-        setReason(loan.reason);
-        setApprovedAmount(loan.approvedAmount);
-        setDurationInMonths(loan.durationInMonths);
-        setMonthDeduction(Math.ceil(loan.amount / loan.durationInMonths)); 
-        setShowForm(true);
+        setIsLoading(true);
+
+        setTimeout(() => {
+            setEditingLoan(loan);
+            setAmount(loan.amount);
+            setReason(loan.reason);
+            setApprovedAmount(loan.approvedAmount);
+            setDurationInMonths(loan.durationInMonths);
+            setMonthDeduction(Math.ceil(loan.amount / loan.durationInMonths));
+            setShowForm(true);
+            setIsLoading(false);
+        }, 300);
     };
 
     const handleApply = async (e) => {
         e.preventDefault();
-
+        setIsLoading(true);
         const loanPayload = {
             amount,
             durationInMonths,
@@ -43,7 +51,7 @@ const loan = () => {
             approvedAmount
         };
 
-      /*  try {*/
+        try {
             let data;
 
             if (editingLoan) {
@@ -86,10 +94,12 @@ const loan = () => {
             } else {
                 toast.error(data.message || "Something went wrong");
             }
-       /* } catch (error) {
+        } catch (error) {
             console.error("Loan apply/update error:", error);
             toast.error("Loan request failed");
-        }*/
+        } finally {
+            setIsLoading(false);
+        }
     };
 
 
@@ -105,14 +115,22 @@ const loan = () => {
 
 
     const updateStatus = async (id, status) => {
-        const { data } = await axios.post(backendUrl +
-            "/api/admin/approve-loan",
-            { loanId: id, status },
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (data.success)
-            fetchLoans();
-        setSelectedLoan(null)
+        setIsLoading(true);
+        try {
+
+            const { data } = await axios.post(backendUrl +
+                "/api/admin/approve-loan",
+                { loanId: id, status },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (data.success)
+                fetchLoans();
+            setSelectedLoan(null)
+        } catch (error) {
+
+        } finally {
+            setIsLoading(false);
+        }
 
     };
 
@@ -122,21 +140,30 @@ const loan = () => {
     }, []);
 
     const closeForm = () => {
-        setShowForm(false);
-        setEditingLoan(null);
-        setAmount("");
-        setReason("");
-        setDurationInMonths("");
-        setMonthDeduction("");
-        setApprovedAmount("");
+        setIsLoading(true);
+
+        setTimeout(() => {
+            setShowForm(false);
+            setEditingLoan(null);
+            setAmount("");
+            setReason("");
+            setDurationInMonths("");
+            setMonthDeduction("");
+            setApprovedAmount("");
+            setIsLoading(false);
+        }, 300);
     };
 
 
     const handleAddNew = () => {
-        setAmount("");
-        setReason("");
-        setDurationInMonths("")
-        setShowForm(true);
+        setIsLoading(true);
+        setTimeout(() => {
+            setAmount("");
+            setReason("");
+            setDurationInMonths("")
+            setShowForm(true);
+            setIsLoading(false);
+        }, 300);
     };
     // Automatically calculate monthly deduction
     useEffect(() => {
@@ -149,18 +176,22 @@ const loan = () => {
     }, [amount, durationInMonths]);
 
 
-   useEffect(() => {
-    if (editingLoan && approvedAmount && durationInMonths) {
-        const deduction = Number(approvedAmount) / Number(durationInMonths);
-        setMonthDeduction(deduction.toFixed(2)); // keeps 2 decimal places
-    }
-}, [approvedAmount, durationInMonths, editingLoan]);
+    useEffect(() => {
+        if (editingLoan && approvedAmount && durationInMonths) {
+            const deduction = Number(approvedAmount) / Number(durationInMonths);
+            setMonthDeduction(deduction.toFixed(2)); // keeps 2 decimal places
+        }
+    }, [approvedAmount, durationInMonths, editingLoan]);
 
 
 
     const handleView = (loans) => {
-        setSelectedLoan(loans);
-        fetchLoans();
+        setIsLoading(true);
+        setTimeout(() => {
+            setSelectedLoan(loans);
+            fetchLoans();
+            setIsLoading(false);
+        }, 300);
     };
 
     // Filter departments based on search
@@ -191,6 +222,30 @@ const loan = () => {
         window.location.reload(); // Optional: reload to restore event bindings
     };
 
+    useEffect(() => {
+        const checkLoanStatus = async () => {
+            try {
+                const { data } = await axios.get(
+                    backendUrl + "/api/admin/get-employee-loan",
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+
+                // Check if there's any loan not completed
+                const pending = data.loans?.some((loan) => loan.status !== "Completed");
+                setHasPendingLoan(pending);
+            } catch (error) {
+                console.error("Failed to fetch loan status:", error);
+            }
+        };
+
+        if (user?.role === "admin") {
+            checkLoanStatus();
+        }
+    }, [user]);
+
+
 
     return loans && (
 
@@ -208,12 +263,26 @@ const loan = () => {
                     className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/3'
                 />
 
-                <button
-                    onClick={handleAddNew}
-                    className="bg-green-500 text-white py-2 px-4 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
-                >
-                    Apply Loan
-                </button>
+                <div className="flex flex-col gap-2">
+                    <button
+                        onClick={handleAddNew}
+                        disabled={hasPendingLoan}
+                        className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${hasPendingLoan
+                                ? "bg-gray-400 text-white cursor-not-allowed"
+                                : "bg-green-500 hover:bg-green-600 text-white"
+                            }`}
+                    >
+                        Apply Loan
+                    </button>
+
+                    {hasPendingLoan && (
+                        <p className="text-sm text-red-600 font-medium">
+                            You have an outstanding loan to pay
+                        </p>
+                    )}
+                </div>
+
+
             </div>
 
             {/* Table container */}
@@ -244,7 +313,7 @@ const loan = () => {
                             <p>{item.reason}</p>
                             <p>₦{item.amount.toLocaleString()}</p>
                             <p>
-                             ₦ {item.status === "Approved" ? (item.approvedAmount || item.amount)?.toLocaleString(): "Pending"}
+                                ₦ {item.status === "Approved" ? (item.approvedAmount || item.amount)?.toLocaleString() : "Pending"}
                             </p>
                             <p>{item.durationInMonths}</p>
                             <p>{item.monthDeduction}</p>
@@ -458,7 +527,7 @@ const loan = () => {
                                             <th className="px-4 py-2 font-medium bg-gray-50 w-40">Requested Amount</th>
                                             <td className="px-4 py-2">₦{selectedLoan.amount?.toLocaleString() || "N/A"}</td>
                                         </tr>
-                                         <tr className="border-b">
+                                        <tr className="border-b">
                                             <th className="px-4 py-2 font-medium bg-gray-50 w-40">Approved Amount</th>
                                             <td className="px-4 py-2">₦ {selectedLoan.approvedAmount?.toLocaleString() || "Pending"}</td>
                                         </tr>
@@ -550,7 +619,7 @@ const loan = () => {
                 </div>
             )}
 
-
+            {isLoading && <LoadingOverlay />}
         </div>
     );
 };

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 const setting = () => {
   const navigate = useNavigate();
@@ -10,48 +11,54 @@ const setting = () => {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+   const [isLoading, setIsLoading] = useState(false);
 
 
 
   const handleChangePassword = async (e) => {
-    e.preventDefault();
-  
-    if (!oldPassword || !newPassword || !confirmPassword) {
-      toast.error("All fields are required");
-      return;
-    }
-  
-    if (newPassword !== confirmPassword) {
-      toast.error("New password and confirm password do not match");
-      return;
-    }
-  
-   
-  
-  /*  try {*/
-      const { data } = await axios.post(
-       `${backendUrl}/api/admin/change-password`,
-        {
-          
-          oldPassword,
-          newPassword,
-          confirmPassword,
-        },
-        {  headers: { Authorization: `Bearer ${token}` },});
-   
-      if (data.success) {
-        toast.success(data.message);
-        logout();
-    
-      } else {
-        console.log("data response:", data.message)
-        toast.error(data.message);
-      }
-   /* } catch (error) {
-      toast.error(error.message)
+  e.preventDefault();
+  setIsLoading(true);
 
-    } */
-  };
+  // 🔴 Validation failures should stop loading
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    toast.error("All fields are required");
+    setIsLoading(false);
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    toast.error("New password and confirm password do not match");
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const { data } = await axios.post(
+      `${backendUrl}/api/admin/change-password`,
+      {
+        oldPassword,
+        newPassword,
+        confirmPassword,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (data.success) {
+      toast.success(data.message);
+      logout(); // Might redirect to login
+    } else {
+      console.log("data response:", data.message);
+      toast.error(data.message || "Password change failed.");
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const logout = () => {
   
@@ -115,6 +122,7 @@ const setting = () => {
           Change Password
         </button>
       </form>
+       {isLoading && <LoadingOverlay />}
     </div>
   );
 };

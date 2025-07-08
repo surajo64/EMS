@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AppContext } from '../context/AppContext';
-
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 const criteriaList = [
   { label: "Punctuality", key: "punctuality", max: 20 },
@@ -16,7 +16,7 @@ const criteriaList = [
 
 const employeeKpi = () => {
   const { token, fetchKpi, kpi, setKpi, backendUrl } = useContext(AppContext);
-
+const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [scores, setScores] = useState({});
   const [comments, setComments] = useState("");
@@ -66,7 +66,7 @@ const employeeKpi = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+setIsLoading(true);
     try {
       const { data } = await axios.post(`${backendUrl}/api/admin/kpi`, formData, {
         headers: { Authorization: `Bearer ${token}` }
@@ -83,7 +83,9 @@ const employeeKpi = () => {
     } catch (error) {
       console.error("Evaluation error:", error);
       res.status(500).json({ success: false, message: 'Error submitting KPI' });
-    }
+    }finally {
+            setIsLoading(false);
+        }
 
   };
 
@@ -104,14 +106,22 @@ const employeeKpi = () => {
 
 
   const handleView = (item) => {
+    setIsLoading(true);
+        setTimeout(() => {
     setShowDetail(true);
     setSelectedRecords(item)
+     setIsLoading(false);
+        }, 300);
   };
 
 
 
   const handleAddNew = () => {
+    setIsLoading(true);
+        setTimeout(() => {
     setShowForm(true);
+     setIsLoading(false);
+        }, 300);
   };
 
 
@@ -510,6 +520,7 @@ const employeeKpi = () => {
         </div >
       )
       }
+       {isLoading && <LoadingOverlay />}
     </div >
   );
 };

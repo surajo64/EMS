@@ -1667,7 +1667,7 @@ const applyLoan = async (req, res) => {
   const userId = req.userId;
 
   try {
-    const monthDeduction = (amount / durationInMonths);
+    const monthDeduction = (amount / durationInMonths).toFixed(2);
 
     const newLoan = new Loan({
       userId,

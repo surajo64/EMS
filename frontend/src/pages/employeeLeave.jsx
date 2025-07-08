@@ -2,10 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { toast } from "react-toastify";
 import axios from 'axios';
 import { AppContext } from '../context/AppContext';
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
 const employeeLeave = () => {
   const { token, backendUrl, leaves, fetchLeaves, getEmployeeLeaves } = useContext(AppContext);
+  const [isLoading, setIsLoading] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,9 +24,9 @@ const employeeLeave = () => {
   const onSubmitHandler = async (event) => {
 
     event.preventDefault();
-
+setIsLoading(true);
     const formData = { leave, reason, from, to };
-    /*  try {*/
+    try {
 
 
     if (editingLeave && editingLeave._id) {
@@ -60,10 +62,12 @@ const employeeLeave = () => {
         toast.error(data.message);
       }
     }
-    /*  } catch (error) {
+     } catch (error) {
         
         toast.error(error.response?.data?.message || error.message);
-      }*/
+      }finally {
+      setIsLoading(false);
+    }
 
   }
   const handleDelete = async (id) => {
@@ -83,27 +87,43 @@ const employeeLeave = () => {
 
 
   const handleClose = () => {
+    setIsLoading(true);
+    setTimeout(() => {
     setShowForm(false);
     fetchLeaves();
+    setIsLoading(false);
+                  }, 300);
   };
 
   const handleAddNew = () => {
+    setIsLoading(true);
+    setTimeout(() => {
     setShowForm(true);
     setEditingLeave(null)
+    setIsLoading(false);
+                  }, 300);
   };
 
   const handleUpdate = (item) => {
+    setIsLoading(true);
+    setTimeout(() => {
     setEditingLeave(item);
     setLeave(item.leave);
     setReason(item.reason);
     setFrom(new Date(item.from).toISOString().split('T')[0]);
     setTo(new Date(item.to).toISOString().split('T')[0]);
     setShowForm(true);
+       setIsLoading(false);
+                  }, 300);
   };
 
 
   const handleView = (leaves) => {
-    setSelectedLeave(leaves);
+    setIsLoading(true);
+    setTimeout(() => {
+      setSelectedLeave(leaves);
+      setIsLoading(false);
+    }, 300);
   };
 
 
@@ -204,10 +224,10 @@ const employeeLeave = () => {
               <p>{new Date(item.appliedAt).toISOString().split('T')[0]}</p>
               <p>
                 <span className={`font-semibold ${(item.hodStatus === "Rejected" || item.status === "Rejected")
-                    ? "text-red-500"
-                    : item.status === "Approved"
-                      ? "text-green-600"
-                      : "text-yellow-600"
+                  ? "text-red-500"
+                  : item.status === "Approved"
+                    ? "text-green-600"
+                    : "text-yellow-600"
                   }`}>
                   {item.hodStatus === "Rejected" ? item.hodStatus : item.status}
                 </span>
@@ -276,7 +296,13 @@ const employeeLeave = () => {
             {/* Pagination controls */}
             <div className="flex justify-center items-center mt-2 gap-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setCurrentPage(prev => Math.max(prev - 1, 1))
+                    setIsLoading(false);
+                  }, 300);
+                }}
                 disabled={currentPage === 1}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                 Prev
@@ -292,7 +318,13 @@ const employeeLeave = () => {
               ))}
 
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                    setIsLoading(false);
+                  }, 300);
+                }}
                 disabled={currentPage === totalPages}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                 Next
@@ -517,16 +549,16 @@ const employeeLeave = () => {
                   <tr className="border-b">
                     <th className="px-4 py-2 font-medium bg-gray-50">HR Approval</th>
                     <td className="px-4 py-2">
-                    
-                <span className={`font-semibold ${(selectedLeave.hodStatus === "Rejected" || selectedLeave.status === "Rejected")
-                    ? "text-red-500"
-                    : selectedLeave.status === "Approved"
-                      ? "text-green-600"
-                      : "text-yellow-600"
-                  }`}>
-                  {selectedLeave.hodStatus === "Rejected" ? selectedLeave.hodStatus : selectedLeave.status}
-                </span>
-       
+
+                      <span className={`font-semibold ${(selectedLeave.hodStatus === "Rejected" || selectedLeave.status === "Rejected")
+                        ? "text-red-500"
+                        : selectedLeave.status === "Approved"
+                          ? "text-green-600"
+                          : "text-yellow-600"
+                        }`}>
+                        {selectedLeave.hodStatus === "Rejected" ? selectedLeave.hodStatus : selectedLeave.status}
+                      </span>
+
                     </td>
                   </tr>
 
@@ -597,7 +629,7 @@ const employeeLeave = () => {
           </div>
         </div>
       )}
-
+      {isLoading && <LoadingOverlay />}
     </div>
   );
 };

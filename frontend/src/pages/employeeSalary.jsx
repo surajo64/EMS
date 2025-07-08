@@ -5,8 +5,10 @@ import { AppContext } from '../context/AppContext';
 import axios from 'axios';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 const employeeSalary = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const { token, backendUrl, getAllSalary, } = useContext(AppContext);
   const [selectedSalaryRecords, setSelectedSalaryRecords] = useState([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -19,8 +21,12 @@ const employeeSalary = () => {
 
 
   const handleView = (group) => {
-    setSelectedSalaryRecords({ month: group.month, year: group.year, records: group.records });
-    setShowDetailModal(true);
+    setIsLoading(true);
+    setTimeout(() => {
+      setSelectedSalaryRecords({ month: group.month, year: group.year, records: group.records });
+      setShowDetailModal(true);
+      setIsLoading(false);
+    }, 300);
   };
 
 
@@ -44,6 +50,7 @@ const employeeSalary = () => {
 
 
   const handlePrintSlip = (group) => {
+
     const currentUserId = JSON.parse(localStorage.getItem('user'))?.id;
     const salaryRecord = group.records.find(
       rec => rec?.employeeId?.userId?._id === currentUserId
@@ -224,7 +231,13 @@ const employeeSalary = () => {
                     View Detail
                   </button>
                   <button
-                    onClick={() => handlePrintSlip(item)}
+                    onClick={() => {
+                      setIsLoading(true);
+                      setTimeout(() => {
+                        handlePrintSlip(item)
+                        setIsLoading(false);
+                      }, 300);
+                    }}
                     className="bg-blue-600 text-white text-sm px-3 py-1 rounded-full"
                   >
                     Pay Slip
@@ -240,7 +253,13 @@ const employeeSalary = () => {
         <div className="flex justify-center items-center mt-4 gap-4">
           <button
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
+            onClick={() => {
+              setIsLoading(true);
+              setTimeout(() => {
+                setCurrentPage((prev) => prev - 1)
+                setIsLoading(false);
+              }, 300);
+            }}
             className={`px-4 py-1 rounded ${currentPage === 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'}`}
           >
             Previous
@@ -252,7 +271,13 @@ const employeeSalary = () => {
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase())
             ).length}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
+            onClick={() => {
+              setIsLoading(true);
+              setTimeout(() => {
+                setCurrentPage((prev) => prev + 1)
+                setIsLoading(false);
+              }, 300);
+            }}
             className={`px-4 py-1 rounded ${currentPage * itemsPerPage >= salaryGroups.length ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'}`}
           >
             Next
@@ -295,31 +320,40 @@ const employeeSalary = () => {
                     <th className="py-2 px-2">Full Name</th>
                     <th className="py-2 px-2">Department</th>
                     <th className="py-2 px-2 text-green-500">Basic</th>
-                    <th className="py-2 px-2 text-green-500">Allowances</th>
+                    <th className="py-2 px-2 text-green-500">Transport Allowance</th>
+                    <th className="py-2 px-2 text-green-500">Meal Allowance</th>
+                    <th className="py-2 px-2 text-green-500">Over Time</th>
                     <th className="py-2 px-2 text-yellow-500">Growth Salary</th>
-                    <th className="py-2 px-2 text-red-500">Deductions</th>
+                    <th className="py-2 px-2 text-red-500">Paye</th>
+                    <th className="py-2 px-2 text-red-500">Loan Deduction</th>
+                    <th className="py-2 px-2 text-red-500">Pension</th>
                     <th className="py-2 px-2 text-green-500">Net Pay</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {selectedSalaryRecords.records.map((salary, idx) => (
-                    <tr key={salary._id} className="border-b hover:bg-gray-50 text-center">
-                      <td className="py-2 px-2">{idx + 1}</td>
-                      <td className="py-2 px-2">{salary?.employeeId?.staffId || 'N/A'}</td>
-                      <td className="py-2 px-2">{salary?.employeeId?.userId?.name || 'N/A'}</td>
-                      <td className="py-2 px-2">{salary?.employeeId?.department?.name || 'N/A'}</td>
-                      <td className="py-2 px-2 text-green-500">₦{salary.basicSalary.toLocaleString()}</td>
-                      <td className="py-2 px-2 text-green-500">
-                        ₦{((salary.transportAllowance || 0) + (salary.mealAllowance || 0) + (salary.overTime || 0)).toLocaleString()}
-                      </td>
-                      <td className="py-2 px-2 text-yellow-500">₦{salary.growthSalary.toLocaleString()}</td>
-                      <td className="py-2 px-2 text-red-500">
-                        ₦{((salary.pension || 0) + (salary.paye || 0) + (salary.loan || 0)).toLocaleString()}
-                      </td>
-                      <td className="py-2 px-2 text-green-500">₦{salary.netSalary.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
+               <tbody>
+  {selectedSalaryRecords.records.map((salary, idx) => (
+    <tr key={salary._id} className="border-b hover:bg-gray-50 text-center">
+      <td className="py-2 px-2">{idx + 1}</td>
+      <td className="py-2 px-2">{salary?.employeeId?.staffId || 'N/A'}</td>
+      <td className="py-2 px-2">{salary?.employeeId?.userId?.name || 'N/A'}</td>
+      <td className="py-2 px-2">{salary?.employeeId?.department?.name || 'N/A'}</td>
+
+      <td className="py-2 px-2 text-green-600 font-medium">₦{(salary.basicSalary ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-green-600 font-medium">₦{(salary.transportAllowance ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-green-600 font-medium">₦{(salary.mealAllowance ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-green-600 font-medium">₦{(salary.overTime ?? 0).toLocaleString()}</td>
+      
+      <td className="py-2 px-2 text-yellow-600 font-medium">₦{(salary.growthSalary ?? 0).toLocaleString()}</td>
+      
+      <td className="py-2 px-2 text-red-500 font-medium">₦{(salary.paye ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-red-500 font-medium">₦{(salary.loan ?? 0).toLocaleString()}</td>
+      <td className="py-2 px-2 text-red-500 font-medium">₦{(salary.pension ?? 0).toLocaleString()}</td>
+      
+      <td className="py-2 px-2 text-green-700 font-semibold bg-green-50">₦{(salary.netSalary ?? 0).toLocaleString()}</td>
+    </tr>
+  ))}
+</tbody>
+
               </table>
             </div>
           </div>
@@ -327,7 +361,7 @@ const employeeSalary = () => {
       )}
 
 
-
+      {isLoading && <LoadingOverlay />}
     </div>
   )
 }

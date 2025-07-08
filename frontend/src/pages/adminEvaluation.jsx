@@ -4,6 +4,7 @@ import { AppContext } from '../context/AppContext';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import axios from "axios";
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
 
@@ -22,7 +23,7 @@ const adminEvaluation = () => {
 
     const { token, getAllEmployees, fetchKpi, kpi, setKpi, employees, getAllEvaluations, evaluations, setEvaluations, backendUrl } = useContext(AppContext);
     const [userId, setUserId] = useState(null); // for saving selected user's ID
-
+    const [isLoading, setIsLoading] = useState(false);
     const [showDetail, setShowDetail] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -71,7 +72,8 @@ const adminEvaluation = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        setIsLoading(true);
+        
         const userId = selectedRecords.hodEvaluation.userId._id || selectedRecords?.employeeId;
         const kpiId = selectedRecords.kpi._id
         const evaluationId = selectedRecords.hodEvaluation._id
@@ -88,65 +90,71 @@ const adminEvaluation = () => {
             month,
 
         };
+       
 
-        if (!userId || !scores || formData.total == null || !formData.grade || !kpiId) {
-            toast.error("Missing required field. Please fill all evaluation inputs.");
-            return;
-        }
-
-        if (isEditing) {
-
-
-            const { data } = await axios.post(
-                backendUrl + '/api/admin/update-admin-evaluation',
-                { adminEvaluationId: selectedRecords.adminEvaluation._id, ...formData },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            if (data.success) {
-                toast.success("Evaluation updated successfully!");
-                resetForm();
-
-                // ✅ Refresh selectedRecords.hodEvaluation manually
-                const updatedEval = {
-                    ...formData,
-                    createdAt: new Date().toISOString(),
-                };
-
-                setSelectedRecords(prev => ({
-                    ...prev,
-                    adminEvaluation: updatedEval
-                }));
-                getAllEvaluations();
-
+            if (!userId || !scores || formData.total == null || !formData.grade || !kpiId) {
+                toast.error("Missing required field. Please fill all evaluation inputs.");
+                return;
             }
-        } else {
-            const { data } = await axios.post(
-                backendUrl + "/api/admin/admin-evaluation",
-                formData,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+ try {
+            if (isEditing) {
 
-            if (data.success) {
-                toast.success("Evaluation Submited successfully!");
 
-                // Reset state
-                // ✅ Refresh selectedRecords.hodEvaluation manually
-                const updatedEval = {
-                    ...formData,
-                    createdAt: new Date().toISOString(),
-                };
+                const { data } = await axios.post(
+                    backendUrl + '/api/admin/update-admin-evaluation',
+                    { adminEvaluationId: selectedRecords.adminEvaluation._id, ...formData },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
 
-                setSelectedRecords(prev => ({
-                    ...prev,
-                    adminEvaluation: updatedEval
-                }));
-                resetForm();
-                getAllEvaluations();
+                if (data.success) {
+                    toast.success("Evaluation updated successfully!");
+                    resetForm();
 
+                    // ✅ Refresh selectedRecords.hodEvaluation manually
+                    const updatedEval = {
+                        ...formData,
+                        createdAt: new Date().toISOString(),
+                    };
+
+                    setSelectedRecords(prev => ({
+                        ...prev,
+                        adminEvaluation: updatedEval
+                    }));
+                    getAllEvaluations();
+
+                }
             } else {
-                toast.error(data.message);
+                const { data } = await axios.post(
+                    backendUrl + "/api/admin/admin-evaluation",
+                    formData,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                if (data.success) {
+                    toast.success("Evaluation Submited successfully!");
+
+                    // Reset state
+                    // ✅ Refresh selectedRecords.hodEvaluation manually
+                    const updatedEval = {
+                        ...formData,
+                        createdAt: new Date().toISOString(),
+                    };
+
+                    setSelectedRecords(prev => ({
+                        ...prev,
+                        adminEvaluation: updatedEval
+                    }));
+                    resetForm();
+                    getAllEvaluations();
+
+                } else {
+                    toast.error(data.message);
+                }
             }
+        } catch (error) {
+        }
+        finally {
+            setIsLoading(false);
         }
     };
 
@@ -177,20 +185,29 @@ const adminEvaluation = () => {
 
 
     const handleView = (item) => {
-        setShowDetail(true);
-        setSelectedRecords(item)
+        setIsLoading(true);
+        setTimeout(() => {
+            setShowDetail(true);
+            setSelectedRecords(item)
+            setIsLoading(false);
+        }, 300);
     };
-    const handleClose = () => {
-        // Reset state
-        setShowDetail(false)
-        setShowForm(false);
-        setIsEditing(false);
-        setYear('')
-        setMonth('')
-        setScores({});
-        setComments('');
-        getAllEvaluations();
 
+
+    const handleClose = () => {
+        setIsLoading(true);
+        setTimeout(() => {
+            // Reset state
+            setShowDetail(false)
+            setShowForm(false);
+            setIsEditing(false);
+            setYear('')
+            setMonth('')
+            setScores({});
+            setComments('');
+            getAllEvaluations();
+            setIsLoading(false);
+        }, 300);
     }
 
 
@@ -292,7 +309,13 @@ const adminEvaluation = () => {
                         {/* Pagination controls */}
                         <div className="flex justify-center items-center mt-2 gap-2">
                             <button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                onClick={() => {
+                                    setIsLoading(true);
+                                    setTimeout(() => {
+                                        setCurrentPage(prev => Math.max(prev - 1, 1))
+                                        setIsLoading(false);
+                                    }, 300);
+                                }}
                                 disabled={currentPage === 1}
                                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                                 Prev
@@ -308,7 +331,13 @@ const adminEvaluation = () => {
                             ))}
 
                             <button
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                onClick={() => {
+                                    setIsLoading(true);
+                                    setTimeout(() => {
+                                        setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                                        setIsLoading(false);
+                                    }, 300);
+                                }}
                                 disabled={currentPage === totalPages}
                                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                                 Next
@@ -543,12 +572,16 @@ const adminEvaluation = () => {
                                             <div className="mt-4 text-right">
                                                 <button
                                                     onClick={() => {
-                                                        setIsEditing(true);
-                                                        setMonth(selectedRecords.adminEvaluation.month);
-                                                        setYear(selectedRecords.adminEvaluation.year);
-                                                        setComments(selectedRecords.adminEvaluation.comments || '');
-                                                        setScores(selectedRecords.adminEvaluation.scores || {});
-                                                        setIsEditing({ _id: selectedRecords.adminEvaluation._id }); // useful for PATCH/POST
+                                                        setIsLoading(true);
+                                                        setTimeout(() => {
+                                                            setIsEditing(true);
+                                                            setMonth(selectedRecords.adminEvaluation.month);
+                                                            setYear(selectedRecords.adminEvaluation.year);
+                                                            setComments(selectedRecords.adminEvaluation.comments || '');
+                                                            setScores(selectedRecords.adminEvaluation.scores || {});
+                                                            setIsEditing({ _id: selectedRecords.adminEvaluation._id }); // useful for PATCH/POST
+                                                            setIsLoading(false);
+                                                        }, 300);
                                                     }}
                                                     className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
                                                 >
@@ -648,7 +681,7 @@ const adminEvaluation = () => {
                 </div>
             )
             }
-
+            {isLoading && <LoadingOverlay />}
 
         </div >
     );

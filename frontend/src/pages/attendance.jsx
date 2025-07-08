@@ -4,6 +4,7 @@ import { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useEffect } from 'react';
 import { toast } from "react-toastify";
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 const attendance = () => {
   const { token, getAllDepartment, setDepartment, department, backendUrl } = useContext(AppContext);
@@ -18,16 +19,18 @@ const attendance = () => {
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [filteredAttendance, setFilteredAttendance] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5
 
   const handleUpload = async (e) => {
     e.preventDefault();
+      setIsLoading(true);
     const formData = new FormData();
     formData.append('file', file);
 
-    /* try {*/
+    try {
     const { data } = await axios.post(backendUrl + '/api/admin/add-attendance', formData,
       { headers: { Authorization: `Bearer ${token}` }, });
 
@@ -43,32 +46,46 @@ const attendance = () => {
 
       toast.error(data.message || "Upload failed.");
     }
-    /*} catch (error) {
+    } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || "Something went wrong.");
-    }*/
+    }finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAddNew = () => {
+    setIsLoading(true);
+    setTimeout(() => {
     setShowForm(true);
-
+setIsLoading(false);
+    }, 300);
   };
-  const handleView = () => {
-    setShowDetailModal(true);
 
+
+  const handleView = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+    setShowDetailModal(true);
+ setIsLoading(false);
+    }, 300);
   };
 
   const handleClose = () => {
+     setIsLoading(true);
+    setTimeout(() => {
     setShowDetailModal(false)
     setMonth("");
     setReport([]);
     setSelectedEmployee(null);
     setEmployeeDetails([]);
-
-
-
+ setIsLoading(false);
+    }, 300);
   };
+
+
   const fetchReport = async () => {
+    setIsLoading(true);
     try {
       const { data } = await axios.get(`${backendUrl}/api/admin/report/${month}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -80,6 +97,8 @@ const attendance = () => {
       }
     } catch (err) {
       console.error("Fetch error:", err);
+    }finally {
+      setIsLoading(false);
     }
   };
 
@@ -109,28 +128,28 @@ const attendance = () => {
     currentPage * itemsPerPage
   );
   return (
-   <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 text-center">
-  {/* Page Title */}
-  <p className="text-2xl font-bold text-gray-800">ATTENDANCE MANAGEMENT</p>
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 text-center">
+      {/* Page Title */}
+      <p className="text-2xl font-bold text-gray-800">ATTENDANCE MANAGEMENT</p>
 
-  {/* Search & Add Button */}
-  <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4 sm:gap-0">
-    <input
-      type="text"
-      placeholder="Search by month name..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="w-full sm:w-1/3 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-    />
+      {/* Search & Add Button */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4 sm:gap-0">
+        <input
+          type="text"
+          placeholder="Search by month name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full sm:w-1/3 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
 
-    <button
-      onClick={handleAddNew}
-      className="bg-green-500 text-white py-2 px-6 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
-    >
-      Add Attendance
-    </button>
-  </div>
-<br/>
+        <button
+          onClick={handleAddNew}
+          className="bg-green-500 text-white py-2 px-6 rounded-md text-sm hover:bg-green-600 transition w-full sm:w-auto"
+        >
+          Add Attendance
+        </button>
+      </div>
+      <br />
       <div className='bg-white border-rounded text-sm max-h-[80vh] min-h-[60vh] overflow-scroll'>
         <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_1fr_1fr_0.5fr_0.5fr_0.5fr_0.5fr_0.5fr_1fr] py-3 px-6 rounded-xl border-b-4 border-green-500'>
           <p>#</p>
@@ -189,7 +208,13 @@ const attendance = () => {
             {/* Pagination controls */}
             <div className="flex justify-center items-center mt-2 gap-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setCurrentPage(prev => Math.max(prev - 1, 1))
+                    setIsLoading(false);
+                  }, 300);
+                }}
                 disabled={currentPage === 1}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                 Prev
@@ -205,7 +230,13 @@ const attendance = () => {
               ))}
 
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                    setIsLoading(false);
+                  }, 300);
+                }}
                 disabled={currentPage === totalPages}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                 Next
@@ -280,140 +311,149 @@ const attendance = () => {
             )}
 
 
-           {/* Attendance Table Wrapper */}
-<div id="print-salary-table" className="overflow-x-auto">
+            {/* Attendance Table Wrapper */}
+            <div id="print-salary-table" className="overflow-x-auto">
 
-  <h2 className="text-lg sm:text-xl font-bold mb-4 text-center sm:text-left">
-    {selectedEmployee
-      ? `Details for ${selectedEmployee.name} (${selectedEmployee.staffId})`
-      : 'Monthly Attendance Report'}{" "}
-    {month && (
-      <span className="text-green-700">
-        for{" "}
-        {new Date(month + "-01").toLocaleString("default", {
-          month: "long",
-          year: "numeric",
-        })}
-      </span>
-    )}
-  </h2>
+              <h2 className="text-lg sm:text-xl font-bold mb-4 text-center sm:text-left">
+                {selectedEmployee
+                  ? `Details for ${selectedEmployee.name} (${selectedEmployee.staffId})`
+                  : 'Monthly Attendance Report'}{" "}
+                {month && (
+                  <span className="text-green-700">
+                    for{" "}
+                    {new Date(month + "-01").toLocaleString("default", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                )}
+              </h2>
 
-  {/* Table for Monthly Summary */}
-  {!selectedEmployee ? (
-    report.length > 0 ? (
-      <div className="overflow-x-auto">
-        <table className="w-full border mt-2 text-sm text-gray-800 min-w-[700px]">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border p-2">#</th>
-              <th className="border p-2">Staff ID</th>
-              <th className="border p-2">Name</th>
-              <th className="border p-2">Present</th>
-              <th className="border p-2">Absent</th>
-              <th className="border p-2">On Leave</th>
-              <th className="border p-2">Over Time</th>
-              <th className="border p-2">Off Duty</th>
-              <th className="border p-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.values(
-              report.reduce((acc, rec) => {
-                const id = rec.employeeId._id;
-                if (!acc[id]) {
-                  acc[id] = {
-                    employeeId: rec.employeeId,
-                    present: 0,
-                    absent: 0,
-                    leave: 0,
-                    overTime: 0,
-                    offDuty: 0,
-                    records: [],
-                  };
-                }
-                acc[id].records.push(rec);
-                if (rec.status === 'Present') acc[id].present++;
-                if (rec.status === 'Absent') acc[id].absent++;
-                if (rec.status === 'Leave') acc[id].leave++;
-                if (rec.status === 'overTime') acc[id].overTime++;
-                if (rec.status === 'offDuty') acc[id].offDuty++;
-                return acc;
-              }, {})
-            ).map((emp, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
-                <td className="border p-2">{idx + 1}</td>
-                <td className="border p-2">{emp.employeeId.staffId}</td>
-                <td className="border p-2">{emp.employeeId.name}</td>
-                <td className="border p-2 text-green-700">{emp.present}</td>
-                <td className="border p-2 text-red-700">{emp.absent}</td>
-                <td className="border p-2 text-yellow-700">{emp.leave}</td>
-                <td className="border p-2 text-blue-700">{emp.overTime}</td>
-                <td className="border p-2 text-gray-700">{emp.offDuty}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => {
-                      setSelectedEmployee(emp.employeeId);
-                      setEmployeeDetails(emp.records);
-                    }}
-                    className="text-blue-600 hover:underline text-sm"
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    ) : (
-      <p className="text-center text-gray-500 py-4">
-        No attendance found for this month.
-      </p>
-    )
-  ) : (
-    <>
-      {/* Table for Single Employee Detail */}
-      <div className="overflow-x-auto">
-        <table className="w-full border mt-2 text-sm text-gray-800 min-w-[300px]">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border p-2">Date</th>
-              <th className="border p-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employeeDetails.map((rec, i) => (
-              <tr key={i} className="hover:bg-gray-50">
-                <td className="border p-2">
-                  {new Date(rec.date).toLocaleDateString()}
-                </td>
-                <td className={`border p-2 font-bold text-center ${
-                  rec.status === "Present" ? "text-green-600" :
-                  rec.status === "Absent" ? "text-red-600" :
-                  rec.status === "Leave" ? "text-yellow-600" :
-                  rec.status === "overTime" ? "text-blue-600" :
-                  rec.status === "offDuty" ? "text-gray-700" : "text-black"
-                }`}>
-                  {rec.status}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              {/* Table for Monthly Summary */}
+              {!selectedEmployee ? (
+                report.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border mt-2 text-sm text-gray-800 min-w-[700px]">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="border p-2">#</th>
+                          <th className="border p-2">Staff ID</th>
+                          <th className="border p-2">Name</th>
+                          <th className="border p-2">Present</th>
+                          <th className="border p-2">Absent</th>
+                          <th className="border p-2">On Leave</th>
+                          <th className="border p-2">Over Time</th>
+                          <th className="border p-2">Off Duty</th>
+                          <th className="border p-2">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.values(
+                          report.reduce((acc, rec) => {
+                            const id = rec.employeeId._id;
+                            if (!acc[id]) {
+                              acc[id] = {
+                                employeeId: rec.employeeId,
+                                present: 0,
+                                absent: 0,
+                                leave: 0,
+                                overTime: 0,
+                                offDuty: 0,
+                                records: [],
+                              };
+                            }
+                            acc[id].records.push(rec);
+                            if (rec.status === 'Present') acc[id].present++;
+                            if (rec.status === 'Absent') acc[id].absent++;
+                            if (rec.status === 'Leave') acc[id].leave++;
+                            if (rec.status === 'overTime') acc[id].overTime++;
+                            if (rec.status === 'offDuty') acc[id].offDuty++;
+                            return acc;
+                          }, {})
+                        ).map((emp, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="border p-2">{idx + 1}</td>
+                            <td className="border p-2">{emp.employeeId.staffId}</td>
+                            <td className="border p-2">{emp.employeeId.name}</td>
+                            <td className="border p-2 text-green-700">{emp.present}</td>
+                            <td className="border p-2 text-red-700">{emp.absent}</td>
+                            <td className="border p-2 text-yellow-700">{emp.leave}</td>
+                            <td className="border p-2 text-blue-700">{emp.overTime}</td>
+                            <td className="border p-2 text-gray-700">{emp.offDuty}</td>
+                            <td className="border p-2">
+                              <button
+                                onClick={() => {
+                                  setIsLoading(true);
+                                  setTimeout(() => {
+                                    setSelectedEmployee(emp.employeeId);
+                                    setEmployeeDetails(emp.records);
+                                    setIsLoading(false);
+                                  }, 300);
+                                }}
+                                className="text-blue-600 hover:underline text-sm"
+                              >
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-4">
+                    No attendance found for this month.
+                  </p>
+                )
+              ) : (
+                <>
+                  {/* Table for Single Employee Detail */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full border mt-2 text-sm text-gray-800 min-w-[300px]">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="border p-2">Date</th>
+                          <th className="border p-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {employeeDetails.map((rec, i) => (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="border p-2">
+                              {new Date(rec.date).toLocaleDateString()}
+                            </td>
+                            <td className={`border p-2 font-bold text-center ${rec.status === "Present" ? "text-green-600" :
+                                rec.status === "Absent" ? "text-red-600" :
+                                  rec.status === "Leave" ? "text-yellow-600" :
+                                    rec.status === "overTime" ? "text-blue-600" :
+                                      rec.status === "offDuty" ? "text-gray-700" : "text-black"
+                              }`}>
+                              {rec.status}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-      {/* Back Button */}
-      <div className="flex justify-end mt-4">
-        <button
-          onClick={() => setSelectedEmployee(null)}
-          className="bg-gray-300 text-gray-800 px-4 py-1 rounded hover:bg-gray-400"
-        >
-          ← Back
-        </button>
-      </div>
-    </>
-  )}
-</div>
+                  {/* Back Button */}
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => {
+                        setIsLoading(true);
+                        setTimeout(() => {
+                          setSelectedEmployee(null)
+                          setIsLoading(false);
+                        }, 300);
+                      }}
+                      className="bg-gray-300 text-gray-800 px-4 py-1 rounded hover:bg-gray-400"
+                    >
+                      ← Back
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
 
 
             {/* Print Button */}
@@ -444,7 +484,7 @@ const attendance = () => {
         </div>
       )}
 
-
+      {isLoading && <LoadingOverlay />}
     </div>
   );
 };
