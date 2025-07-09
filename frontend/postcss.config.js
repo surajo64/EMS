@@ -1,7 +1,7 @@
+// ✅ Correct for ESM / Vite projects
 export default {
   plugins: {
-    tailwindcss: {},
+    '@tailwindcss/postcss': {},
     autoprefixer: {},
   },
 }
-
