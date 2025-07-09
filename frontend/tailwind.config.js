@@ -1,12 +1,34 @@
-
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx,html}",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'primary': "#5f6FFF"
+      },
+      fontSize: {
+        'course-deatails-heading-large': ['36px', '44px'],
+        'course-deatails-heading-small': ['26px', '36px'],
+        'home-heading-small': ['28px', '34px'],
+        'home-heading-large': ['48px', '56px'],
+        'default': ['15px', '21px']
+      },
+      gridTemplateColumns: {
+        'auto': 'repeat(auto-fit, minmax(200px, 1fr))'
+      },
+      spacing: {
+        'section-height': '500px'
+      },
+      maxWidth: {
+        'course-card' : '424px',
+      },
+      boxShadow: {
+        'custom-card' : '0px 4px 15px 2px rgba(0,0,0,0.3) ',
+      },
+    },
   },
   plugins: [],
 }
