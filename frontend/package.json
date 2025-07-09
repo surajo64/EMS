@@ -44,3 +44,13 @@
   "author": "",
   "license": "ISC"
 }
+{
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  ...
+}
+
