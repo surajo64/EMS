@@ -31,24 +31,26 @@ import Loan from './pages/loan.jsx'
 import LoadingOverlay from './components/loadingOverlay.jsx';
 
 const App = () => {
-  const { token , setToken} = useContext(AppContext);
+  const { token, setToken } = useContext(AppContext);
   const navigate = useNavigate();
- const location = useLocation();
- const [isLoading, setIsLoading] = useState(false);
- const idleTimeoutRef = useRef(null);
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const idleTimeoutRef = useRef(null);
 
-  // 🟢 Inactivity logout handler
   const startIdleTimer = () => {
     clearTimeout(idleTimeoutRef.current);
 
     idleTimeoutRef.current = setTimeout(() => {
-      // logout and navigate
-      setToken(null); // clear token in context
-      localStorage.removeItem("token"); // also clear from storage if you use that
       toast.warn("Session timed out due to inactivity");
-      navigate("/login");
+      alert("Session timed out due to inactivity");
+      setTimeout(() => {
+        setToken(null);
+        localStorage.removeItem("token");
+        navigate("/login");
+      }, 2000); // Let toast show before navigating
     }, 5 * 60 * 1000); // 5 minutes
   };
+
 
   // 🔄 Reset idle timer on user activity
   const resetIdleTimer = () => {
@@ -77,19 +79,19 @@ const App = () => {
 
 
   useEffect(() => {
-  setIsLoading(true);
+    setIsLoading(true);
 
-  const handle = requestAnimationFrame(() => {
-    // Add slight delay if needed
-    setTimeout(() => setIsLoading(false), 300);
-  });
+    const handle = requestAnimationFrame(() => {
+      // Add slight delay if needed
+      setTimeout(() => setIsLoading(false), 300);
+    });
 
-  return () => {
-    cancelAnimationFrame(handle);
-  };
-}, [location.pathname]);
+    return () => {
+      cancelAnimationFrame(handle);
+    };
+  }, [location.pathname]);
 
-  
+
   return (
     <>
       <ToastContainer />
