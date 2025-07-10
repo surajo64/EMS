@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
@@ -31,24 +32,68 @@ import LoadingOverlay from './components/loadingOverlay.jsx';
 
 const App = () => {
   const { token } = useContext(AppContext);
-
+  const navigate = useNavigate();
  const location = useLocation();
-  const [loading, setLoading] = useState(false);
+ const [isLoading, setIsLoading] = useState(false);
+ const idleTimeoutRef = useRef(null);
+
+  // 🟢 Inactivity logout handler
+  const startIdleTimer = () => {
+    clearTimeout(idleTimeoutRef.current);
+
+    idleTimeoutRef.current = setTimeout(() => {
+      // logout and navigate
+      setToken(null); // clear token in context
+      localStorage.removeItem("token"); // also clear from storage if you use that
+      toast.warn("Session timed out due to inactivity");
+      navigate("/login");
+    }, 5 * 60 * 1000); // 5 minutes
+  };
+
+  // 🔄 Reset idle timer on user activity
+  const resetIdleTimer = () => {
+    startIdleTimer();
+  };
 
   useEffect(() => {
-    // Show overlay briefly during route change
-    setLoading(true);
+    if (token) {
+      // Start timer and attach listeners
+      startIdleTimer();
 
-    const timeout = setTimeout(() => {
-      setLoading(false);
-    }, 500); // Adjust duration as needed
+      window.addEventListener("mousemove", resetIdleTimer);
+      window.addEventListener("keydown", resetIdleTimer);
+      window.addEventListener("click", resetIdleTimer);
+      window.addEventListener("scroll", resetIdleTimer);
+    }
 
-    return () => clearTimeout(timeout);
-  }, [location.pathname]);
+    return () => {
+      clearTimeout(idleTimeoutRef.current);
+      window.removeEventListener("mousemove", resetIdleTimer);
+      window.removeEventListener("keydown", resetIdleTimer);
+      window.removeEventListener("click", resetIdleTimer);
+      window.removeEventListener("scroll", resetIdleTimer);
+    };
+  }, [token]);
+
+
+  useEffect(() => {
+  setIsLoading(true);
+
+  const handle = requestAnimationFrame(() => {
+    // Add slight delay if needed
+    setTimeout(() => setIsLoading(false), 300);
+  });
+
+  return () => {
+    cancelAnimationFrame(handle);
+  };
+}, [location.pathname]);
+
+  
   return (
     <>
       <ToastContainer />
-      {loading && <LoadingOverlay />}
+      {isLoading && <LoadingOverlay />}
       {token ? (
         <div className=' bg-gray-100 min-h-[50px] max-h-full overflow-auto'>
           <Navbar />

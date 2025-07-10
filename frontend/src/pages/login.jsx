@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useContext } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { AppContext, useAuth } from '../context/AppContext';
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
 
@@ -12,11 +13,11 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-
+const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+ setIsLoading(true);
     try {
       const { data } = await axios.post(backendUrl + '/api/auth/login', {
         email,
@@ -47,7 +48,9 @@ const Login = () => {
     } catch (error) {
       console.error("Login error:", error);
       toast.error(error.response?.data?.message || "Login failed!");
-    }
+    }finally {
+    setIsLoading(false); 
+  }
   };
 
   return (
@@ -93,6 +96,7 @@ const Login = () => {
           </button>
         </form>
       </div>
+      {isLoading && <LoadingOverlay />}
     </div>
   );
 };

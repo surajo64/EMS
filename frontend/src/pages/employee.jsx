@@ -144,7 +144,7 @@ const employee = () => {
         setSelectedDepartment(item.department._id);
         handleDepartmentChange({ target: { value: item.department._id } });
       }
-      setDesignation(item.designation || '');
+      setDesignation(item.designation || ''); 
       setSelectedCVFile(item.cv || null);
       setSelectedImageFile(item.userId?.profileImage || null);
       setAddress(item.address);
