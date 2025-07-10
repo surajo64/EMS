@@ -25,7 +25,8 @@ app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
 
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'build')));
-app.get('*', (req, res) => {
+
+app.get('/*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '..', 'frontend', 'build', 'index.html'));
 });
 
