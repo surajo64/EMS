@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
- "scripts": {
+"scripts": {
   "start": "node index.js",
-  "build": "cd frontend && npm install && npm run build && cd .. && npm install",
+  "build": "cd frontend && npm run build && cd ..",
+  "dev": "concurrently \"npm run server\" \"npm run client\"",
+  "server": "node index.js",
+  "client": "cd frontend && npm run dev",
   "install-all": "npm install && cd frontend && npm install"
 },
   "keywords": [],
