@@ -26,19 +26,18 @@ app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
 
 
-// Serve static files from Vite build
-const frontendPath = path.join(__dirname, 'public');
-
-if (fs.existsSync(frontendPath)) {
-  app.use(express.static(frontendPath));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-} else {
-  console.error('Frontend files not found at:', frontendPath);
-  console.log('Did you forget to build the frontend?');
-}
+const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
+  // First verify the path exists
+  if (fs.existsSync(frontendPath)) {
+    app.use(express.static(frontendPath));
+    
+    // ✅ Catch-all route for React Router
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    });
+  } else {
+    console.error('Frontend build directory not found:', frontendPath);
+  }
 
 
 app.listen(process.env.PORT,() => {
