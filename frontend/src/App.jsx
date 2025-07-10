@@ -100,6 +100,7 @@ const App = () => {
           <div className='flex items-start'>
             <Sidebar />
             <Routes>
+              <Route path="/" element={<AdminDashboard />} />
               <Route path='/admin-dashboard' element={<AdminDashboard />} />
               <Route path='/employee-dashboard' element={<EmployeeDashboard />} />
               <Route path='/hod-dashboard' element={<HodDashboar />} />
