@@ -73,7 +73,7 @@ adminRouter.get('/get-employee-salaries', authUser, getEmployeeSalaries);
 
 adminRouter.post('/change-password',authUser, changePassword);
 adminRouter.post('/forgot-password',  forgotPassword)
-//adminRouter.post("/reset-password/:token", resetPassword)
+adminRouter.post("/reset-password/:token", resetPassword)
 
 
 // Performance evaluation

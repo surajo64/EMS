@@ -6,6 +6,7 @@ import adminRouter from './routes/adminRoute.js'
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import fs from 'fs';
 
 
 connectToDatabase()
