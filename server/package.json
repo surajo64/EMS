@@ -5,7 +5,7 @@
   "type": "module",
 "scripts": {
   "start": "node index.js",
-  "build": "cd frontend && npm run build && cd ..",
+  "build": "cd frontend && npm run build",
   "dev": "concurrently \"npm run server\" \"npm run client\"",
   "server": "node index.js",
   "client": "cd frontend && npm run dev",

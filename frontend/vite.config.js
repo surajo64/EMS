@@ -4,16 +4,17 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  server: {
-    port: 5173, // Vite default dev server port
-  },
   build: {
-    outDir: '../server/public', // Build directly into Express public folder
-    emptyOutDir: true, // Clear the directory before building
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+    outDir: '../server/public',  // Build into Express public folder
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          vendor: ['axios', 'lodash'],
+        }
+      }
     },
-  },
+    chunkSizeWarningLimit: 1000,  // Increase warning limit to 1000kb
+  }
 });

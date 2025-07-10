@@ -26,20 +26,29 @@ app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
 
 
-// Serve static files from Vite build
-const frontendPath = path.join(__dirname, 'public');
+// Serve static files from either location
+const possibleFrontendPaths = [
+  path.join(__dirname, 'public'),       // Vite builds here with current config
+  path.join(__dirname, '../frontend/dist')  // Alternative location
+];
 
-if (fs.existsSync(frontendPath)) {
-  app.use(express.static(frontendPath));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-} else {
-  console.error('Frontend files not found at:', frontendPath);
-  console.log('Did you forget to build the frontend?');
+let frontendServed = false;
+
+possibleFrontendPaths.forEach(frontendPath => {
+  if (fs.existsSync(frontendPath)) {
+    app.use(express.static(frontendPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    });
+    console.log(`Serving frontend from: ${frontendPath}`);
+    frontendServed = true;
+  }
+});
+
+if (!frontendServed) {
+  console.error('Frontend not found in any of these locations:');
+  possibleFrontendPaths.forEach(p => console.log(`- ${p}`));
 }
-
 
 app.listen(process.env.PORT,() => {
 console.log(`Server is running on port ${process.env.PORT}`);
