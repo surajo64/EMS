@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
-"scripts": {
-  "start": "node index.js",
-  "build": "cd frontend && npm run build",
-  "dev": "concurrently \"npm run server\" \"npm run client\"",
-  "server": "node index.js",
-  "client": "cd frontend && npm run dev",
-  "install-all": "npm install && cd frontend && npm install"
-},
+ "scripts": {
+    "start": "node index.js",
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "node index.js",
+    "client": "cd frontend && npm run dev"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
