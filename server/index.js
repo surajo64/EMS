@@ -25,13 +25,20 @@ app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
 
 
-// ✅ Serve React frontend (AFTER API routes)
-app.use(express.static(path.join(__dirname, '..', 'frontend', 'build')));
+const frontendPath = path.join(__dirname, '..', 'frontend', 'build');
+  // First verify the path exists
+  if (fs.existsSync(frontendPath)) {
+    app.use(express.static(frontendPath));
+    
+    // ✅ Catch-all route for React Router
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    });
+  } else {
+    console.error('Frontend build directory not found:', frontendPath);
+  }
 
-// ✅ Catch-all route for React Router (very important!)
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, '..', 'frontend', 'build', 'index.html'));
-});
+
 app.listen(process.env.PORT,() => {
 console.log(`Server is running on port ${process.env.PORT}`);
 
