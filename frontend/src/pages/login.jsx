@@ -7,7 +7,7 @@ import { AppContext, useAuth } from '../context/AppContext';
 import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 
-
+ 
 const Login = () => {
   const { logout, login, user, token, setToken, backendUrl } = useContext(AppContext)
   const navigate = useNavigate();
@@ -55,6 +55,9 @@ const [isLoading, setIsLoading] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-green-100 px-4">
+      
+        <img src="/public/logo.svg" class="w-24 mx-auto mb-4" />
+
       <h1 className="text-2xl sm:text-3xl font-bold text-center text-green-800 mb-6">
         KIRCT EMPLOYEE MANAGEMENT SYSTEM
       </h1>
