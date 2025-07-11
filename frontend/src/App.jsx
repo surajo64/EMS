@@ -31,7 +31,7 @@ import Loan from './pages/loan.jsx'
 import LoadingOverlay from './components/loadingOverlay.jsx';
 
 const App = () => {
-  const { token } = useContext(AppContext);
+  const { token,setToken  } = useContext(AppContext);
   const navigate = useNavigate();
  const location = useLocation();
  const [isLoading, setIsLoading] = useState(false);
