@@ -7,6 +7,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import dotenv from 'dotenv';
+import fs from 'fs'; // ✅ Fix: import fs here
+
 
 dotenv.config(); // ✅ Make sure env vars like PORT and Cloudinary keys are loaded
 
