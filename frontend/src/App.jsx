@@ -46,6 +46,7 @@ const App = () => {
       setToken(null); // clear token in context
       localStorage.removeItem("token"); // also clear from storage if you use that
       toast.warn("Session timed out due to inactivity");
+    alert("Session timed out due to inactivity");
       navigate("/login");
     }, 5 * 60 * 1000); // 5 minutes
   };

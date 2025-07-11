@@ -49,8 +49,10 @@ const addEmployee = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
 
-    const profileImage = req.files?.image?.[0]?.filename || "";
-    const cvFile = req.files?.cv?.[0]?.filename || "";
+    const profileImage = req.files?.image?.[0]?.path || "";
+    const cvFile = req.files?.cv?.[0]?.path || "";
+
+
 
     const newUser = new User({
       name,
@@ -138,8 +140,9 @@ const updateEmployee = async (req, res) => {
     }
 
     // Conditionally include uploaded files
-    const profileImage = req.files?.image?.[0]?.filename;
-    const cvFile = req.files?.cv?.[0]?.filename;
+    const profileImage = req.files?.image?.[0]?.path;
+    const cvFile = req.files?.cv?.[0]?.path;
+
 
     // Prepare user update data
     const updatedUserData = {
@@ -832,7 +835,7 @@ const addSalary = async (req, res) => {
       // ✅ FIX: Declare loan deduction from Excel
       const excelLoanDeduction = row.loan || 0;
       const loan = await Loan.findOne({
-        userId: employee.userId, 
+        userId: employee.userId,
         status: 'Approved',
       });
 
@@ -1792,6 +1795,6 @@ export {
   getAllevaluations, updateEvaluation, getUsers, getEmployeeDashboardData, fetchEmployees,
   submitKpi, getKpi, hodEvaluation, getKpiByDepartment, adminEvaluation, updateAdminEvaluation,
   uploadAttendance, getAttendance, getAllAttendance, resumeLeave, deactivateEmployee, getEmployeesByStatus,
-  applyLoan, getAllyLoan, approveRejectLoan, updateLoan,  getEmployeeLoan,
- 
+  applyLoan, getAllyLoan, approveRejectLoan, updateLoan, getEmployeeLoan,
+
 }
