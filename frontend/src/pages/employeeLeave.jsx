@@ -476,7 +476,7 @@ setIsLoading(true);
             {/* Profile Image */}
             <div className="flex justify-center mb-4">
               <img
-                src={backendUrl + `/upload/${selectedLeave.userId?.profileImage}`}
+                src={selectedLeave.userId?.profileImage}
                 alt="Profile"
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border"
               />

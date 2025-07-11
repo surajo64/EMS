@@ -144,7 +144,7 @@ const employee = () => {
         setSelectedDepartment(item.department._id);
         handleDepartmentChange({ target: { value: item.department._id } });
       }
-      setDesignation(item.designation || ''); 
+      setDesignation(item.designation || '');
       setSelectedCVFile(item.cv || null);
       setSelectedImageFile(item.userId?.profileImage || null);
       setAddress(item.address);
@@ -160,7 +160,7 @@ const employee = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-     setIsLoading(true);
+    setIsLoading(true);
     // Validate CV file
     // Validate profile image file
     if (
@@ -260,8 +260,8 @@ const employee = () => {
       console.error('Employee Add/Update failed', error);
       toast.error(error.response?.data?.message || error.message);
     } finally {
-    setIsLoading(false); 
-  }
+      setIsLoading(false);
+    }
   };
 
   const handleDeactivate = async () => {
@@ -335,7 +335,7 @@ const employee = () => {
     }
   };
 
-
+if (!employees) return <LoadingOverlay />;
   return (
     <div className='w-full max-w-6xl mx-auto px-4 text-center'>
       <p className="text-xl sm:text-2xl font-bold text-gray-800 mt-5">MANAGE EMPLOYEE</p>
@@ -382,7 +382,7 @@ const employee = () => {
               <div className="flex items-center gap-2">
                 <img
                   className="w-10 h-10 rounded-full object-cover"
-                  src={backendUrl + `/upload/${item.userId?.profileImage}`}
+                  src={item.userId?.profileImage || '/default-avatar.png'}
                   alt="profile"
                 />
                 <p className="text-sm">{item.userId?.name}</p>
@@ -675,7 +675,7 @@ const employee = () => {
                   <label className="block font-medium mt-4">Upload CV (PDF)</label>
                   {editingAdmin && typeof selectedCVFile === 'string' && (
                     <a
-                      href={`${backendUrl}/upload/${selectedCVFile}`}
+                      href={selectedCVFile}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 underline block mb-2"
@@ -716,7 +716,7 @@ const employee = () => {
                   <label className="block font-medium">Profile Image</label>
                   {editingAdmin && typeof selectedImageFile === 'string' && (
                     <img
-                      src={`${backendUrl}/upload/${selectedImageFile}`}
+                      src={selectedImageFile}
                       alt="Profile Preview"
                       className="w-24 h-24 object-cover rounded-full mb-2"
                     />
@@ -766,8 +766,10 @@ const employee = () => {
 
             {/* Profile Image */}
             <div className="mt-4 sm:mt-6 text-center">
+             
+
               <img
-                src={backendUrl + `/upload/${selectedEmployee.userId?.profileImage}`}
+                src={selectedEmployee.userId?.profileImage}
                 alt="Profile"
                 className="w-28 h-28 sm:w-44 sm:h-44 rounded-full object-cover inline-block border border-gray-300 mb-6"
               />
