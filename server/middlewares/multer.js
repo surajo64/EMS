@@ -1,5 +1,6 @@
 import multer from 'multer';
-import { storage } from './cloudinary.js'; // adjust path if needed
+import { storage } from '../utils/cloudinary.js';
+
 
 const upload = multer({ storage });
 
