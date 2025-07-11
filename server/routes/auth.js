@@ -6,7 +6,7 @@ import { fetchEmployees } from '../controller/adminController.js';
 
 const authRouter = express.Router();
 
- 
+
 authRouter.post('/login', login);
 authRouter.get('/get-employees',fetchEmployees );
 
