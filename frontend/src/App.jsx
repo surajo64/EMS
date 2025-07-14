@@ -29,61 +29,57 @@ import ResetPassword from './pages/resetPassword.jsx'
 import EmployeeLoan from './pages/employeeLoan.jsx'
 import Loan from './pages/loan.jsx'
 import LoadingOverlay from './components/loadingOverlay.jsx';
+import { toast } from "react-toastify";
 
 const App = () => {
-  const { token,setToken  } = useContext(AppContext);
+  const { token, setToken, setUser, user } = useContext(AppContext);
   const navigate = useNavigate();
- const location = useLocation();
- const [isLoading, setIsLoading] = useState(false);
- const idleTimeoutRef = useRef(null);
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const idleTimer = useRef(null);
 
-  // ✅ Define logout handler
-  const logout = () => {
-    toast.warn("Session timed out due to inactivity");
-    alert("Session timed out due to inactivity");
 
-    setTimeout(() => {
-      setToken(null);
-      localStorage.removeItem("token");
-      navigate("/login");
-    }, 100); // Delay helps navigate run smoothly before component unmount
+  // ✅ Central logout logic
+  const handleLogout = () => {
+    alert('Session timed out due to inactivity');
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate('/login');
   };
 
-  // 🟢 Inactivity logout handler
+  // ✅ Start inactivity timer
   const startIdleTimer = () => {
-    clearTimeout(idleTimeoutRef.current);
-
-    idleTimeoutRef.current = setTimeout(() => {
-      logout();
-    }, 5 * 60 * 1000); // Set to 1 min (60,000 ms) for testing
+    clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(handleLogout, 1 * 60 * 1000); // 1 minute for testing
   };
 
-  // 🔄 Reset idle timer on user activity
+  // ✅ Reset timer on activity
   const resetIdleTimer = () => {
-    startIdleTimer();
+    if (token) startIdleTimer();
   };
 
-  // 🔄 Attach event listeners and manage idle timer
+  // ✅ Attach activity listeners
   useEffect(() => {
     if (token) {
       startIdleTimer();
-
-      window.addEventListener("mousemove", resetIdleTimer);
-      window.addEventListener("keydown", resetIdleTimer);
-      window.addEventListener("click", resetIdleTimer);
-      window.addEventListener("scroll", resetIdleTimer);
+      window.addEventListener('mousemove', resetIdleTimer);
+      window.addEventListener('keydown', resetIdleTimer);
+      window.addEventListener('click', resetIdleTimer);
+      window.addEventListener('scroll', resetIdleTimer);
     }
 
     return () => {
-      clearTimeout(idleTimeoutRef.current);
-      window.removeEventListener("mousemove", resetIdleTimer);
-      window.removeEventListener("keydown", resetIdleTimer);
-      window.removeEventListener("click", resetIdleTimer);
-      window.removeEventListener("scroll", resetIdleTimer);
+      clearTimeout(idleTimer.current);
+      window.removeEventListener('mousemove', resetIdleTimer);
+      window.removeEventListener('keydown', resetIdleTimer);
+      window.removeEventListener('click', resetIdleTimer);
+      window.removeEventListener('scroll', resetIdleTimer);
     };
   }, [token]);
 
-  // ✅ Auto-redirect to login when token is cleared
+  // ✅ Auto redirect to login if token is gone
   useEffect(() => {
     if (!token && location.pathname !== '/login') {
       navigate('/login');
@@ -91,19 +87,19 @@ const App = () => {
   }, [token, location.pathname]);
 
   useEffect(() => {
-  setIsLoading(true);
+    setIsLoading(true);
 
-  const handle = requestAnimationFrame(() => {
-    // Add slight delay if needed
-    setTimeout(() => setIsLoading(false), 300);
-  });
+    const handle = requestAnimationFrame(() => {
+      // Add slight delay if needed
+      setTimeout(() => setIsLoading(false), 300);
+    });
 
-  return () => {
-    cancelAnimationFrame(handle);
-  };
-}, [location.pathname]);
+    return () => {
+      cancelAnimationFrame(handle);
+    };
+  }, [location.pathname]);
 
-  
+
   return (
     <>
       <ToastContainer />
