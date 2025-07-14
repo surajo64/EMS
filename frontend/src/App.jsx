@@ -52,7 +52,7 @@ const App = () => {
   // ✅ Start inactivity timer
   const startIdleTimer = () => {
     clearTimeout(idleTimer.current);
-    idleTimer.current = setTimeout(handleLogout, 1 * 60 * 1000); // 1 minute for testing
+    idleTimer.current = setTimeout(handleLogout, 5 * 60 * 1000); // 1 minute for testing
   };
 
   // ✅ Reset timer on activity
