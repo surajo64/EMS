@@ -37,18 +37,25 @@ const App = () => {
  const [isLoading, setIsLoading] = useState(false);
  const idleTimeoutRef = useRef(null);
 
+  // ✅ Define logout handler
+  const logout = () => {
+    toast.warn("Session timed out due to inactivity");
+    alert("Session timed out due to inactivity");
+
+    setTimeout(() => {
+      setToken(null);
+      localStorage.removeItem("token");
+      navigate("/login");
+    }, 100); // Delay helps navigate run smoothly before component unmount
+  };
+
   // 🟢 Inactivity logout handler
   const startIdleTimer = () => {
     clearTimeout(idleTimeoutRef.current);
 
     idleTimeoutRef.current = setTimeout(() => {
-      // logout and navigate
-      setToken(null); // clear token in context
-      localStorage.removeItem("token"); // also clear from storage if you use that
-      toast.warn("Session timed out due to inactivity");
-    alert("Session timed out due to inactivity");
-      navigate("/login");
-    }, 5 * 60 * 1000); // 5 minutes
+      logout();
+    }, 1 * 60 * 1000); // Set to 1 min (60,000 ms) for testing
   };
 
   // 🔄 Reset idle timer on user activity
@@ -56,9 +63,9 @@ const App = () => {
     startIdleTimer();
   };
 
+  // 🔄 Attach event listeners and manage idle timer
   useEffect(() => {
     if (token) {
-      // Start timer and attach listeners
       startIdleTimer();
 
       window.addEventListener("mousemove", resetIdleTimer);
@@ -76,6 +83,12 @@ const App = () => {
     };
   }, [token]);
 
+  // ✅ Auto-redirect to login when token is cleared
+  useEffect(() => {
+    if (!token && location.pathname !== '/login') {
+      navigate('/login');
+    }
+  }, [token, location.pathname]);
 
   useEffect(() => {
   setIsLoading(true);
