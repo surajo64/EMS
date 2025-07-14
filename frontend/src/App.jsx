@@ -55,7 +55,7 @@ const App = () => {
 
     idleTimeoutRef.current = setTimeout(() => {
       logout();
-    }, 1 * 60 * 1000); // Set to 1 min (60,000 ms) for testing
+    }, 5 * 60 * 1000); // Set to 1 min (60,000 ms) for testing
   };
 
   // 🔄 Reset idle timer on user activity
