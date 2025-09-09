@@ -45,8 +45,8 @@ const SendMessage = () => {
 
         try {
             const { data } = await axios.post(
-                backendUrl + "/api/messages/send",
-                { userIds: selectedEmployees, text: message }, // ✅ send multiple userIds
+                backendUrl + "/api/auth/send-message",
+                { userIds: selectedEmployees, text: message,title }, // ✅ send multiple userIds
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -54,6 +54,7 @@ const SendMessage = () => {
                 toast.success("Message sent successfully ✅");
                 setMessages((prev) => [...prev, ...data.messages]); // ✅ push multiple
                 setMessage("");
+                setTitle("")
                 setSelectedEmployees([]);
                 setShowForm(false);
             } else {

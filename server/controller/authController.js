@@ -58,16 +58,22 @@ const login = async (req, res) => {
 
 // HR/Admin sends a message to an employee
   export const sendMessage = async (req, res) => {
-   try {
-    const { userIds, text } = req.body; // userIds is an array
+  try {
+    console.log("Incoming body:", req.body);
 
-    if (!userIds || !userIds.length || !text) {
-      return res.json({ success: false, message: "Missing fields" });
+    const { userIds, text, title } = req.body;
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ success: false, message: "No recipients provided" });
     }
 
     const messages = await Promise.all(
       userIds.map(async (id) => {
-        const msg = new Message({ user: id, text });
+        const msg = new Message({
+          userId: id,              // ✅ fixed field name
+          text,
+          title,
+          createdBy: req.user._id  // ✅ sender info from token
+        });
         await msg.save();
         return msg;
       })
@@ -75,9 +81,11 @@ const login = async (req, res) => {
 
     res.json({ success: true, messages });
   } catch (err) {
-    res.json({ success: false, message: "Error sending messages", error: err });
+    console.error("Send message error:", err);
+    res.status(500).json({ success: false, message: "Error sending messages", error: err.message });
   }
 };
+
 
 
 // Delete Message
