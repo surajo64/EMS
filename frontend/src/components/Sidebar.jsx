@@ -66,6 +66,7 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
                 <SidebarLink to="/salary" label="Salary" icon={assets.Salary} />
                 <SidebarLink to="/attendence" label="Attendance" icon={assets.Attend} />
                 <SidebarLink to="/admin-evaluation" label="Performance" icon={assets.Evaluation} />
+                <SidebarLink to="/send-message" label="Message" icon={assets.Department} />
                 <SidebarLink to="/setting" label="Setting" icon={assets.Setting} />
               </>
             )}

@@ -10,6 +10,7 @@ const AppContextProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [user, setUser] = useState(null);
   const [kpi, setKpi] = useState(null);
+   const [messages, setMessages] = useState([]);
     const [departmentKpi, setDepartmentKpi] = useState(null);
   const [salaryGroups, setSalaryGroups] = useState([]);
   const [hodLeaves, setHodLeaves] = useState(null);
@@ -68,7 +69,7 @@ const AppContextProvider = ({ children }) => {
   // get all Patient list
   const getAllEmployees = async () => {
 
-    /*  try {*/
+      try {
 
     const { data } = await axios.get(backendUrl + '/api/admin/get-all-employees', {
       headers: {
@@ -84,9 +85,9 @@ const AppContextProvider = ({ children }) => {
       toast.error("Failed to fetch Employee.")
     }
 
-    /*   } catch (error) {
+     } catch (error) {
           toast.error(error.message)
-        }*/
+        }
 
   }
 
@@ -215,7 +216,20 @@ const fetchDepartmentKpi = async () => {
   }
 };
 
+// API o fetch Messages
+const fetchMessages = async () => {
+      try {
+   
+          const {data} = await axios.get("/api/auth/get-message", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setMessages(data.messages);
 
+      } catch (err) {
+        console.error("Error fetching messages:", err);
+      }
+
+    }
 
 
   const value = {
@@ -227,7 +241,7 @@ const fetchDepartmentKpi = async () => {
     logout, employeeLeaves, setEmployeeLeaves, fetchLeaves,
     setUser, leaves, setLeaves,
     getAllDepartment,fetchDepartmentKpi,setDepartmentKpi,departmentKpi,
-    setDepartment, department,
+    setDepartment, department,messages,setMessages,
     employees, setEmployees, getAllEmployees,
   };
 
