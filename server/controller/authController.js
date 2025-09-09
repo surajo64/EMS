@@ -58,7 +58,7 @@ const login = async (req, res) => {
 
 // HR/Admin sends a message to an employee
   export const sendMessage = async (req, res) => {
-  try {
+/*  try {*/
     console.log("Incoming body:", req.body);
 
     const { userIds, text, title } = req.body;
@@ -80,10 +80,10 @@ const login = async (req, res) => {
     );
 
     res.json({ success: true, messages });
-  } catch (err) {
+/*  } catch (err) {
     console.error("Send message error:", err);
     res.status(500).json({ success: false, message: "Error sending messages", error: err.message });
-  }
+  }*/
 };
 
 
