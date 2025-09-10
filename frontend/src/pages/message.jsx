@@ -46,7 +46,7 @@ const SendMessage = () => {
         try {
             const { data } = await axios.post(
                 backendUrl + "/api/auth/send-message",
-                { userIds: selectedEmployees, text: message,title }, // ✅ send multiple userIds
+                { userIds: selectedEmployees, text: message, title }, // ✅ send multiple userIds
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -57,7 +57,7 @@ const SendMessage = () => {
                 setTitle("")
                 setSelectedEmployees([]);
                 setShowForm(false);
-            } 
+            }
         } catch (err) {
             console.error("Error sending message:", err);
             toast.error("Error sending message ❌");
@@ -102,21 +102,23 @@ const SendMessage = () => {
     }
 
     // Handle employee selection (including select all)
-    const handleSelectEmployees = (e) => {
-        const values = Array.from(e.target.selectedOptions, (opt) => opt.value);
+   const handleSelectEmployees = (e) => {
+  const values = Array.from(e.target.selectedOptions, (opt) => opt.value);
 
-        if (values.includes("all")) {
-            if (selectedEmployees.length === employees.length) {
-                // If already all selected, unselect all
-                setSelectedEmployees([]);
-            } else {
-                // Select all employee IDs
-                setSelectedEmployees(employees.map((emp) => emp._id));
-            }
-        } else {
-            setSelectedEmployees(values);
-        }
-    };
+  if (values.includes("all")) {
+    if (selectedEmployees.length === employees.length) {
+      // Unselect all
+      setSelectedEmployees([]);
+    } else {
+      // Select all employee IDs (exclude "all")
+      setSelectedEmployees(employees.map((emp) => emp._id));
+    }
+  } else {
+    // Only store actual employee IDs
+    setSelectedEmployees(values.filter((val) => val !== "all"));
+  }
+};
+
 
     return (
         <div className="w-full max-w-6xl mx-auto px-4 text-center">

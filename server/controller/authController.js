@@ -61,8 +61,8 @@ const login = async (req, res) => {
 /*  try {*/
     console.log("Incoming body:", req.body);
 
-    const { text, title } = req.body;
-    const userIds = req.userId;
+    const { userIds, text, title } = req.body;
+   
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return res.status(400).json({ success: false, message: "No recipients provided" });
     }
