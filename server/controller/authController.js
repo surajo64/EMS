@@ -33,7 +33,7 @@ const login = async (req, res) => {
 
 // Get all messages for logged-in user
  export const getAllMessage = async (req, res) => {
-  try {
+/*  try {*/
     let messages;
 
     if (req.user.role === "admin" || req.user.role === "HR") {
@@ -50,10 +50,10 @@ const login = async (req, res) => {
     }
 
     res.json({ success: true, messages });
-  } catch (error) {
+/*  } catch (error) {
     console.error("Error fetching messages:", error);
     res.status(500).json({ success: false, message: "Failed to fetch messages" });
-  }
+  }*/
 };
 
 
