@@ -11,6 +11,7 @@ const AppContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [kpi, setKpi] = useState(null);
    const [messages, setMessages] = useState([]);
+   const [emplMessages, setEmplMessages] = useState([]);
     const [departmentKpi, setDepartmentKpi] = useState(null);
   const [salaryGroups, setSalaryGroups] = useState([]);
   const [hodLeaves, setHodLeaves] = useState(null);
@@ -218,25 +219,45 @@ const fetchDepartmentKpi = async () => {
 
 // API o fetch Messages
 const fetchMessages = async () => {
-      try {
+      /*try {*/
    
           const {data} = await axios.get(backendUrl+"/api/auth/get-all-message", {
             headers: { Authorization: `Bearer ${token}` },
           });
-          setMessages(data.messages);
+          if (data.success) {
+            setMessages(data.messages);
+          }
+          
 
-      } catch (err) {
+      /*} catch (err) {
         console.error("Error fetching messages:", err);
-      }
+      }*/
 
     }
 
+    // API o fetch Messages
+const fetchEmployeeMessage = async () => {
+      /*try {*/
+   
+          const {data} = await axios.get(backendUrl+"/api/auth/get-all-message", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (data.success) {
+            setEmplMessages(data.emplMessages);
+          }
+          
+
+      /*} catch (err) {
+        console.error("Error fetching messages:", err);
+      }*/
+
+    }
 
   const value = {
     backendUrl,fetchKpi, kpi,setKpi,
     token,fetchHodLeaves,hodLeaves,
     setToken,getAllEvaluations,evaluations,
-    user, getAllLeaves,setEvaluations,
+    user, getAllLeaves,setEvaluations,fetchEmployeeMessage,emplMessages,setEmplMessages,
     login,salaryGroups, setSalaryGroups,
     logout, employeeLeaves, setEmployeeLeaves, fetchLeaves,
     setUser, leaves, setLeaves,fetchMessages,
