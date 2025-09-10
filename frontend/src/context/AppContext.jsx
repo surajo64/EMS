@@ -219,7 +219,7 @@ const fetchDepartmentKpi = async () => {
 
 // API o fetch Messages
 const fetchMessages = async () => {
-      /*try {*/
+      try {
    
           const {data} = await axios.get(backendUrl+"/api/auth/get-all-message", {
             headers: { Authorization: `Bearer ${token}` },
@@ -229,9 +229,9 @@ const fetchMessages = async () => {
           }
           
 
-      /*} catch (err) {
+      } catch (err) {
         console.error("Error fetching messages:", err);
-      }*/
+      }
 
     }
 

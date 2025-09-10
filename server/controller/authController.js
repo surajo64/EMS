@@ -34,16 +34,16 @@ const login = async (req, res) => {
 // Get all messages for logged-in user
  export const getAllMessage = async (req, res) => {
 
- /* try {*/
+ try {
    const messages = await Message.find()
       .populate("userId", "name email role")    // recipient details
       .populate("createdBy", "name email role") // sender details
       .sort({ createdAt: -1 });
 
     res.json({ success: true, messages });
-/*  } catch (error) {
+ } catch (error) {
     res.status(500).json({ error: "Failed to fetch messages" });
-  }*/
+  }
 };
 
   
