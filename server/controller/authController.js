@@ -32,6 +32,33 @@ const login = async (req, res) => {
 
 
 // Get all messages for logged-in user
+ export const getAllMessage = async (req, res) => {
+  try {
+    let messages;
+
+    if (req.user.role === "admin" || req.user.role === "HR") {
+      // HR/Admin: fetch all messages
+      messages = await Message.find()
+        .populate("userId", "name email role")   // recipient details
+        .populate("createdBy", "name email role") // sender details
+        .sort({ createdAt: -1 });
+    } else {
+      // Employee: fetch only their messages
+      messages = await Message.find({ userId: req.user._id })
+        .populate("createdBy", "name email role")
+        .sort({ createdAt: -1 });
+    }
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch messages" });
+  }
+};
+
+
+
+// Get all messages for logged-in user
   export const getMessage = async (req, res) => {
   try {
     const messages = await Message.find({ userId: req.user.id }).sort({ createdAt: -1 });

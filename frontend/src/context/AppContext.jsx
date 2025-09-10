@@ -220,7 +220,7 @@ const fetchDepartmentKpi = async () => {
 const fetchMessages = async () => {
       try {
    
-          const {data} = await axios.get("/api/auth/get-message", {
+          const {data} = await axios.get(backendUrl+"/api/auth/get-all-message", {
             headers: { Authorization: `Bearer ${token}` },
           });
           setMessages(data.messages);
@@ -239,7 +239,7 @@ const fetchMessages = async () => {
     user, getAllLeaves,setEvaluations,
     login,salaryGroups, setSalaryGroups,
     logout, employeeLeaves, setEmployeeLeaves, fetchLeaves,
-    setUser, leaves, setLeaves,
+    setUser, leaves, setLeaves,fetchMessages,
     getAllDepartment,fetchDepartmentKpi,setDepartmentKpi,departmentKpi,
     setDepartment, department,messages,setMessages,
     employees, setEmployees, getAllEmployees,

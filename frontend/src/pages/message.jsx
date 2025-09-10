@@ -4,15 +4,16 @@ import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
 
 const SendMessage = () => {
-    const { token, backendUrl, user, messages, setMessages } = useContext(AppContext);
+    const { token, backendUrl, user, messages, setMessages,fetchMessages } = useContext(AppContext);
     const [employees, setEmployees] = useState([]);
-    const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [filteredMessages, setFilteredMessages] = useState([]);
     const [selectedEmployees, setSelectedEmployees] = useState([]);
     const [message, setMessage] = useState("");
     const [title, setTitle] = useState("");
     const [status, setStatus] = useState("");
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [showRead, setShowRead] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
@@ -86,16 +87,28 @@ const SendMessage = () => {
         }
     };
 
-    // ✅ Filter + Pagination
-    const filteredMessages = (messages || []).filter((m) =>
-        m.text?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const totalItems = filteredMessages.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const paginatedMessages = filteredMessages.slice(
+     // Filter departments based on search
+      useEffect(() => {
+        const filtered = (messages || []).filter((m) =>
+          m.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredMessages(filtered);
+        setCurrentPage(1); // Reset to first page on new search
+      }, [searchTerm, messages]);
+    
+      // Pagination logic
+      const totalItems = messages?.length;
+      const totalPages = Math.ceil(filteredMessages.length / itemsPerPage);
+      const paginatedMessages = filteredMessages.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
-    );
+      );
+
+  useEffect(() => {
+    if (token) fetchMessages();
+    console.log("messages:",messages)
+  }, [token]);
+
 
     if (user?.role !== "admin" && user?.role !== "HR") {
         return <p className="text-red-500">You are not authorized to send messages.</p>;
@@ -145,6 +158,7 @@ const SendMessage = () => {
             <div className="bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]">
                 <div className="bg-gray-200 hidden sm:grid grid-cols-[0.5fr_3fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500">
                     <p>#</p>
+                    <p>Title</p>
                     <p>Message</p>
                     <p>Actions</p>
                 </div>
@@ -156,8 +170,15 @@ const SendMessage = () => {
                             className="flex flex-col sm:grid sm:grid-cols-[0.5fr_3fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
                         >
                             <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
+                            <p>{item.title}</p>
                             <p>{item.text}</p>
                             <div className="flex sm:justify-end gap-2">
+                                <button
+                                    onClick={() => setShowRead(true)}
+                                    className="bg-Green-500 text-white text-sm px-3 py-1 rounded-full"
+                                >
+                                    Read
+                                </button>
                                 <button
                                     onClick={() => setConfirmDeleteId(item._id)}
                                     className="bg-red-500 text-white text-sm px-3 py-1 rounded-full"
@@ -172,35 +193,61 @@ const SendMessage = () => {
                 )}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-4">
-                    <button
-                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
-                    >
-                        Prev
-                    </button>
-                    {[...Array(totalPages)].map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setCurrentPage(i + 1)}
-                            className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-green-500 text-white" : "bg-gray-200"
-                                }`}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
-                    <button
-                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
+             {/* Pagination */}
+        {totalPages > 1 && (
+          <>
+            <div className="flex justify-center items-center flex-wrap gap-2 mt-4 px-4 pb-4">
+              <button
+                onClick={() => {
+                  setIsLoading(true);
+
+                  setTimeout(() => {
+                    setCurrentPage(prev => Math.max(prev - 1, 1))
+
+                    setIsLoading(false);
+                  }, 300);
+                }}
+
+                disabled={currentPage === 1}
+                className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
+              >
+                Prev
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`px-3 py-1 rounded ${currentPage === i + 1
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                    setIsLoading(false);
+                  }, 300);
+                }}
+                disabled={currentPage === totalPages}
+                className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+
+            <div className="flex justify-end mt-2 text-sm text-gray-800 px-4 pb-2">
+              Showing {(currentPage - 1) * itemsPerPage + 1}–
+              {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+            </div>
+          </>
+        )}
 
             {/* ✅ Popup Send Form */}
             {showForm && (
