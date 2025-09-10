@@ -65,52 +65,63 @@ const login = async (req, res) => {
 };
 
 // Mark a message as read
-
-  export const markRead = async (req, res) => {
+export const markRead = async (req, res) => {
   try {
-    const msg = await Message.findByIdAndUpdate(
-      req.params.id,
-      { isRead: true },
-      { new: true }
-    );
-    res.json(msg);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update message" });
-  }
-};
+    const { messageId } = req.params;
 
-// HR/Admin sends a message to an employee
-  export const sendMessage = async (req, res) => {
-  try {
-    console.log("Incoming body:", req.body);
-
-    const { userIds, text, title } = req.body;
-    
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-      return res.status(400).json({ success: false, message: "No recipients provided" });
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ success: false, message: "Message not found" });
     }
 
-    const messages = await Promise.all(
-      userIds.map(async (id) => {
-        const msg = new Message({
-          userId: id,          
-          text,
-          title,
-          createdBy: req.userId  // ✅ sender info from token
-        });
-        await msg.save();
-        return msg.populate("createdBy", "name email role"); // optional: return populated sender
-      })
+    message.isRead = message.isRead.map((status) =>
+      status.userId.toString() === req.userId.toString()
+        ? { ...status.toObject(), read: true }
+        : status
     );
 
-    res.json({ success: true, messages });
-  } catch (err) {
-    console.error("Send message error:", err);
-    res.status(500).json({ success: false, message: "Error sending messages", error: err.message });
+    await message.save();
+
+    res.json({ success: true, message });
+  } catch (error) {
+    console.error("Mark as read error:", error);
+    res.status(500).json({ success: false, message: "Failed to mark as read" });
   }
 };
 
 
+// HR/Admin sends a message to an employee
+export const sendMessage = async (req, res) => {
+  try {
+    const { userIds, text, title } = req.body;
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No recipients provided" });
+    }
+
+    const newMessage = new Message({
+      recipients: userIds,
+      text,
+      title,
+      createdBy: req.userId,
+      isRead: userIds.map((id) => ({ userId: id, read: false })),
+    });
+
+    // initialize read-status per recipient
+    newMessage.isRead = userIds.map((id) => ({ userId: id, read: false }));
+
+    await newMessage.save();
+
+    res.json({ success: true, message: newMessage });
+  } catch (err) {
+    console.error("Send message error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Error sending message", error: err.message });
+  }
+};
 
 
 // Delete Message

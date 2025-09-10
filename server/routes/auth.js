@@ -13,7 +13,7 @@ authRouter.get('/get-employees',fetchEmployees );
 authRouter.post("/send-message", authUser, sendMessage );
 authRouter.get("/get-all-message", authUser, getAllMessage );
 authRouter.get("/get-message", authUser, getMessage );
-authRouter.post("/:id/read", authUser, markRead );
+authRouter.put("/mark-read/:messageId", authUser, markRead);
 authRouter.delete("/delete/:id", authUser, deleteMessage);
 
 

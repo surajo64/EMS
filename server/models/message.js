@@ -2,11 +2,13 @@ import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    recipients: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      }
+    ],
     text: {
       type: String,
       required: true,
@@ -15,10 +17,12 @@ const messageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isRead: {
-      type: Boolean,
-      default: false,
-    },
+    isRead: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        read: { type: Boolean, default: false }
+      }
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // HR/Admin who sent the message
@@ -27,5 +31,5 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Message = mongoose.model('Message', messageSchema);
+const Message = mongoose.model("Message", messageSchema);
 export default Message;
