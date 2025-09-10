@@ -4,10 +4,11 @@ import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
 
 const SendMessage = () => {
-    const { token, backendUrl, user, messages, setMessages,fetchMessages } = useContext(AppContext);
+    const { token, backendUrl, user, messages, setMessages, fetchMessages } = useContext(AppContext);
     const [employees, setEmployees] = useState([]);
-  const [filteredMessages, setFilteredMessages] = useState([]);
+    const [filteredMessages, setFilteredMessages] = useState([]);
     const [selectedEmployees, setSelectedEmployees] = useState([]);
+    const [selectedMessage, setSelectedMessage] = useState(null);
     const [message, setMessage] = useState("");
     const [title, setTitle] = useState("");
     const [status, setStatus] = useState("");
@@ -87,27 +88,27 @@ const SendMessage = () => {
         }
     };
 
-     // Filter departments based on search
-      useEffect(() => {
+    // Filter departments based on search
+    useEffect(() => {
         const filtered = (messages || []).filter((m) =>
-          m.title.toLowerCase().includes(searchTerm.toLowerCase())
+            m.title.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredMessages(filtered);
         setCurrentPage(1); // Reset to first page on new search
-      }, [searchTerm, messages]);
-    
-      // Pagination logic
-      const totalItems = messages?.length;
-      const totalPages = Math.ceil(filteredMessages.length / itemsPerPage);
-      const paginatedMessages = filteredMessages.slice(
+    }, [searchTerm, messages]);
+
+    // Pagination logic
+    const totalItems = messages?.length;
+    const totalPages = Math.ceil(filteredMessages.length / itemsPerPage);
+    const paginatedMessages = filteredMessages.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
-      );
+    );
 
-  useEffect(() => {
-    if (token) fetchMessages();
-    console.log("messages:",messages)
-  }, [token]);
+    useEffect(() => {
+        if (token) fetchMessages();
+        console.log("messages:", messages)
+    }, [token]);
 
 
     if (user?.role !== "admin" && user?.role !== "HR") {
@@ -115,22 +116,22 @@ const SendMessage = () => {
     }
 
     // Handle employee selection (including select all)
-   const handleSelectEmployees = (e) => {
-  const values = Array.from(e.target.selectedOptions, (opt) => opt.value);
+    const handleSelectEmployees = (e) => {
+        const values = Array.from(e.target.selectedOptions, (opt) => opt.value);
 
-  if (values.includes("all")) {
-    if (selectedEmployees.length === employees.length) {
-      // Unselect all
-      setSelectedEmployees([]);
-    } else {
-      // Select all employee IDs (exclude "all")
-      setSelectedEmployees(employees.map((emp) => emp._id));
-    }
-  } else {
-    // Only store actual employee IDs
-    setSelectedEmployees(values.filter((val) => val !== "all"));
-  }
-};
+        if (values.includes("all")) {
+            if (selectedEmployees.length === employees.length) {
+                // Unselect all
+                setSelectedEmployees([]);
+            } else {
+                // Select all employee IDs (exclude "all")
+                setSelectedEmployees(employees.map((emp) => emp._id));
+            }
+        } else {
+            // Only store actual employee IDs
+            setSelectedEmployees(values.filter((val) => val !== "all"));
+        }
+    };
 
 
     return (
@@ -156,8 +157,9 @@ const SendMessage = () => {
 
             {/* Messages List */}
             <div className="bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]">
-                <div className="bg-gray-200 hidden sm:grid grid-cols-[0.5fr_3fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500">
+                <div className="bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_2fr_3fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500 font-semibold text-gray-700">
                     <p>#</p>
+                    <p>From</p>
                     <p>Title</p>
                     <p>Message</p>
                     <p>Actions</p>
@@ -167,15 +169,18 @@ const SendMessage = () => {
                     paginatedMessages.map((item, index) => (
                         <div
                             key={item._id}
-                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_3fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
-                        >
+                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_2fr_3fr_2fr] items-start sm:items-center text-gray-600 py-3 px-6 border-b hover:bg-blue-50 gap-2">
                             <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
+                            <p>{item.userId?.name}</p>
                             <p>{item.title}</p>
-                            <p>{item.text}</p>
+                            <p className="line-clamp-1">{item.text}</p>
                             <div className="flex sm:justify-end gap-2">
                                 <button
-                                    onClick={() => setShowRead(true)}
-                                    className="bg-Green-500 text-white text-sm px-3 py-1 rounded-full"
+                                    onClick={() => {
+                                        setSelectedMessage(item);
+                                        setShowRead(true);
+                                    }}
+                                    className="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded-full"
                                 >
                                     Read
                                 </button>
@@ -193,61 +198,61 @@ const SendMessage = () => {
                 )}
             </div>
 
-             {/* Pagination */}
-        {totalPages > 1 && (
-          <>
-            <div className="flex justify-center items-center flex-wrap gap-2 mt-4 px-4 pb-4">
-              <button
-                onClick={() => {
-                  setIsLoading(true);
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <>
+                    <div className="flex justify-center items-center flex-wrap gap-2 mt-4 px-4 pb-4">
+                        <button
+                            onClick={() => {
+                                setIsLoading(true);
 
-                  setTimeout(() => {
-                    setCurrentPage(prev => Math.max(prev - 1, 1))
+                                setTimeout(() => {
+                                    setCurrentPage(prev => Math.max(prev - 1, 1))
 
-                    setIsLoading(false);
-                  }, 300);
-                }}
+                                    setIsLoading(false);
+                                }, 300);
+                            }}
 
-                disabled={currentPage === 1}
-                className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
-              >
-                Prev
-              </button>
+                            disabled={currentPage === 1}
+                            className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
+                        >
+                            Prev
+                        </button>
 
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 rounded ${currentPage === i + 1
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+                        {[...Array(totalPages)].map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setCurrentPage(i + 1)}
+                                className={`px-3 py-1 rounded ${currentPage === i + 1
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-gray-100 hover:bg-gray-200'
+                                    }`}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
 
-              <button
-                onClick={() => {
-                  setIsLoading(true);
-                  setTimeout(() => {
-                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
-                    setIsLoading(false);
-                  }, 300);
-                }}
-                disabled={currentPage === totalPages}
-                className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
+                        <button
+                            onClick={() => {
+                                setIsLoading(true);
+                                setTimeout(() => {
+                                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                                    setIsLoading(false);
+                                }, 300);
+                            }}
+                            disabled={currentPage === totalPages}
+                            className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                    </div>
 
-            <div className="flex justify-end mt-2 text-sm text-gray-800 px-4 pb-2">
-              Showing {(currentPage - 1) * itemsPerPage + 1}–
-              {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
-            </div>
-          </>
-        )}
+                    <div className="flex justify-end mt-2 text-sm text-gray-800 px-4 pb-2">
+                        Showing {(currentPage - 1) * itemsPerPage + 1}–
+                        {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+                    </div>
+                </>
+            )}
 
             {/* ✅ Popup Send Form */}
             {showForm && (
@@ -305,6 +310,47 @@ const SendMessage = () => {
                                 Send
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ✅ Read Message Modal */}
+            {showRead && selectedMessage && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
+                        {/* Close Button */}
+                        <button
+                            onClick={() => {
+                                setShowRead(false);
+                                setSelectedMessage(null);
+                            }}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+                        >
+                            ✖
+                        </button>
+
+                        <h2 className="text-lg font-bold mb-2 text-green-600">
+                            {selectedMessage.title}
+                        </h2>
+
+                        <p className="text-gray-700 mb-4 whitespace-pre-wrap">
+                            {selectedMessage.text}
+                        </p>
+
+                        <div className="text-sm text-gray-500 space-y-1">
+                            <p>
+                                <span className="font-semibold">From:</span>{" "}
+                                {selectedMessage.createdBy?.name} ({selectedMessage.createdBy?.email})
+                            </p>
+                            <p>
+                                <span className="font-semibold">To:</span>{" "}
+                                {selectedMessage.userId?.name} ({selectedMessage.userId?.email})
+                            </p>
+                            <p>
+                                <span className="font-semibold">Date:</span>{" "}
+                                {new Date(selectedMessage.createdAt).toLocaleString()}
+                            </p>
+                        </div>
                     </div>
                 </div>
             )}

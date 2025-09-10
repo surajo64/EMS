@@ -81,11 +81,11 @@ const login = async (req, res) => {
 
 // HR/Admin sends a message to an employee
   export const sendMessage = async (req, res) => {
-/*  try {*/
+  try {
     console.log("Incoming body:", req.body);
 
     const { userIds, text, title } = req.body;
-   
+    
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return res.status(400).json({ success: false, message: "No recipients provided" });
     }
@@ -93,22 +93,23 @@ const login = async (req, res) => {
     const messages = await Promise.all(
       userIds.map(async (id) => {
         const msg = new Message({
-          userId: id,              // ✅ fixed field name
+          userId: id,          
           text,
           title,
-          createdBy: req.userId._id  // ✅ sender info from token
+          createdBy: req.userId  // ✅ sender info from token
         });
         await msg.save();
-        return msg;
+        return msg.populate("createdBy", "name email role"); // optional: return populated sender
       })
     );
 
     res.json({ success: true, messages });
-/*  } catch (err) {
+  } catch (err) {
     console.error("Send message error:", err);
     res.status(500).json({ success: false, message: "Error sending messages", error: err.message });
-  }*/
+  }
 };
+
 
 
 
