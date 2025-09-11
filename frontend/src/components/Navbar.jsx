@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { AppContext, useAuth } from "../context/AppContext";
-import { useContext } from "react";
+import { io } from "socket.io-client"; // ✅ import socket.io-client
+import { AppContext } from "../context/AppContext";
 
 const Navbar = () => {
-  const { token, backendUrl, user,} =
-      useContext(AppContext);
+  const { token, backendUrl, setToken, user } = useContext(AppContext);
   const [isOpen, setIsOpen] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -15,25 +14,50 @@ const Navbar = () => {
 
   const navigate = useNavigate();
 
-  // Fetch messages from backend
+  // ✅ Setup socket instance
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        if (token) {
-          const {data} = await axios.get(backendUrl+"/api/auth/get-message", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (data.success) {
-            setMessages(data.messages);
-          }
-          
-        }
-      } catch (err) {
-        console.error("Error fetching messages:", err);
-      }
-    };
+    if (!user?._id) return;
 
-    fetchMessages();
+    const socket = io(backendUrl, {
+      auth: { token }, // optional auth
+    });
+
+    socket.emit("join", user._id); // join private room
+
+    // listen for new messages
+    socket.on("newMessage", () => {
+      fetchMessages();
+    });
+
+    // listen for read updates
+    socket.on("messageRead", () => {
+      fetchMessages();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, token, backendUrl]);
+
+  // ✅ fetch messages (reusable)
+  const fetchMessages = async () => {
+    try {
+      const { data } = await axios.get(`${backendUrl}/api/auth/get-message`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success) {
+        setMessages(data.messages);
+      }
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+    }
+  };
+
+  // initial load
+  useEffect(() => {
+    if (token) {
+      fetchMessages();
+    }
   }, [token]);
 
   const logout = () => {
@@ -43,6 +67,37 @@ const Navbar = () => {
       navigate("/login");
     }
   };
+
+  const markMessageRead = async (id) => {
+    try {
+      await axios.put(
+        `${backendUrl}/api/auth/mark-read/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // no need to call fetchMessages manually
+      // socket will trigger auto update
+    } catch (err) {
+      console.error("Error marking message read:", err);
+    }
+  };
+
+  // ✅ unread filter
+  const unreadMessages = (messages || []).filter((msg) => {
+  // skip if I am the sender
+  if (msg.createdBy?._id === user._id || msg.createdBy === user._id) {
+    return false;
+  }
+
+  const myReadStatus = msg.isRead?.find(
+    (r) => r.userId === user._id || r.userId?._id === user._id
+  );
+
+  return !myReadStatus || myReadStatus.read === false;
+});
+
+
+  const latestUnreadMessages = unreadMessages.slice(0, 5);
 
   const roleTitle =
     user?.role === "admin" ? "Admin" : user?.role === "HOD" ? "HOD" : "Employee";
@@ -114,82 +169,96 @@ const Navbar = () => {
                 />
               </svg>
 
-              {/* Badge */}
-              {messages?.length > 0 && (
+              {/* Badge update */}
+              {unreadMessages.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                  {messages.length}
+                  {unreadMessages.length}
                 </span>
               )}
+
             </button>
 
             {/* Dropdown */}
             {showMessages && (
               <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg z-50">
-                <div className="p-2 font-semibold border-b text-gray-700">
+                <div className="p-2 border-b text-gray-700 font-bold">
                   Messages
                 </div>
-                <ul className="max-h-60 overflow-y-auto">
-                  {messages?.length > 0 ? (
-                    messages.map((msg) => (
+                <ul className="max-h-60 overflow-y-auto font-semibold">
+
+                  {latestUnreadMessages.length > 0 ? (
+                    latestUnreadMessages.map((msg) => (
                       <li
                         key={msg._id}
+                        onClick={() => {
+                          markMessageRead(msg._id); // will update isRead for this user
+                          setSelectedMessage(msg);
+                          setShowRead(true);
+                        }}
                         className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                       >
-                        {msg.text}
+                        {msg.title}
                       </li>
                     ))
                   ) : (
-                    <li className="px-4 py-2 text-sm text-gray-500">No messages</li>
+                    <li className="px-4 py-2 text-sm text-gray-500">
+                      No unread messages
+                    </li>
                   )}
                 </ul>
+
                 <div className="p-2 text-center border-t">
-                  <button className="text-green-600 text-sm font-medium hover:underline">
+                  <button
+                    onClick={() => navigate("/messages")} // ✅ link to all messages
+                    className="text-green-600 text-sm font-medium hover:underline"
+                  >
                     View All
                   </button>
                 </div>
               </div>
             )}
 
-             {/* ✅ Read Message Modal */}
-      {showRead && selectedMessage && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
-            <button
-              onClick={() => {
-                setShowRead(false);
-                setSelectedMessage(null);
-              }}
-              className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
-            >
-              ✖
-            </button>
 
-            <h2 className="text-lg font-bold mb-2 text-green-600">
-              {selectedMessage.title}
-            </h2>
+            {/* ✅ Read Message Modal */}
+            {showRead && selectedMessage && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
+                  <button
+                    onClick={() => {
+                      setShowRead(false);
+                      setSelectedMessage(null);
+                    }}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+                  >
+                    ✖
+                  </button>
 
-            <p className="text-gray-700 mb-4 whitespace-pre-wrap">
-              {selectedMessage.text}
-            </p>
+                  <h2 className="text-lg font-bold mb-2 text-green-600">
+                    {selectedMessage.title}
+                  </h2>
 
-            <div className="text-sm text-gray-500 space-y-1">
-              <p>
-                <span className="font-semibold">From:</span>{" "}
-                {selectedMessage.createdBy?.name} (
-                {selectedMessage.createdBy?.email})
-              </p>
-              <p>
-                <span className="font-semibold">To:</span>{" "}
-                {selectedMessage.userId?.name} ({selectedMessage.userId?.email})
-              </p>
-              <p>
-                <span className="font-semibold">Date:</span>{" "}
-                {new Date(selectedMessage.createdAt).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+                  <p className="text-gray-700 mb-4 whitespace-pre-wrap">
+                    {selectedMessage.text}
+                  </p>
+
+                  <div className="text-sm text-gray-500 space-y-1">
+                    <p>
+                      <span className="font-semibold">From:</span>{" "}
+                      {selectedMessage.createdBy?.name} (
+                      {selectedMessage.createdBy?.email})
+                    </p>
+                    <p>
+                      <span className="font-semibold">To:</span>{" "}
+                      {selectedMessage.userId?.name} ({selectedMessage.userId?.email})
+                    </p>
+                    <p>
+                      <span className="font-semibold">Date:</span>{" "}
+                      {new Date(selectedMessage.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </div>
 

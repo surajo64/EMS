@@ -4,8 +4,7 @@ const messageSchema = new mongoose.Schema(
   {
     recipients: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        type: mongoose.Schema.Types.ObjectId, ref: "User",
         required: true,
       }
     ],
@@ -25,7 +24,7 @@ const messageSchema = new mongoose.Schema(
     ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // HR/Admin who sent the message
+      ref: "User",
     }
   },
   { timestamps: true }

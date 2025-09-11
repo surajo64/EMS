@@ -7,6 +7,7 @@ const SendMessage = () => {
   const { token, backendUrl, user, messages, setMessages, fetchMessages } =
     useContext(AppContext);
 
+  const [tab, setTab] = useState("inbox"); // "inbox" or "sent"
   const [employees, setEmployees] = useState([]);
   const [filteredMessages, setFilteredMessages] = useState([]);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
@@ -21,6 +22,7 @@ const SendMessage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // ✅ Mark message as read
   const markMessageRead = async (id) => {
     try {
       await axios.put(
@@ -28,30 +30,35 @@ const SendMessage = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchMessages(); // reload updated messages
+      fetchMessages();
     } catch (err) {
       console.error("Error marking message read:", err);
     }
   };
 
+  // ✅ Fetch employees (only for HR/Admin)
 
-  // ✅ Fetch employees for HR/Admin
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const { data } = await axios.get(
-          backendUrl + "/api/admin/get-all-employees",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (data.success) setEmployees(data.employees);
-      } catch (err) {
-        console.error("Error fetching employees", err);
+useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+      const { data } = await axios.get(
+        `${backendUrl}/api/auth/get-all-users`, // make sure this matches your backend route
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (data.success) {
+        setEmployees(data.users); 
       }
-    };
-    if (user?.role === "admin" || user?.role === "HR") {
-      fetchEmployees();
+    } catch (err) {
+      console.error("Error fetching users", err);
     }
-  }, [token, user, backendUrl]);
+  };
+
+  fetchUsers();
+}, [token, backendUrl]); // user removed from deps because it’s not used
+
 
   // ✅ Send Message
   const handleSend = async (e) => {
@@ -70,7 +77,7 @@ const SendMessage = () => {
 
       if (data.success) {
         toast.success("Message sent successfully ✅");
-        setMessages((prev) => [...prev, ...data.messages]);
+        setMessages(data.messages);
         setMessage("");
         setTitle("");
         setSelectedEmployees([]);
@@ -103,42 +110,53 @@ const SendMessage = () => {
     }
   };
 
-  // ✅ Search filter
-  useEffect(() => {
-    const filtered = (messages || []).filter((m) =>
-      m.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredMessages(filtered);
-    setCurrentPage(1);
-  }, [searchTerm, messages]);
+  // ✅ Inbox & Sent Filters
+  const inboxMessages = (messages || []).filter((msg) =>
+  msg.recipients?.some(
+    (r) =>
+      r._id?.toString() === user._id?.toString() ||
+      r._id?.toString() === user.id?.toString()
+  )
+);
 
-  // ✅ Pagination logic
+const sentMessages = (messages || []).filter(
+  (msg) =>
+    msg.createdBy?._id?.toString() === user._id?.toString() ||
+    msg.createdBy?._id?.toString() === user.id?.toString()
+);
+
+useEffect(() => {
+  console.log("Logged in user:", user);
+  console.log("All messages:", messages);
+}, [messages, user]);
+
+
+
+  // ✅ Apply search & tab filter
+  useEffect(() => {
+    let list = tab === "inbox" ? inboxMessages : sentMessages;
+    if (searchTerm.trim() !== "") {
+      list = list.filter((m) =>
+        m.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    setFilteredMessages(list);
+    setCurrentPage(1);
+  }, [tab, searchTerm, messages]);
+
+  // ✅ Pagination
   const totalItems = filteredMessages.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-
   const paginatedMessages = filteredMessages.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
   useEffect(() => {
-    setFilteredMessages(messages || []);
-    setCurrentPage(1);
-  }, [messages]);
-
-  useEffect(() => {
     if (token) fetchMessages();
   }, [token]);
 
-  if (user?.role !== "admin" && user?.role !== "HR") {
-    return (
-      <p className="text-red-500">
-        You are not authorized to send messages.
-      </p>
-    );
-  }
-
-  // ✅ Handle employee selection (including select all)
+  // ✅ Handle employee selection
   const handleSelectEmployees = (e) => {
     const values = Array.from(e.target.selectedOptions, (opt) => opt.value);
 
@@ -159,7 +177,29 @@ const SendMessage = () => {
         MANAGE MESSAGES
       </p>
 
-      {/* Search and Add */}
+      {/* Tabs */}
+      <div className="mt-4 flex justify-center space-x-4">
+        <button
+          className={`px-4 py-2 rounded-t-lg border-b-2 ${tab === "inbox"
+              ? "border-green-500 text-green-700 font-semibold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          onClick={() => setTab("inbox")}
+        >
+          Inbox
+        </button>
+        <button
+          className={`px-4 py-2 rounded-t-lg border-b-2 ${tab === "sent"
+              ? "border-green-500 text-green-700 font-semibold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          onClick={() => setTab("sent")}
+        >
+          Sent
+        </button>
+      </div>
+
+      {/* Search & Add */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-4">
         <input
           type="text"
@@ -200,14 +240,14 @@ const SendMessage = () => {
               <div className="flex sm:justify-end gap-2">
                 <button
                   onClick={() => {
-                    markMessageRead()
-                    setShowRead(true)
+                    markMessageRead(item._id);
+                    setSelectedMessage(item);
+                    setShowRead(true);
                   }}
                   className="bg-green-500 text-white text-sm px-3 py-1 rounded-full"
                 >
                   Read
                 </button>
-
                 <button
                   onClick={() => setConfirmDeleteId(item._id)}
                   className="bg-red-500 text-white text-sm px-3 py-1 rounded-full"
@@ -220,10 +260,9 @@ const SendMessage = () => {
         ) : (
           <p className="text-center py-5 text-gray-500">No messages found.</p>
         )}
-
       </div>
 
-      {/* ✅ Pagination */}
+      {/* Pagination */}
       {totalPages > 1 && (
         <>
           <div className="flex justify-center items-center flex-wrap gap-2 mt-4 px-4 pb-4">
@@ -240,8 +279,8 @@ const SendMessage = () => {
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`px-3 py-1 rounded ${currentPage === i + 1
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-100 hover:bg-gray-200"
                   }`}
               >
                 {i + 1}
@@ -353,12 +392,13 @@ const SendMessage = () => {
             <div className="text-sm text-gray-500 space-y-1">
               <p>
                 <span className="font-semibold">From:</span>{" "}
-                {selectedMessage.createdBy?.name} (
-                {selectedMessage.createdBy?.email})
+                {selectedMessage.createdBy?.name}
               </p>
               <p>
                 <span className="font-semibold">To:</span>{" "}
-                {selectedMessage.userId?.name} ({selectedMessage.userId?.email})
+                {selectedMessage.recipients
+                  ?.map((r) => `${r.name} (${r.email})`)
+                  .join(", ")}
               </p>
               <p>
                 <span className="font-semibold">Date:</span>{" "}

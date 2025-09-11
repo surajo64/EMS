@@ -89,7 +89,7 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
               <>
                 <SidebarLink to="/hod-dashboard" label="Dashboard" icon={assets.Home} />
                 <SidebarLink to="/profile" label="My Profile" icon={assets.Emplyees} />
-                 <SidebarLink to="/my-messages" label="Message" icon={assets.Department} />
+                 <SidebarLink to="/messages" label="Message" icon={assets.Department} />
                 <SidebarLink to="/hod-leave" label="Leave" icon={assets.Leave} />
                 <SidebarLink to="/employee-loan" label="Loan" icon={assets.Salary} />
                 <SidebarLink to="/employee-salary" label="Salary" icon={assets.Salary} />

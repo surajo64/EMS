@@ -2,6 +2,7 @@ import User from "../models/User.js"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import Message from "../models/message.js"
+import { io } from "../index.js";
 
 
 const login = async (req, res) => {
@@ -20,8 +21,6 @@ const login = async (req, res) => {
       res.json({ success: false, message: "Invalid UserName Or Password!" });
     }
 
-
-
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -29,37 +28,76 @@ const login = async (req, res) => {
 
 }
 
-
-
-// Get all messages for logged-in user
-export const getAllMessage = async (req, res) => {
+// get all employee from same department
+export const fetchEmployees = async (req, res) => {
   try {
-    const messages = await Message.find()
-      .populate("recipients", "name email role")   // all receivers
-      .populate("createdBy", "name email role")    // sender
-      .sort({ createdAt: -1 });
+    const userId = req.userId;
 
-    res.json({ success: true, messages });
+    // Fetch all users except the logged-in user
+    const users = await User.find({
+      _id: { $ne: userId } 
+    }).select('name email role profileImage') 
+      .populate('department', 'name'); 
+
+    res.json({ success: true, users });
   } catch (error) {
-    console.error("Error fetching messages:", error.message);
-    res.status(500).json({ success: false, error: "Failed to fetch messages" });
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+//sends a message to an employee
+export const sendMessage = async (req, res) => {
+  try {
+    const { userIds, text, title } = req.body;
+    const senderId = req.userId;
+
+    // Convert string IDs to ObjectId
+    const recipientIds = userIds.map(id => new mongoose.Types.ObjectId(id));
+    const senderObjectId = new mongoose.Types.ObjectId(senderId);
+
+    // ✅ Create message
+    const message = new Message({
+      title,
+      text,
+      recipients: recipientIds, // Use converted ObjectIds
+      createdBy: senderObjectId,
+      isRead: [
+        { userId: senderObjectId, read: true }, // Mark sender as read
+        ...recipientIds.map(uid => ({ userId: uid, read: false })) // Recipients as unread
+      ]
+    });
+
+    await message.save();
+
+    // ✅ Populate recipients and sender before sending response
+    const savedMessage = await Message.findById(message._id)
+      .populate("recipients", "name email role")
+      .populate("createdBy", "name email role");
+
+    res.json({ success: true, message: savedMessage });
+  } catch (err) {
+    console.error("Error sending message:", err);
+    res.status(500).json({ success: false, message: "Failed to send message" });
   }
 };
 
 
 
-
-
-
 // Get all messages for logged-in user (sent or received)
-export const getMessage = async (req, res) => {
+export const getAllMessage = async (req, res) => {
   try {
     const userId = req.userId;
+    
+    // Convert string userId to ObjectId
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
+    // ✅ Fetch messages where user is sender or recipient
     const messages = await Message.find({
       $or: [
-        { createdBy: userId },   // sent by user
-        { recipients: userId },  // received by user
+        { createdBy: userObjectId },
+        { recipients: userObjectId }
       ],
     })
       .populate("recipients", "name email role")
@@ -67,72 +105,70 @@ export const getMessage = async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.json({ success: true, messages });
+  } catch (err) {
+    console.error("Error fetching messages:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch messages" });
+  }
+};
+
+// Get all messages for logged-in user (only received)
+export const getMessage = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const emplMessages = await Message.find({
+      recipients: userId // ✅ only messages where I'm in recipients
+    })
+      .populate("recipients", "name email role")
+      .populate("createdBy", "name email role")
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, emplMessages });
   } catch (error) {
     console.error("Error fetching my messages:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch messages" });
+    res.status(500).json({ success: false, message: "Failed to fetch messages" });
   }
 };
 
 
 
 // Mark a message as read
+
+
 export const markRead = async (req, res) => {
   try {
-    const { messageId } = req.params;
+    const { messageId } = req.params; // ✅ match route param
+    const userId = req.userId;
 
     const message = await Message.findById(messageId);
+
     if (!message) {
       return res.status(404).json({ success: false, message: "Message not found" });
     }
 
-    message.isRead = message.isRead.map((status) =>
-      status.userId.toString() === req.userId.toString()
-        ? { ...status.toObject(), read: true }
-        : status
+    // find entry for this user
+    const entry = message.isRead.find(
+      (r) => r.userId.toString() === userId.toString()
     );
+
+    if (entry) {
+      entry.read = true;
+    } else {
+      message.isRead.push({ userId, read: true });
+    }
 
     await message.save();
 
-    res.json({ success: true, message });
-  } catch (error) {
-    console.error("Mark as read error:", error);
-    res.status(500).json({ success: false, message: "Failed to mark as read" });
-  }
-};
-
-
-// HR/Admin sends a message to an employee
-export const sendMessage = async (req, res) => {
-  try {
-    const { userIds, text, title } = req.body;
-
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No recipients provided" });
-    }
-
-    const newMessage = new Message({
-      recipients: userIds,
-      text,
-      title,
-      createdBy: req.userId,
-      isRead: userIds.map((id) => ({ userId: id, read: false })),
+    // ✅ Emit real-time update to this user
+    io.to(userId.toString()).emit("messageRead", {
+      messageId: message._id,
+      userId,
     });
 
-    // initialize read-status per recipient
-    newMessage.isRead = userIds.map((id) => ({ userId: id, read: false }));
-
-    await newMessage.save();
-
-    res.json({ success: true, message: newMessage });
-  } catch (err) {
-    console.error("Send message error:", err);
-    res
-      .status(500)
-      .json({ success: false, message: "Error sending message", error: err.message });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error marking read:", error);
+    res.status(500).json({ success: false, message: "Failed to mark as read" });
   }
 };
 
