@@ -11,7 +11,7 @@ const SendMessage = () => {
   const [users,setUsers] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [filteredMessages, setFilteredMessages] = useState([]);
-  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState("");
