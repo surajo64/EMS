@@ -8,6 +8,7 @@ const SendMessage = () => {
     useContext(AppContext);
 
   const [tab, setTab] = useState("inbox"); // "inbox" or "sent"
+  const [users,setUsers] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [filteredMessages, setFilteredMessages] = useState([]);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
