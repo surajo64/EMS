@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import Message from "../models/message.js"
 import { io } from "../index.js";
+import mongoose from "mongoose";
 
 
 const login = async (req, res) => {
@@ -72,14 +73,13 @@ export const getAllMessage = async (req, res) => {
   try {
     const userId = req.userId;
     
-    // Convert string userId to ObjectId
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
 
     // ✅ Fetch messages where user is sender or recipient
     const messages = await Message.find({
       $or: [
-        { createdBy: userObjectId },
-        { recipients: userObjectId }
+        { createdBy: userId },
+        { recipients: userId }
       ],
     })
       .populate("recipients", "name email role")
