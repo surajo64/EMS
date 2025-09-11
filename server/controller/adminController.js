@@ -286,8 +286,22 @@ const getEmployeesByStatus = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+// to fetch all users
+const getAllUsers = async (req, res) => {
+  try {
+    const userId = req.userId; // logged-in user
 
+    // Fetch all users except the logged-in user
+    const users = await User.find({ _id: { $ne: userId } })
+      .select("name email role profileImage") // fields you need
+      .populate("department", "name");        // optional: include department
 
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 // get all employee from same department
 const fetchEmployees = async (req, res) => {
@@ -1795,6 +1809,6 @@ export {
   getAllevaluations, updateEvaluation, getUsers, getEmployeeDashboardData, fetchEmployees,
   submitKpi, getKpi, hodEvaluation, getKpiByDepartment, adminEvaluation, updateAdminEvaluation,
   uploadAttendance, getAttendance, getAllAttendance, resumeLeave, deactivateEmployee, getEmployeesByStatus,
-  applyLoan, getAllyLoan, approveRejectLoan, updateLoan, getEmployeeLoan,
+  applyLoan, getAllyLoan, approveRejectLoan, updateLoan, getEmployeeLoan,getAllUsers,
 
 }

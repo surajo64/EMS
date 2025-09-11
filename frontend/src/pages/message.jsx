@@ -36,52 +36,47 @@ const SendMessage = () => {
     }
   };
 
-  // ✅ Fetch employees (only for HR/Admin)
+  // ✅ Fetch all users
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data } = await axios.get(
+          `${backendUrl}/api/admin/get-all-users`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-useEffect(() => {
-  const fetchUsers = async () => {
-    try {
-      const { data } = await axios.get(
-        `${backendUrl}/api/auth/get-all-users`, // make sure this matches your backend route
-        {
-          headers: { Authorization: `Bearer ${token}` }
+        if (data.success) {
+          setUsers(data.users);
         }
-      );
-
-      if (data.success) {
-        setEmployees(data.users); 
+      } catch (err) {
+        console.error("Error fetching users", err);
       }
-    } catch (err) {
-      console.error("Error fetching users", err);
-    }
-  };
+    };
+    fetchUsers();
+  }, [token, backendUrl, user]);
 
-  fetchUsers();
-}, [token, backendUrl]); // user removed from deps because it’s not used
-
-
-  // ✅ Send Message
+  // ✅ Send message
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!selectedEmployees.length || !message.trim()) {
-      setStatus("Please select at least one employee and type a message.");
+    if (!selectedUsers.length || !message.trim()) {
+      setStatus("Please select at least one user and type a message.");
       return;
     }
 
     try {
       const { data } = await axios.post(
-        backendUrl + "/api/auth/send-message",
-        { userIds: selectedEmployees, text: message, title },
+        `${backendUrl}/api/auth/send-message`,
+        { userIds: selectedUsers, text: message, title },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (data.success) {
         toast.success("Message sent successfully ✅");
-        setMessages(data.messages);
-        setMessage("");
+        setMessages(prev => [data.message, ...prev]); // add new message to list
         setTitle("");
-        setSelectedEmployees([]);
-        setShowForm(false);
+        setMessage("");
+        setSelectedUsers([]);
+        setStatus("");
       }
     } catch (err) {
       console.error("Error sending message:", err);
@@ -112,23 +107,23 @@ useEffect(() => {
 
   // ✅ Inbox & Sent Filters
   const inboxMessages = (messages || []).filter((msg) =>
-  msg.recipients?.some(
-    (r) =>
-      r._id?.toString() === user._id?.toString() ||
-      r._id?.toString() === user.id?.toString()
-  )
-);
+    msg.recipients?.some(
+      (r) =>
+        r._id?.toString() === user._id?.toString() ||
+        r._id?.toString() === user.id?.toString()
+    )
+  );
 
-const sentMessages = (messages || []).filter(
-  (msg) =>
-    msg.createdBy?._id?.toString() === user._id?.toString() ||
-    msg.createdBy?._id?.toString() === user.id?.toString()
-);
+  const sentMessages = (messages || []).filter(
+    (msg) =>
+      msg.createdBy?._id?.toString() === user._id?.toString() ||
+      msg.createdBy?._id?.toString() === user.id?.toString()
+  );
 
-useEffect(() => {
-  console.log("Logged in user:", user);
-  console.log("All messages:", messages);
-}, [messages, user]);
+  useEffect(() => {
+    console.log("Logged in user:", user);
+    console.log("All messages:", messages);
+  }, [messages, user]);
 
 
 
@@ -156,20 +151,17 @@ useEffect(() => {
     if (token) fetchMessages();
   }, [token]);
 
-  // ✅ Handle employee selection
-  const handleSelectEmployees = (e) => {
-    const values = Array.from(e.target.selectedOptions, (opt) => opt.value);
 
-    if (values.includes("all")) {
-      if (selectedEmployees.length === employees.length) {
-        setSelectedEmployees([]);
-      } else {
-        setSelectedEmployees(employees.map((emp) => emp._id));
-      }
-    } else {
-      setSelectedEmployees(values.filter((val) => val !== "all"));
-    }
+  // ✅ Handle multi-select checkbox
+  const handleSelectUser = (userId) => {
+    setSelectedUsers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
   };
+
+
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 text-center">
@@ -181,8 +173,8 @@ useEffect(() => {
       <div className="mt-4 flex justify-center space-x-4">
         <button
           className={`px-4 py-2 rounded-t-lg border-b-2 ${tab === "inbox"
-              ? "border-green-500 text-green-700 font-semibold"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+            ? "border-green-500 text-green-700 font-semibold"
+            : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           onClick={() => setTab("inbox")}
         >
@@ -190,8 +182,8 @@ useEffect(() => {
         </button>
         <button
           className={`px-4 py-2 rounded-t-lg border-b-2 ${tab === "sent"
-              ? "border-green-500 text-green-700 font-semibold"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+            ? "border-green-500 text-green-700 font-semibold"
+            : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           onClick={() => setTab("sent")}
         >
@@ -279,8 +271,8 @@ useEffect(() => {
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`px-3 py-1 rounded ${currentPage === i + 1
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 hover:bg-gray-200"
                   }`}
               >
                 {i + 1}
@@ -315,50 +307,43 @@ useEffect(() => {
             >
               ✖
             </button>
+            <h2 className="text-lg font-bold mb-2">Send Message</h2>
+            {status && <p className="text-red-500 mb-2">{status}</p>}
 
-            <h2 className="text-lg font-bold mb-4 text-green-600">
-              Send Message
-            </h2>
-            {status && <p className="mb-2 text-sm text-gray-600">{status}</p>}
-
-            <form onSubmit={handleSend} className="space-y-4">
-              <select
-                multiple
-                value={selectedEmployees}
-                onChange={handleSelectEmployees}
-                className="w-full border px-3 py-2 rounded h-40"
-              >
-                <option value="all">
-                  {selectedEmployees.length === employees.length
-                    ? "Unselect All"
-                    : "Select All"}
-                </option>
-                {employees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.name} ({emp.email})
-                  </option>
-                ))}
-              </select>
-
+            <form onSubmit={handleSend}>
               <input
                 type="text"
+                placeholder="Title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                placeholder="Type the subject"
-                className="w-full border px-3 py-2 rounded"
+                onChange={e => setTitle(e.target.value)}
+                className="border p-2 w-full mb-2 rounded"
               />
+
               <textarea
+                placeholder="Type your message"
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="w-full border px-3 py-2 rounded"
-                rows="4"
+                onChange={e => setMessage(e.target.value)}
+                className="border p-2 w-full mb-2 rounded"
               />
+
+              <div className="mb-2 max-h-40 overflow-y-auto border p-2 rounded">
+                {users.map(user => (
+                  <label key={user._id} className="block">
+                    <input
+                      type="checkbox"
+                      value={user._id}
+                      checked={selectedUsers.includes(user._id)}
+                      onChange={() => handleSelectUser(user._id)}
+                      className="mr-2"
+                    />
+                    {user.name} ({user.role})
+                  </label>
+                ))}
+              </div>
 
               <button
                 type="submit"
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-full"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
               >
                 Send
               </button>

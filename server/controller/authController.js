@@ -28,24 +28,6 @@ const login = async (req, res) => {
 
 }
 
-// get all employee from same department
-export const fetchEmployees = async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    // Fetch all users except the logged-in user
-    const users = await User.find({
-      _id: { $ne: userId } 
-    }).select('name email role profileImage') 
-      .populate('department', 'name'); 
-
-    res.json({ success: true, users });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
 
 //sends a message to an employee
 export const sendMessage = async (req, res) => {

@@ -5,7 +5,7 @@ import { addDepartment, addEmployee, addLeave, addSalary, adminEvaluation, apply
      changePassword,
      deactivateEmployee,
      deleteDepartment, deleteEmployee, deleteLeave, fetchEmployees, forgotPassword, getAllAttendance, getAllDepartment, 
-     getAllEmployees, getAllevaluations, getAllLeaves,getAllSalaries,getAllyLoan,getAttendance,getEmployeeDashboardData,getEmployeeLeaves,  
+     getAllEmployees, getAllevaluations, getAllLeaves,getAllSalaries,getAllUsers,getAllyLoan,getAttendance,getEmployeeDashboardData,getEmployeeLeaves,  
     getEmployeeLoan,  
     getEmployeeSalaries, 
     getEmployeesByStatus, 
@@ -94,6 +94,7 @@ adminRouter.get('/get-employees', authUser, getAllEmployees);
 adminRouter.post('/add-attendance', authUser, upload.single('file'), uploadAttendance);
 adminRouter.get('/report/:month', authUser, getAttendance);
 adminRouter.get('/get-Attendance', authUser, getAllAttendance);
+adminRouter.get("/get-all-users", authUser, getAllUsers);
 
 // Loan Routers
 adminRouter.post('/apply-loan', authUser, applyLoan);
