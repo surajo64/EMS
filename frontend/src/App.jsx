@@ -29,7 +29,7 @@ import ResetPassword from './pages/resetPassword.jsx'
 import EmployeeLoan from './pages/employeeLoan.jsx'
 import Loan from './pages/loan.jsx'
 import SendMessage from './pages/message.jsx';
-import EmployeeMessage from './pages/employeeMessage.jsx'
+
 import LoadingOverlay from './components/loadingOverlay.jsx';
 import { toast } from "react-toastify";
 
@@ -133,7 +133,7 @@ const App = () => {
               <Route path='/evaluation' element={<Evaluation />} />
               <Route path='/admin-evaluation' element={<AdminEvaluation />} />
               <Route path='/attendence' element={<Attendance />} />
-              <Route path='/my-messages' element = {<EmployeeMessage/>}/>
+             
 
             </Routes>
           </div>

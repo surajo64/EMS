@@ -76,7 +76,7 @@ const employeeSalary = () => {
 
         <div class="max-w-2xl mx-auto bg-white border border-gray-300 p-6 rounded shadow">
           <div class="text-center mb-6">
-        <img src="/public/logo.svg" class="w-12 mx-auto mb-4" />
+        <img src="https://res.cloudinary.com/dyii5iyqq/image/upload/v1756986671/logo_arebic.png" class="w-12 mx-auto mb-4" />
         <h2 class="text-2xl font-bold text-gray-800 mb-10">KIRCT Employee Pay Slip</h2>
         <p class="text-xl font-bold text-green-800 uppercase">
           ${salaryRecord.employeeId.userId.name}

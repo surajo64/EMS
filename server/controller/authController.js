@@ -15,7 +15,7 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password)
     if (isMatch) {
       const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET,)
-      res.json({ success: true, token, user: {id: user._id, name: user.name, role: user.role},});
+      res.json({ success: true, token, user: { id: user._id, name: user.name, role: user.role }, });
     } else {
       res.json({ success: false, message: "Invalid UserName Or Password!" });
     }
@@ -32,37 +32,50 @@ const login = async (req, res) => {
 
 
 // Get all messages for logged-in user
- export const getAllMessage = async (req, res) => {
-
- try {
-   const messages = await Message.find()
-      .populate("userId", "name email role")    // recipient details
-      .populate("createdBy", "name email role") // sender details
+export const getAllMessage = async (req, res) => {
+  try {
+    const messages = await Message.find()
+      .populate("recipients", "name email role")   // all receivers
+      .populate("createdBy", "name email role")    // sender
       .sort({ createdAt: -1 });
 
     res.json({ success: true, messages });
- } catch (error) {
-    res.status(500).json({ error: "Failed to fetch messages" });
+  } catch (error) {
+    console.error("Error fetching messages:", error.message);
+    res.status(500).json({ success: false, error: "Failed to fetch messages" });
   }
 };
 
-  
 
 
-// Get all messages for logged-in user
-  export const getMessage = async (req, res) => {
+
+
+
+// Get all messages for logged-in user (sent or received)
+export const getMessage = async (req, res) => {
   try {
     const userId = req.userId;
-    const emplMessages = await Message.find({ userId })
+
+    const messages = await Message.find({
+      $or: [
+        { createdBy: userId },   // sent by user
+        { recipients: userId },  // received by user
+      ],
+    })
+      .populate("recipients", "name email role")
       .populate("createdBy", "name email role")
       .sort({ createdAt: -1 });
 
-    res.json({ success: true, emplMessages });
+    res.json({ success: true, messages });
   } catch (error) {
     console.error("Error fetching my messages:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch messages" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch messages" });
   }
 };
+
+
 
 // Mark a message as read
 export const markRead = async (req, res) => {
@@ -126,7 +139,7 @@ export const sendMessage = async (req, res) => {
 
 // Delete Message
 
-  export const deleteMessage = async (req, res) => {
+export const deleteMessage = async (req, res) => {
   try {
     await Message.findByIdAndDelete(req.params.id);
     res.json({ success: true });
@@ -138,4 +151,4 @@ export const sendMessage = async (req, res) => {
 
 
 
-export{login}
+export { login }

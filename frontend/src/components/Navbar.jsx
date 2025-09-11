@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useAuth } from "../context/AppContext";
+import { AppContext, useAuth } from "../context/AppContext";
+import { useContext } from "react";
 
 const Navbar = () => {
-  const { token, user, setToken } = useAuth();
+  const { token, backendUrl, user,} =
+      useContext(AppContext);
   const [isOpen, setIsOpen] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [showRead, setShowRead] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
 
   const navigate = useNavigate();
 
@@ -16,7 +20,7 @@ const Navbar = () => {
     const fetchMessages = async () => {
       try {
         if (token) {
-          const {data} = await axios.get("/api/auth/get-message", {
+          const {data} = await axios.get(backendUrl+"/api/auth/get-message", {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (data.success) {
@@ -111,7 +115,7 @@ const Navbar = () => {
               </svg>
 
               {/* Badge */}
-              {messages.length > 0 && (
+              {messages?.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
                   {messages.length}
                 </span>
@@ -125,7 +129,7 @@ const Navbar = () => {
                   Messages
                 </div>
                 <ul className="max-h-60 overflow-y-auto">
-                  {messages.length > 0 ? (
+                  {messages?.length > 0 ? (
                     messages.map((msg) => (
                       <li
                         key={msg._id}
@@ -145,6 +149,48 @@ const Navbar = () => {
                 </div>
               </div>
             )}
+
+             {/* ✅ Read Message Modal */}
+      {showRead && selectedMessage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
+            <button
+              onClick={() => {
+                setShowRead(false);
+                setSelectedMessage(null);
+              }}
+              className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+            >
+              ✖
+            </button>
+
+            <h2 className="text-lg font-bold mb-2 text-green-600">
+              {selectedMessage.title}
+            </h2>
+
+            <p className="text-gray-700 mb-4 whitespace-pre-wrap">
+              {selectedMessage.text}
+            </p>
+
+            <div className="text-sm text-gray-500 space-y-1">
+              <p>
+                <span className="font-semibold">From:</span>{" "}
+                {selectedMessage.createdBy?.name} (
+                {selectedMessage.createdBy?.email})
+              </p>
+              <p>
+                <span className="font-semibold">To:</span>{" "}
+                {selectedMessage.userId?.name} ({selectedMessage.userId?.email})
+              </p>
+              <p>
+                <span className="font-semibold">Date:</span>{" "}
+                {new Date(selectedMessage.createdAt).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
           </div>
 
           {/* Logout */}

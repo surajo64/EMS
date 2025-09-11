@@ -221,7 +221,7 @@ const fetchDepartmentKpi = async () => {
 const fetchMessages = async () => {
       try {
    
-          const {data} = await axios.get(backendUrl+"/api/auth/get-all-message", {
+          const {data} = await axios.get(backendUrl+"/api/auth/get-message", {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (data.success) {
@@ -239,7 +239,7 @@ const fetchMessages = async () => {
 const fetchEmployeeMessage = async () => {
       try {
    
-          const {data} = await axios.get(backendUrl+"/api/auth/get-all-message", {
+          const {data} = await axios.get(backendUrl+"/api/auth/get-message", {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (data.success) {

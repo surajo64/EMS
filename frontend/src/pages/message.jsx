@@ -22,17 +22,17 @@ const SendMessage = () => {
   const itemsPerPage = 5;
 
   const markMessageRead = async (id) => {
-  try {
-    await axios.put(
-      `${backendUrl}/api/auth/mark-read/${id}`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    fetchMessages(); // reload updated messages
-  } catch (err) {
-    console.error("Error marking message read:", err);
-  }
-};
+    try {
+      await axios.put(
+        `${backendUrl}/api/auth/mark-read/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchMessages(); // reload updated messages
+    } catch (err) {
+      console.error("Error marking message read:", err);
+    }
+  };
 
 
   // ✅ Fetch employees for HR/Admin
@@ -193,19 +193,21 @@ const SendMessage = () => {
               className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_3fr_2fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
             >
               <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
-               <p>{item.createdBy?.name || "Unknown"}</p>
+              <p>{item.createdBy?.name || "Unknown"}</p>
               <p>{item.title}</p>
               <p className="truncate">{item.text}</p>
-             
+
               <div className="flex sm:justify-end gap-2">
                 <button
                   onClick={() => {
                     markMessageRead()
-                    setShowRead(true)}}
+                    setShowRead(true)
+                  }}
                   className="bg-green-500 text-white text-sm px-3 py-1 rounded-full"
                 >
                   Read
                 </button>
+
                 <button
                   onClick={() => setConfirmDeleteId(item._id)}
                   className="bg-red-500 text-white text-sm px-3 py-1 rounded-full"
@@ -238,8 +240,8 @@ const SendMessage = () => {
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`px-3 py-1 rounded ${currentPage === i + 1
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 hover:bg-gray-200"
                   }`}
               >
                 {i + 1}
