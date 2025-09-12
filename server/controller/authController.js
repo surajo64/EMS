@@ -68,22 +68,20 @@ export const sendMessage = async (req, res) => {
 
 
 
-// Get all messages for logged-in user (sent or received)
+// Get all messages for logged-in user (sent, received, or mentioned in replies)
 export const getAllMessage = async (req, res) => {
   try {
     const userId = req.userId;
-
-
-
-    // ✅ Fetch messages where user is sender or recipient
     const messages = await Message.find({
       $or: [
         { createdBy: userId },
-        { recipients: userId }
+        { recipients: userId },
+        { "replies.userId": userId } // NEW: Include messages where user is in replies
       ],
     })
       .populate("recipients", "name email role")
       .populate("createdBy", "name email role")
+      .populate("replies.userId", "name email") // NEW: Populate reply users
       .sort({ createdAt: -1 });
 
     res.json({ success: true, messages });
@@ -93,7 +91,7 @@ export const getAllMessage = async (req, res) => {
   }
 };
 
-// Get all messages for logged-in user (only received)
+
 export const getMessage = async (req, res) => {
   try {
     const userId = req.userId;
