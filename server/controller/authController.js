@@ -156,13 +156,50 @@ export const markRead = async (req, res) => {
 
 
 // Delete Message
-
 export const deleteMessage = async (req, res) => {
   try {
-    await Message.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
+    const messageId = req.params.id;
+    const userId = req.userId;
+
+    // First get the current message to check recipients count
+    const message = await Message.findById(messageId);
+    
+    if (!message) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    // If user is the only recipient, delete the entire message
+    if (message.recipients.length === 1 && 
+        message.recipients[0].toString() === userId) {
+      await Message.findByIdAndDelete(messageId);
+      return res.json({ 
+        success: true, 
+        message: "Message deleted (no recipients left)" 
+      });
+    }
+
+    // Otherwise, just remove the user from recipients
+    const updatedMessage = await Message.findByIdAndUpdate(
+      messageId,
+      {
+        $pull: {
+          recipients: userId,
+          isRead: { userId: userId }
+        }
+      },
+      { new: true }
+    )
+      .populate("recipients", "name email role")
+      .populate("createdBy", "name email role");
+
+    res.json({ 
+      success: true, 
+      message: "User removed from recipients",
+      updatedMessage 
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Error deleting message" });
+    console.error("Error updating message:", err);
+    res.status(500).json({ success: false, message: "Error updating message" });
   }
 };
 

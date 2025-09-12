@@ -5,10 +5,9 @@ import { io } from "socket.io-client"; // ✅ import socket.io-client
 import { AppContext } from "../context/AppContext";
 
 const Navbar = () => {
-  const { token, backendUrl, setToken, user } = useContext(AppContext);
+  const { token, backendUrl, setToken, user, messages, setMessages, fetchMessages } = useContext(AppContext);
   const [isOpen, setIsOpen] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
-  const [messages, setMessages] = useState([]);
   const [showRead, setShowRead] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
 
@@ -39,24 +38,13 @@ const Navbar = () => {
     };
   }, [user, token, backendUrl]);
 
-  // ✅ fetch messages (reusable)
-  const fetchMessages = async () => {
-    try {
-      const { data } = await axios.get(`${backendUrl}/api/auth/get-message`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (data.success) {
-        setMessages(data.messages);
-      }
-    } catch (err) {
-      console.error("Error fetching messages:", err);
-    }
-  };
 
   // initial load
   useEffect(() => {
     if (token) {
       fetchMessages();
+      console.log("Inbox Message", inboxMessages )
+      console.log("Unread Inbox Message", unreadInboxMessages )
     }
   }, [token]);
 
@@ -82,22 +70,32 @@ const Navbar = () => {
     }
   };
 
-  // ✅ unread filter
-  const unreadMessages = (messages || []).filter((msg) => {
-  // skip if I am the sender
-  if (msg.createdBy?._id === user._id || msg.createdBy === user._id) {
-    return false;
-  }
+  // ✅ Inbox Messages (messages where I am a recipient)
+const inboxMessages = (messages || []).filter((msg) =>
+  msg.recipients?.some(
+    (recipient) => {
+      const recipientId = recipient._id?.toString() || recipient.toString();
+      const userId = user._id?.toString() || user.id?.toString();
+      return recipientId === userId;
+    }
+  )
+);
 
+// ✅ Unread Inbox Messages
+const unreadInboxMessages = inboxMessages.filter((msg) => {
   const myReadStatus = msg.isRead?.find(
-    (r) => r.userId === user._id || r.userId?._id === user._id
+    (readStatus) => {
+      const statusUserId = readStatus.userId?.toString() || readStatus.userId;
+      const userId = user._id?.toString() || user.id?.toString();
+      return statusUserId === userId;
+    }
   );
-
   return !myReadStatus || myReadStatus.read === false;
 });
 
+  const latestUnreadMessages = unreadInboxMessages.slice(0, 5);
 
-  const latestUnreadMessages = unreadMessages.slice(0, 5);
+
 
   const roleTitle =
     user?.role === "admin" ? "Admin" : user?.role === "HOD" ? "HOD" : "Employee";
@@ -170,11 +168,12 @@ const Navbar = () => {
               </svg>
 
               {/* Badge update */}
-              {unreadMessages.length > 0 && (
+              {unreadInboxMessages.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                  {unreadMessages.length}
+                  {unreadInboxMessages.length}
                 </span>
               )}
+
 
             </button>
 

@@ -8,7 +8,7 @@ const SendMessage = () => {
     useContext(AppContext);
 
   const [tab, setTab] = useState("inbox"); // "inbox" or "sent"
-  const [users,setUsers] = useState([]);
+  const [users, setUsers] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [filteredMessages, setFilteredMessages] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -78,6 +78,7 @@ const SendMessage = () => {
         setMessage("");
         setSelectedUsers([]);
         setStatus("");
+        fetchMessages();
       }
     } catch (err) {
       console.error("Error sending message:", err);
@@ -85,26 +86,31 @@ const SendMessage = () => {
     }
   };
 
-  // ✅ Delete Message
-  const handleDelete = async (id) => {
-    try {
-      const { data } = await axios.delete(
-        backendUrl + `/api/auth/delete/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  // ✅ Remove User from Message (instead of deleting entire message)
+const handleDelete = async (id) => {
+  try {
+    const { data } = await axios.delete(
+      backendUrl + `/api/auth/delete/${id}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      if (data.success) {
-        toast.success("Message deleted ✅");
-        setMessages((prev) => prev.filter((m) => m._id !== id));
-        setConfirmDeleteId(null);
-      } else {
-        toast.error("Failed to delete message");
-      }
-    } catch (err) {
-      console.error("Error deleting message:", err);
-      toast.error("Error deleting message ❌");
+    if (data.success) {
+      toast.success("Message removed from your inbox ✅");
+      
+      // Update local state to remove the message from view
+      setMessages((prev) => prev.filter((m) => m._id !== id));
+      setConfirmDeleteId(null);
+      
+      // Optional: Refetch messages to get updated list
+      fetchMessages();
+    } else {
+      toast.error("Failed to remove message");
     }
-  };
+  } catch (err) {
+    console.error("Error removing message:", err);
+    toast.error("Error removing message ❌");
+  }
+};
 
   // ✅ Inbox & Sent Filters
   const inboxMessages = (messages || []).filter((msg) =>
@@ -120,11 +126,6 @@ const SendMessage = () => {
       msg.createdBy?._id?.toString() === user._id?.toString() ||
       msg.createdBy?._id?.toString() === user.id?.toString()
   );
-
-  useEffect(() => {
-    console.log("Logged in user:", user);
-    console.log("All messages:", messages);
-  }, [messages, user]);
 
 
 
@@ -149,8 +150,11 @@ const SendMessage = () => {
   );
 
   useEffect(() => {
-    if (token) fetchMessages();
-  }, [token]);
+    if (token)
+      fetchMessages();
+    console.log("Logged in user:", user);
+    console.log("All messages:", messages);
+  }, [token, messages, user]);
 
 
   // ✅ Handle multi-select checkbox
@@ -303,7 +307,9 @@ const SendMessage = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
             <button
-              onClick={() => setShowForm(false)}
+              onClick={() => {
+                setShowForm(false),
+              fetchMessages()}}
               className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
             >
               ✖
@@ -312,6 +318,44 @@ const SendMessage = () => {
             {status && <p className="text-red-500 mb-2">{status}</p>}
 
             <form onSubmit={handleSend}>
+              <div className="mb-2 max-h-40 overflow-y-auto border p-2 rounded text-right">
+                {/* ✅ Select All / Deselect All */}
+                <label className="flex justify-end items-center font-semibold mb-1 space-x-2">
+                  <span>Select All</span>
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.length === users.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedUsers(users.map(user => user._id));
+                      } else {
+                        setSelectedUsers([]);
+                      }
+                    }}
+                    className="ml-2"
+                  />
+                </label>
+
+                {/* ✅ Individual users */}
+                {users.map(user => (
+                  <label key={user._id} className="flex justify-end items-center mb-1 space-x-2">
+                    <span>{user.name} ({user.role})</span>
+                    <input
+                      type="checkbox"
+                      value={user._id}
+                      checked={selectedUsers.includes(user._id)}
+                      onChange={() => {
+                        setSelectedUsers(prev =>
+                          prev.includes(user._id)
+                            ? prev.filter(id => id !== user._id)
+                            : [...prev, user._id]
+                        );
+                      }}
+                      className="ml-2"
+                    />
+                  </label>
+                ))}
+              </div>
               <input
                 type="text"
                 placeholder="Title"
@@ -326,21 +370,6 @@ const SendMessage = () => {
                 onChange={e => setMessage(e.target.value)}
                 className="border p-2 w-full mb-2 rounded"
               />
-
-              <div className="mb-2 max-h-40 overflow-y-auto border p-2 rounded">
-                {users.map(user => (
-                  <label key={user._id} className="block">
-                    <input
-                      type="checkbox"
-                      value={user._id}
-                      checked={selectedUsers.includes(user._id)}
-                      onChange={() => handleSelectUser(user._id)}
-                      className="mr-2"
-                    />
-                    {user.name} ({user.role})
-                  </label>
-                ))}
-              </div>
 
               <button
                 type="submit"
@@ -383,7 +412,7 @@ const SendMessage = () => {
               <p>
                 <span className="font-semibold">To:</span>{" "}
                 {selectedMessage.recipients
-                  ?.map((r) => `${r.name} (${r.email})`)
+                  ?.map((r) => `${r.name}`)
                   .join(", ")}
               </p>
               <p>
