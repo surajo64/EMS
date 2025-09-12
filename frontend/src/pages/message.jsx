@@ -152,8 +152,9 @@ const SendMessage = () => {
   useEffect(() => {
     if (token)
       fetchMessages();
-    console.log("Logged in user:", user);
-    console.log("All messages:", messages);
+ 
+    console.log("Seleted Reply Recients:", replyToAll);
+
   }, [token, messages, user]);
 
 
@@ -166,37 +167,34 @@ const SendMessage = () => {
     );
   };
 
-// handle replay
-  const handleReply = async () => {
+const handleReply = async () => {
   try {
     if (!replyMessage.trim()) return;
-    
+
     const { data } = await axios.post(
       `${backendUrl}/api/auth/messages/${selectedMessage._id}/reply`,
-      {
-        message: replyMessage,
-        replyToAll: replyToAll
-      },
+      { message: replyMessage, replyToAll },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
     if (data.success) {
-      toast.success("Reply sent successfully!");
+      toast.success(data.message);
       setReplyMessage("");
       setShowReplyForm(false);
-      
-      // Update the selected message with the new reply
-      setSelectedMessage(data.updatedMessage);
-      
-      // Optional: Refresh the messages list
-      fetchMessages();
+
+      if (replyToAll) {
+        // For "Reply to All", refresh messages to show the new thread
+        fetchMessages();
+      } else {
+        // For "Reply to Sender", update the current message with new reply
+        setSelectedMessage(data.updatedMessage);
+      }
     }
   } catch (err) {
     console.error("Error sending reply:", err);
-    toast.error("Failed to send reply");
+    toast.error(err.response?.data?.message || "Failed to send reply");
   }
 };
-
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 text-center">

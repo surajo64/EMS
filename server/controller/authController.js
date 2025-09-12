@@ -6,7 +6,7 @@ import { io } from "../index.js";
 import mongoose from "mongoose";
 
 
-const login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body
     const user = await User.findOne({ email })
@@ -72,8 +72,8 @@ export const sendMessage = async (req, res) => {
 export const getAllMessage = async (req, res) => {
   try {
     const userId = req.userId;
-    
-    
+
+
 
     // ✅ Fetch messages where user is sender or recipient
     const messages = await Message.find({
@@ -179,10 +179,10 @@ export const deleteMessage = async (req, res) => {
       return res.status(404).json({ success: false, message: "Message not found" });
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: "User removed from recipients",
-      updatedMessage 
+      updatedMessage
     });
   } catch (err) {
     console.error("Error updating message:", err);
@@ -191,50 +191,126 @@ export const deleteMessage = async (req, res) => {
 };
 
 
-// Reply to message
+// controllers/messageController.js
 export const replyToMessage = async (req, res) => {
   try {
     const { message, replyToAll } = req.body;
     const messageId = req.params.id;
     const userId = req.userId;
 
-    // Find the message
+    console.log("Reply request:", { message, replyToAll, messageId, userId });
+
+    // Fetch the original message
     const originalMessage = await Message.findById(messageId);
+    
     if (!originalMessage) {
       return res.status(404).json({ success: false, message: "Message not found" });
     }
 
-    // Add the reply
+    console.log("Original message found:", originalMessage._id);
+
+    // Build reply object
     const reply = {
-      userId: userId,
-      message: message
+      userId,
+      message,
     };
 
-    // Update the message with the new reply
+    // Save reply in original message's replies array
     const updatedMessage = await Message.findByIdAndUpdate(
       messageId,
       { $push: { replies: reply } },
       { new: true }
-    )
-      .populate("recipients", "name email role")
-      .populate("createdBy", "name email role")
-      .populate("replies.userId", "name email");
+    ).populate("replies.userId", "name email");
 
-    // Here you could also send notifications to recipients
-    // based on the replyToAll flag
+    console.log("Reply added to original message");
 
-    res.json({ 
-      success: true, 
-      message: "Reply sent successfully",
-      updatedMessage 
-    });
+    // Handle reply based on type
+    if (replyToAll) {
+      console.log("Processing Reply to All");
+      
+      // Get all recipient IDs (including original sender, excluding current user)
+      let recipientIds = [
+        ...originalMessage.recipients.map(r => r.toString()),
+        originalMessage.createdBy.toString()
+      ];
+      
+      // Remove duplicates and current user
+      recipientIds = [...new Set(recipientIds)].filter(id => id !== userId.toString());
+
+      console.log("Recipient IDs for new message:", recipientIds);
+
+      if (recipientIds.length === 0) {
+        return res.json({
+          success: true,
+          message: "No recipients to send to",
+          updatedMessage,
+        });
+      }
+
+      // Create isRead array
+      const isReadArray = recipientIds.map(recipientId => ({
+        userId: recipientId,
+        read: recipientId === userId.toString()
+      }));
+
+      // Add sender to isRead array as read
+      isReadArray.push({ userId: userId, read: true });
+
+      // Create a NEW message for all recipients
+      const newMessage = new Message({
+        title: `Re: ${originalMessage.title}`,
+        text: message,
+        recipients: recipientIds,
+        createdBy: userId,
+        isRead: isReadArray,
+        threadId: originalMessage._id
+      });
+
+      console.log("New message created:", newMessage);
+
+      const savedMessage = await newMessage.save();
+      console.log("New message saved:", savedMessage._id);
+
+      // Populate the new message
+      const populatedNewMessage = await Message.findById(savedMessage._id)
+        .populate("recipients", "name email role")
+        .populate("createdBy", "name email role");
+
+      // Emit socket events (if you have socket.io setup)
+      if (io) {
+        recipientIds.forEach(rid => {
+          io.to(rid).emit("newMessage", populatedNewMessage);
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "Reply sent to all participants",
+        updatedMessage,
+        newMessage: populatedNewMessage
+      });
+
+    } else {
+      console.log("Processing Reply to Sender Only");
+      
+      // Emit socket event (if you have socket.io setup)
+      if (io) {
+        io.to(originalMessage.createdBy.toString()).emit("messageUpdated", updatedMessage);
+      }
+
+      return res.json({
+        success: true,
+        message: "Reply sent to sender",
+        updatedMessage,
+      });
+    }
+
   } catch (err) {
-    console.error("Error replying to message:", err);
-    res.status(500).json({ success: false, message: "Failed to send reply" });
+    console.error("Error in replyToMessage:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to send reply",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    });
   }
 };
-
-
-
-
-export { login }

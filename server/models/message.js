@@ -29,11 +29,19 @@ const messageSchema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now }
       }
     ],
+    
+     threadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message",
+      default: null,
+  },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     }
   },
+
+
   { timestamps: true }
 );
 
