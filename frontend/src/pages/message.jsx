@@ -86,7 +86,7 @@ const SendMessage = () => {
     }
   };
 
-  // ✅ Remove User from Message (instead of deleting entire message)
+ // ✅ Remove User from Message (never delete entire message)
 const handleDelete = async (id) => {
   try {
     const { data } = await axios.delete(
@@ -100,9 +100,6 @@ const handleDelete = async (id) => {
       // Update local state to remove the message from view
       setMessages((prev) => prev.filter((m) => m._id !== id));
       setConfirmDeleteId(null);
-      
-      // Optional: Refetch messages to get updated list
-      fetchMessages();
     } else {
       toast.error("Failed to remove message");
     }

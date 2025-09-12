@@ -155,30 +155,13 @@ export const markRead = async (req, res) => {
 };
 
 
-// Delete Message
+// Delete Message (only remove user from recipients, never delete entire message)
 export const deleteMessage = async (req, res) => {
   try {
     const messageId = req.params.id;
     const userId = req.userId;
 
-    // First get the current message to check recipients count
-    const message = await Message.findById(messageId);
-    
-    if (!message) {
-      return res.status(404).json({ success: false, message: "Message not found" });
-    }
-
-    // If user is the only recipient, delete the entire message
-    if (message.recipients.length === 1 && 
-        message.recipients[0].toString() === userId) {
-      await Message.findByIdAndDelete(messageId);
-      return res.json({ 
-        success: true, 
-        message: "Message deleted (no recipients left)" 
-      });
-    }
-
-    // Otherwise, just remove the user from recipients
+    // Always just remove the user from recipients, never delete the message
     const updatedMessage = await Message.findByIdAndUpdate(
       messageId,
       {
@@ -191,6 +174,10 @@ export const deleteMessage = async (req, res) => {
     )
       .populate("recipients", "name email role")
       .populate("createdBy", "name email role");
+
+    if (!updatedMessage) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
 
     res.json({ 
       success: true, 
