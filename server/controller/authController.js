@@ -191,6 +191,50 @@ export const deleteMessage = async (req, res) => {
 };
 
 
+// Reply to message
+export const replyToMessage = async (req, res) => {
+  try {
+    const { message, replyToAll } = req.body;
+    const messageId = req.params.id;
+    const userId = req.userId;
+
+    // Find the message
+    const originalMessage = await Message.findById(messageId);
+    if (!originalMessage) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    // Add the reply
+    const reply = {
+      userId: userId,
+      message: message
+    };
+
+    // Update the message with the new reply
+    const updatedMessage = await Message.findByIdAndUpdate(
+      messageId,
+      { $push: { replies: reply } },
+      { new: true }
+    )
+      .populate("recipients", "name email role")
+      .populate("createdBy", "name email role")
+      .populate("replies.userId", "name email");
+
+    // Here you could also send notifications to recipients
+    // based on the replyToAll flag
+
+    res.json({ 
+      success: true, 
+      message: "Reply sent successfully",
+      updatedMessage 
+    });
+  } catch (err) {
+    console.error("Error replying to message:", err);
+    res.status(500).json({ success: false, message: "Failed to send reply" });
+  }
+};
+
+
 
 
 export { login }

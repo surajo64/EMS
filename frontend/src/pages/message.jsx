@@ -6,7 +6,9 @@ import { toast } from "react-toastify";
 const SendMessage = () => {
   const { token, backendUrl, user, messages, setMessages, fetchMessages } =
     useContext(AppContext);
-
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replyToAll, setReplyToAll] = useState(true); // true = reply to all, false = reply to sender only
   const [tab, setTab] = useState("inbox"); // "inbox" or "sent"
   const [users, setUsers] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -79,6 +81,7 @@ const SendMessage = () => {
         setSelectedUsers([]);
         setStatus("");
         fetchMessages();
+        setShowForm(false);
       }
     } catch (err) {
       console.error("Error sending message:", err);
@@ -86,28 +89,28 @@ const SendMessage = () => {
     }
   };
 
- // ✅ Remove User from Message (never delete entire message)
-const handleDelete = async (id) => {
-  try {
-    const { data } = await axios.delete(
-      backendUrl + `/api/auth/delete/${id}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+  // ✅ Remove User from Message (never delete entire message)
+  const handleDelete = async (id) => {
+    try {
+      const { data } = await axios.delete(
+        backendUrl + `/api/auth/delete/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    if (data.success) {
-      toast.success("Message removed from your inbox ✅");
-      
-      // Update local state to remove the message from view
-      setMessages((prev) => prev.filter((m) => m._id !== id));
-      setConfirmDeleteId(null);
-    } else {
-      toast.error("Failed to remove message");
+      if (data.success) {
+        toast.success("Message removed from your inbox ✅");
+
+        // Update local state to remove the message from view
+        setMessages((prev) => prev.filter((m) => m._id !== id));
+        setConfirmDeleteId(null);
+      } else {
+        toast.error("Failed to remove message");
+      }
+    } catch (err) {
+      console.error("Error removing message:", err);
+      toast.error("Error removing message ❌");
     }
-  } catch (err) {
-    console.error("Error removing message:", err);
-    toast.error("Error removing message ❌");
-  }
-};
+  };
 
   // ✅ Inbox & Sent Filters
   const inboxMessages = (messages || []).filter((msg) =>
@@ -163,6 +166,36 @@ const handleDelete = async (id) => {
     );
   };
 
+// handle replay
+  const handleReply = async () => {
+  try {
+    if (!replyMessage.trim()) return;
+    
+    const { data } = await axios.post(
+      `${backendUrl}/api/auth/messages/${selectedMessage._id}/reply`,
+      {
+        message: replyMessage,
+        replyToAll: replyToAll
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (data.success) {
+      toast.success("Reply sent successfully!");
+      setReplyMessage("");
+      setShowReplyForm(false);
+      
+      // Update the selected message with the new reply
+      setSelectedMessage(data.updatedMessage);
+      
+      // Optional: Refresh the messages list
+      fetchMessages();
+    }
+  } catch (err) {
+    console.error("Error sending reply:", err);
+    toast.error("Failed to send reply");
+  }
+};
 
 
   return (
@@ -306,7 +339,8 @@ const handleDelete = async (id) => {
             <button
               onClick={() => {
                 setShowForm(false),
-              fetchMessages()}}
+                  fetchMessages()
+              }}
               className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
             >
               ✖
@@ -387,6 +421,7 @@ const handleDelete = async (id) => {
               onClick={() => {
                 setShowRead(false);
                 setSelectedMessage(null);
+                setShowReplyForm(false);
               }}
               className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
             >
@@ -417,6 +452,88 @@ const handleDelete = async (id) => {
                 {new Date(selectedMessage.createdAt).toLocaleString()}
               </p>
             </div>
+
+            {/* Reply Button */}
+            {!showReplyForm && (
+              <button
+                onClick={() => setShowReplyForm(true)}
+                className="text-green-500 mt-4 hover:underline"
+              >
+                Reply
+              </button>
+            )}
+
+            {/* Reply Form */}
+            {showReplyForm && (
+              <div className="mt-4 p-3 border rounded-lg">
+                <div className="flex space-x-2 mb-3">
+                  <button
+                    onClick={() => setReplyToAll(true)}
+                    className={`px-3 py-1 rounded ${replyToAll
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-200 text-gray-700"
+                      }`}
+                  >
+                    Reply to All
+                  </button>
+                  <button
+                    onClick={() => setReplyToAll(false)}
+                    className={`px-3 py-1 rounded ${!replyToAll
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-200 text-gray-700"
+                      }`}
+                  >
+                    Reply to Sender
+                  </button>
+                </div>
+
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder="Type your reply here..."
+                  className="w-full p-2 border rounded mb-3"
+                  rows="4"
+                />
+
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={() => {
+                      setShowReplyForm(false);
+                      setReplyMessage("");
+                    }}
+                    className="px-3 py-1 bg-gray-300 rounded"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleReply}
+                    disabled={!replyMessage.trim()}
+                    className={`px-3 py-1 rounded ${!replyMessage.trim()
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-green-500 text-white hover:bg-green-600"
+                      }`}
+                  >
+                    Send Reply
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Display Existing Replies */}
+            {selectedMessage.replies && selectedMessage.replies.length > 0 && (
+              <div className="mt-4 border-t pt-3">
+                <h3 className="font-semibold mb-2">Replies:</h3>
+                {selectedMessage.replies.map((reply, index) => (
+                  <div key={index} className="bg-gray-100 p-2 rounded mb-2">
+                    <p className="text-sm">{reply.message}</p>
+                    <p className="text-xs text-gray-500">
+                      By: {reply.userId?.name || "Unknown"} •{" "}
+                      {new Date(reply.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

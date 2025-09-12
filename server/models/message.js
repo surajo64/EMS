@@ -22,6 +22,13 @@ const messageSchema = new mongoose.Schema(
         read: { type: Boolean, default: false }
       }
     ],
+    replies: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        message: { type: String, default: "" },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
