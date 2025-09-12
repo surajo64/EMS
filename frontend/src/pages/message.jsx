@@ -10,7 +10,7 @@ const SendMessage = () => {
   // State management
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyMessage, setReplyMessage] = useState("");
-  const [replyToAll, setReplyToAll] = useState(true);
+  const [replyToAll, setReplyToAll] = useState(false);
   const [activeTab, setActiveTab] = useState("inbox");
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -451,7 +451,7 @@ const SendMessage = () => {
                           Sent
                         </span>
                       )}
-                     
+
                     </div>
                   </div>
 
@@ -634,23 +634,20 @@ const SendMessage = () => {
                 <div className="mt-4 p-4 border rounded-lg bg-gray-50">
                   <div className="flex space-x-2 mb-3">
                     <button
-                      onClick={() => setReplyToAll(true)}
-                      className={`px-3 py-1 rounded ${replyToAll
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-200 text-gray-700"
-                        } transition-colors`}
-                    >
-                      Reply to All
-                    </button>
-                    <button
                       onClick={() => setReplyToAll(false)}
-                      className={`px-3 py-1 rounded ${!replyToAll
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-200 text-gray-700"
+                      className={`px-3 py-1 rounded ${!replyToAll ? "bg-green-500 text-white" : "bg-gray-200 text-gray-700"
                         } transition-colors`}
                     >
                       Reply to Sender
                     </button>
+                    <button
+                      onClick={() => setReplyToAll(true)}
+                      className={`px-3 py-1 rounded ${replyToAll ? "bg-green-500 text-white" : "bg-gray-200 text-gray-700"
+                        } transition-colors`}
+                    >
+                      Reply to All
+                    </button>
+                    
                   </div>
 
                   <textarea
