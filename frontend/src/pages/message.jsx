@@ -27,7 +27,7 @@ const SendMessage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-
+  const [recipientsExpanded, setRecipientsExpanded] = useState(false);
 
   // ✅ Fetch all users
   useEffect(() => {
@@ -40,7 +40,6 @@ const SendMessage = () => {
 
         if (data.success) {
           setUsers(data.users);
-          console.log("user response", user)
         }
       } catch (err) {
         console.error("Error fetching users", err);
@@ -50,25 +49,25 @@ const SendMessage = () => {
   }, [token, backendUrl, user]);
 
   const { inboxMessages, sentMessages, unreadInboxMessages } = useMemo(() => {
-  const userIdStr = user?.id?.toString();
+    const userIdStr = user?.id?.toString();
 
-  const inbox = (messages || []).filter((msg) => {
-    // Handle recipients as populated or raw ObjectId
-    const isRecipient = msg.recipients?.some((r) => {
-      const rId = typeof r === "string" ? r : r._id?.toString();
-      return rId === userIdStr;
+    const inbox = (messages || []).filter((msg) => {
+      // Handle recipients as populated or raw ObjectId
+      const isRecipient = msg.recipients?.some((r) => {
+        const rId = typeof r === "string" ? r : r._id?.toString();
+        return rId === userIdStr;
+      });
+
+      return isRecipient;
     });
 
-    return isRecipient;
-  });
-
-  const sent = (messages || []).filter((msg) => {
-    const createdById =
-      typeof msg.createdBy === "string"
-        ? msg.createdBy
-        : msg.createdBy?._id?.toString();
-    return createdById === userIdStr;
-  });
+    const sent = (messages || []).filter((msg) => {
+      const createdById =
+        typeof msg.createdBy === "string"
+          ? msg.createdBy
+          : msg.createdBy?._id?.toString();
+      return createdById === userIdStr;
+    });
 
     const unreadInbox = inbox.filter((msg) => {
       const myReadStatus = msg.isRead?.find((r) => {
@@ -87,29 +86,6 @@ const SendMessage = () => {
       unreadInboxMessages: unreadInbox,
     };
   }, [messages, user?.id]);
-
-  // Fetch all users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data } = await axios.get(
-          `${backendUrl}/api/admin/get-all-users`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (data.success) {
-          setUsers(data.users);
-        }
-      } catch (err) {
-        console.error("Error fetching users", err);
-        toast.error("Failed to load users");
-      }
-    };
-
-    if (token && user?.role === "admin") {
-      fetchUsers();
-    }
-  }, [token, backendUrl, user]);
 
   // Apply search & tab filter
   useEffect(() => {
@@ -179,14 +155,14 @@ const SendMessage = () => {
     } catch (err) {
       console.error("Error sending message:", err);
       toast.error("Error sending message ❌");
-    }finally {
-    setIsLoading(false); 
-  }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Remove User from Message
   const handleDelete = async (id) => {
-     setIsLoading(true);
+    setIsLoading(true);
     try {
       const { data } = await axios.delete(
         backendUrl + `/api/auth/delete/${id}`,
@@ -203,14 +179,14 @@ const SendMessage = () => {
     } catch (err) {
       console.error("Error removing message:", err);
       toast.error("Error removing message ❌");
-    }finally {
-    setIsLoading(false); 
-  }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle reply
   const handleReply = async () => {
-     setIsLoading(true);
+    setIsLoading(true);
     try {
       if (!replyMessage.trim()) return;
 
@@ -230,9 +206,9 @@ const SendMessage = () => {
     } catch (err) {
       console.error("Error sending reply:", err);
       toast.error(err.response?.data?.message || "Failed to send reply");
-    }finally {
-    setIsLoading(false); 
-  }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // View message details
@@ -257,6 +233,58 @@ const SendMessage = () => {
       setSelectedUsers([]);
     } else {
       setSelectedUsers(users.map(user => user._id));
+    }
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Render recipients with toggle
+  const renderRecipients = (recipients) => {
+    if (!recipients || recipients.length === 0) {
+      return "Unknown";
+    }
+    if (recipients.length === 1) {
+      return recipients[0].name;
+    }
+    if (recipientsExpanded) {
+      return (
+        <span>
+          {recipients.map((u, idx) => (
+            <span key={u._id || idx}>
+              {u.name}
+              {idx < recipients.length - 1 ? ", " : ""}
+            </span>
+          ))}
+          {" "}
+          <button
+            onClick={() => setRecipientsExpanded(false)}
+            className="ml-1 text-blue-600 text-xs underline"
+          >
+            (show less)
+          </button>
+        </span>
+      );
+    } else {
+      const othersCount = recipients.length - 1;
+      return (
+        <span>
+          {<b>You!</b>} &{" "}
+          <button
+            onClick={() => setRecipientsExpanded(true)}
+            className="text-blue-600 text-xs underline"
+          >
+            {othersCount} {othersCount === 1 ? "other" : "others"}
+          </button>
+        </span>
+      );
     }
   };
 
@@ -387,14 +415,17 @@ const SendMessage = () => {
 
       {/* Messages List */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="bg-gray-50 grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_2fr_3fr_2fr] py-4 px-6 border-b text-sm font-semibold text-gray-700">
+        {/* Header */}
+        <div className="bg-gray-100 grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_2fr_3fr_2fr_1.5fr] py-3 px-6 border-b text-sm font-semibold text-gray-700">
           <span>#</span>
-          <span>From</span>
+          <span>{activeTab === "inbox" ? "From" : "To"}</span>
           <span>Title</span>
           <span>Message</span>
+          <span>Date</span>
           <span className="text-right">Actions</span>
         </div>
 
+        {/* Messages */}
         <div className="divide-y">
           {paginatedMessages.length > 0 ? (
             paginatedMessages.map((item, index) => {
@@ -402,80 +433,78 @@ const SendMessage = () => {
                 r => r._id?.toString() === user._id?.toString()
               );
               const isSender = item.createdBy?._id?.toString() === user._id?.toString();
-              const isReplyMention = item.replies?.some(
-                reply => reply.userId?._id?.toString() === user._id?.toString()
-              );
 
-              // Check if message is read by current user
-              const isUnread = !item.isRead?.some(
-                r => r.userId?.toString() === user._id?.toString() && r.read === true
-              );
+              const userId = user._id?.toString() || user.id?.toString();
+              const myReadStatus = item.isRead?.find(r => r.userId?.toString() === userId);
+              const isUnread = !myReadStatus || myReadStatus.read === false;
 
-              let dotColor = "bg-green-500"; // default = green
-
+              let dotColor = "bg-green-500";
               if (activeTab === "inbox") {
-                const userId = user._id?.toString() || user.id?.toString();
-
-                // ✅ FIXED: use `item.isRead` not `message.isRead`
-                const myReadStatus = item.isRead?.find((readStatus) => {
-                  return readStatus.userId?.toString() === userId;
-                });
-
-                if (!myReadStatus || myReadStatus.read === false) {
-                  dotColor = "bg-red-500";  // unread
-                } else {
-                  dotColor = "bg-green-500"; // read
-                }
-              } else if (activeTab === "sent") {
-                dotColor = "bg-green-500";
+                dotColor = isUnread ? "bg-red-500" : "bg-green-500";
               }
 
               return (
                 <div
                   key={item._id}
-                  className={`grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_2fr_3fr_2fr] items-start sm:items-center py-4 px-6 hover:bg-blue-50 gap-3 ${isUnread && activeTab === "inbox" ? 'bg-blue-50' : ''}`}
+                  className={`grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_2fr_3fr_2fr_1.5fr] items-start sm:items-center py-4 px-6 hover:bg-blue-50 gap-3 transition-colors
+                    ${isUnread && activeTab === "inbox" ? "bg-blue-50" : ""}`}
                 >
-                  <div className="flex items-center">
-                    <span className="text-gray-500 mr-2">
+                  {/* # + dot */}
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-500">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </span>
-                    {/* Status indicator dot */}
                     <span className={`w-2 h-2 rounded-full ${dotColor}`}></span>
                   </div>
 
+                  {/* From / To */}
                   <div>
                     <p className="font-medium">
-                      {item.createdBy?.name || "Unknown"}</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {isRecipient && (
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">
+                      {activeTab === "inbox"
+                        ? item.createdBy?.name || "Unknown"
+                        : renderRecipients(item.recipients)}
+                    </p>
+                    <div className="flex gap-1 mt-1">
+                      {isRecipient && activeTab === "inbox" && (
+                        <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">
                           Inbox
                         </span>
                       )}
-                      {isSender && (
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
+                      {isSender && activeTab === "sent" && (
+                        <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded">
                           Sent
                         </span>
                       )}
-
+                      {isUnread && activeTab === "inbox" && (
+                        <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded">
+                          Unread
+                        </span>
+                      )}
                     </div>
                   </div>
 
+                  {/* Title */}
                   <p className="font-medium text-gray-800">{item.title}</p>
+
+                  {/* Message preview */}
                   <p className="text-gray-600 line-clamp-2">{item.text}</p>
 
+                  {/* Date */}
+                  <p className="text-sm text-gray-500">{formatDate(item.createdAt || new Date())}</p>
+
+                  {/* Actions */}
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => handleViewMessage(item)}
-                      className="bg-green-100 text-green-700 text-sm px-3 py-1.5 rounded-lg hover:bg-green-200 transition-colors"
+                      className="bg-green-100 text-green-700 text-sm px-3 py-1.5 rounded-lg hover:bg-green-200 transition-colors flex items-center"
                     >
-                      View
+                      <i className="fas fa-eye mr-1 text-xs"></i> View
                     </button>
                     <button
                       onClick={() => setConfirmDeleteId(item._id)}
-                      className="bg-red-100 text-red-700 text-sm px-3 py-1.5 rounded-lg hover:bg-red-200 transition-colors"
+                      className="bg-red-100 text-red-700 text-sm px-3 py-1.5 rounded-lg hover:bg-red-200 transition-colors flex items-center"
                     >
-                      Delete
+                      <i className="fas fa-trash mr-1 text-xs"></i> Delete
                     </button>
                   </div>
                 </div>
@@ -485,7 +514,9 @@ const SendMessage = () => {
             <div className="py-12 text-center">
               <p className="text-gray-500">No messages found</p>
               <p className="text-sm text-gray-400 mt-2">
-                {activeTab === "inbox" ? "Your inbox is empty" : "You haven't sent any messages yet"}
+                {activeTab === "inbox"
+                  ? "Your inbox is empty"
+                  : "You haven't sent any messages yet"}
               </p>
             </div>
           )}
@@ -495,258 +526,249 @@ const SendMessage = () => {
       {/* Pagination */}
       {renderPagination()}
 
-      {/* ✅ Send Form Modal */}
-      {
-        showForm && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
-              <button
-                onClick={() => {
-                  setShowForm(false),
-                    fetchMessages()
-                }}
-                className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
-              >
-                ✖
-              </button>
-              <h2 className="text-lg font-bold mb-2">Send Message</h2>
-              {status && <p className="text-red-500 mb-2">{status}</p>}
+      {/* Send Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
+            <button
+              onClick={() => {
+                setShowForm(false);
+                fetchMessages();
+              }}
+              className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+            >
+              ✖
+            </button>
+            <h2 className="text-lg font-bold mb-2">Send Message</h2>
+            {status && <p className="text-red-500 mb-2">{status}</p>}
 
-              <form onSubmit={handleSend}>
-                <div className="mb-2 max-h-40 overflow-y-auto border p-2 rounded text-right">
-                  {/* ✅ Select All / Deselect All */}
-                  <label className="flex justify-end items-center font-semibold mb-1 space-x-2">
-                    <span>Select All</span>
+            <form onSubmit={handleSend}>
+              <div className="mb-2 max-h-40 overflow-y-auto border p-2 rounded text-right">
+                {/* Select All / Deselect All */}
+                <label className="flex justify-end items-center font-semibold mb-1 space-x-2">
+                  <span>Select All</span>
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.length === users.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedUsers(users.map(user => user._id));
+                      } else {
+                        setSelectedUsers([]);
+                      }
+                    }}
+                    className="ml-2"
+                  />
+                </label>
+
+                {/* Individual users */}
+                {users.map(user => (
+                  <label key={user._id} className="flex justify-end items-center mb-1 space-x-2">
+                    <span>{user.name} ({user.role})</span>
                     <input
                       type="checkbox"
-                      checked={selectedUsers.length === users.length}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedUsers(users.map(user => user._id));
-                        } else {
-                          setSelectedUsers([]);
-                        }
+                      value={user._id}
+                      checked={selectedUsers.includes(user._id)}
+                      onChange={() => {
+                        setSelectedUsers(prev =>
+                          prev.includes(user._id)
+                            ? prev.filter(id => id !== user._id)
+                            : [...prev, user._id]
+                        );
                       }}
                       className="ml-2"
                     />
                   </label>
+                ))}
+              </div>
+              <input
+                type="text"
+                placeholder="Title"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                className="border p-2 w-full mb-2 rounded"
+              />
 
-                  {/* ✅ Individual users */}
-                  {users.map(user => (
-                    <label key={user._id} className="flex justify-end items-center mb-1 space-x-2">
-                      <span>{user.name} ({user.role})</span>
-                      <input
-                        type="checkbox"
-                        value={user._id}
-                        checked={selectedUsers.includes(user._id)}
-                        onChange={() => {
-                          setSelectedUsers(prev =>
-                            prev.includes(user._id)
-                              ? prev.filter(id => id !== user._id)
-                              : [...prev, user._id]
-                          );
-                        }}
-                        className="ml-2"
-                      />
-                    </label>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  placeholder="Title"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  className="border p-2 w-full mb-2 rounded"
-                />
+              <textarea
+                placeholder="Type your message"
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                className="border p-2 w-full mb-2 rounded"
+              />
 
-                <textarea
-                  placeholder="Type your message"
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  className="border p-2 w-full mb-2 rounded"
-                />
-
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                  Send
-                </button>
-              </form>
-            </div>
+              <button
+                type="submit"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Send
+              </button>
+            </form>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* Read Message Modal */}
-      {
-        showRead && selectedMessage && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-            <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative max-h-[90vh] overflow-y-auto">
-              <button
-                onClick={() => {
-                  setShowRead(false);
-                  setSelectedMessage(null);
-                  setShowReplyForm(false);
-                }}
-                className="absolute top-3 right-3 text-gray-500 hover:text-red-600 transition-colors"
-              >
-                ✖
-              </button>
+      {showRead && selectedMessage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => {
+                setShowRead(false);
+                setSelectedMessage(null);
+                setShowReplyForm(false);
+              }}
+              className="absolute top-3 right-3 text-gray-500 hover:text-red-600 transition-colors"
+            >
+              ✖
+            </button>
 
-              <h2 className="text-lg font-bold mb-4 text-blue-600">
-                {selectedMessage.title}
-              </h2>
+            <h2 className="text-lg font-bold mb-4 text-blue-600">
+              {selectedMessage.title}
+            </h2>
 
-              {/* Original Message Content */}
-              <div className="bg-gray-50 p-3 rounded-lg mb-4 border">
-                <p className="text-sm text-gray-600 mb-1">
-                  <span className="font-semibold">Original message:</span>
-                </p>
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {selectedMessage.text}
-                </p>
-              </div>
-
-              <div className="text-sm text-gray-500 space-y-2 mb-4">
-                <p>
-                  <span className="font-semibold">From:</span>{" "}
-                  {selectedMessage.createdBy?.name}
-                </p>
-                <p>
-                  <span className="font-semibold">To:</span>{" "}
-                  {selectedMessage.recipients
-                    ?.map((r) => `${r.name}`)
-                    .join(", ")}
-                </p>
-                <p>
-                  <span className="font-semibold">Date:</span>{" "}
-                  {new Date(selectedMessage.createdAt).toLocaleString()}
-                </p>
-              </div>
-
-              {/* Reply Button */}
-              {!showReplyForm && (
-                <button
-                  onClick={() => setShowReplyForm(true)}
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors w-full mb-4"
-                >
-                  Reply
-                </button>
-              )}
-
-              {/* Reply Form */}
-              {showReplyForm && (
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-                  <div className="flex space-x-2 mb-3">
-                    <button
-                      onClick={() => setReplyToAll(false)}
-                      className={`px-3 py-1 rounded ${!replyToAll ? "bg-green-500 text-white" : "bg-gray-200 text-gray-700"
-                        } transition-colors`}
-                    >
-                      Reply to Sender
-                    </button>
-                    <button
-                      onClick={() => setReplyToAll(true)}
-                      className={`px-3 py-1 rounded ${replyToAll ? "bg-green-500 text-white" : "bg-gray-200 text-gray-700"
-                        } transition-colors`}
-                    >
-                      Reply to All
-                    </button>
-                    
-                  </div>
-
-                  <textarea
-                    value={replyMessage}
-                    onChange={(e) => setReplyMessage(e.target.value)}
-                    placeholder={`Type your reply to ${selectedMessage.createdBy?.name}...`}
-                    className="w-full p-3 border rounded mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows="4"
-                  />
-
-                  {/* Original message quoted */}
-                  <div className="bg-gray-100 p-3 rounded border text-sm">
-                    <p className="text-gray-500 text-xs mb-1">
-                      On {new Date(selectedMessage.createdAt).toLocaleString()}, {selectedMessage.createdBy?.name} wrote:
-                    </p>
-                    <p className="text-gray-700 whitespace-pre-wrap">
-                      {selectedMessage.text}
-                    </p>
-                  </div>
-
-                  <div className="flex justify-end space-x-2 mt-3">
-                    <button
-                      onClick={() => {
-                        setShowReplyForm(false);
-                        setReplyMessage("");
-                      }}
-                      className="px-3 py-2 bg-gray-300 rounded text-sm hover:bg-gray-400 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleReply}
-                      disabled={!replyMessage.trim()}
-                      className={`px-3 py-2 rounded text-sm ${!replyMessage.trim()
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-green-500 text-white hover:bg-green-600"
-                        } transition-colors`}
-                    >
-                      Send Reply
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Display Existing Replies */}
-              {selectedMessage.replies && selectedMessage.replies.length > 0 && (
-                <div className="mt-6 border-t pt-4">
-                  <h3 className="font-semibold mb-3">Replies:</h3>
-                  {selectedMessage.replies.map((reply, index) => (
-                    <div key={index} className="bg-gray-100 p-3 rounded mb-3">
-                      <p className="text-gray-700">{reply.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        By: {reply.userId?.name || "Unknown"} •{" "}
-                        {new Date(reply.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {/* Original Message Content */}
+            <div className="bg-gray-50 p-3 rounded-lg mb-4 border">
+              <p className="text-sm text-gray-600 mb-1">
+                <span className="font-semibold">Original message:</span>
+              </p>
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {selectedMessage.text}
+              </p>
             </div>
+
+            <div className="text-sm text-gray-500 space-y-2 mb-4">
+              <p>
+                <span className="font-semibold">From:</span>{" "}
+                {selectedMessage.createdBy?.name}
+              </p>
+              <p>
+                <span className="font-semibold">To:&nbsp;</span>
+                {renderRecipients(selectedMessage.recipients)}
+              </p>
+              <p>
+                <span className="font-semibold">Date:</span>{" "}
+                {new Date(selectedMessage.createdAt).toLocaleString()}
+              </p>
+            </div>
+
+            {/* Reply Button */}
+            {!showReplyForm && (
+              <button
+                onClick={() => setShowReplyForm(true)}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors w-full mb-4"
+              >
+                Reply
+              </button>
+            )}
+
+            {/* Reply Form */}
+            {showReplyForm && (
+              <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                <div className="flex space-x-2 mb-3">
+                  <button
+                    onClick={() => setReplyToAll(false)}
+                    className={`px-3 py-1 rounded ${!replyToAll ? "bg-green-500 text-white" : "bg-gray-200 text-gray-700"
+                      } transition-colors`}
+                  >
+                    Reply to Sender
+                  </button>
+                  <button
+                    onClick={() => setReplyToAll(true)}
+                    className={`px-3 py-1 rounded ${replyToAll ? "bg-green-500 text-white" : "bg-gray-200 text-gray-700"
+                      } transition-colors`}
+                  >
+                    Reply to All
+                  </button>
+                </div>
+
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder={`Type your reply to ${selectedMessage.createdBy?.name}...`}
+                  className="w-full p-3 border rounded mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="4"
+                />
+
+                {/* Original message quoted */}
+                <div className="bg-gray-100 p-3 rounded border text-sm">
+                  <p className="text-gray-500 text-xs mb-1">
+                    On {new Date(selectedMessage.createdAt).toLocaleString()}, {selectedMessage.createdBy?.name} wrote:
+                  </p>
+                  <p className="text-gray-700 whitespace-pre-wrap">
+                    {selectedMessage.text}
+                  </p>
+                </div>
+
+                <div className="flex justify-end space-x-2 mt-3">
+                  <button
+                    onClick={() => {
+                      setShowReplyForm(false);
+                      setReplyMessage("");
+                    }}
+                    className="px-3 py-2 bg-gray-300 rounded text-sm hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleReply}
+                    disabled={!replyMessage.trim()}
+                    className={`px-3 py-2 rounded text-sm ${!replyMessage.trim()
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-green-500 text-white hover:bg-green-600"
+                      } transition-colors`}
+                  >
+                    Send Reply
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Display Existing Replies */}
+            {selectedMessage.replies && selectedMessage.replies.length > 0 && (
+              <div className="mt-6 border-t pt-4">
+                <h3 className="font-semibold mb-3">Replies:</h3>
+                {selectedMessage.replies.map((reply, index) => (
+                  <div key={index} className="bg-gray-100 p-3 rounded mb-3">
+                    <p className="text-gray-700">{reply.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      By: {reply.userId?.name || "Unknown"} •{" "}
+                      {new Date(reply.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* Confirm Delete Modal */}
-      {
-        confirmDeleteId && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded shadow-md max-w-sm">
-              <p className="text-red-500 mb-4 font-semibold">
-                Are you sure you want to delete this message?
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setConfirmDeleteId(null)}
-                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDelete(confirmDeleteId)}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
+      {confirmDeleteId && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-md max-w-sm">
+            <p className="text-red-500 mb-4 font-semibold">
+              Are you sure you want to delete this message?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDeleteId)}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {isLoading && <LoadingOverlay />}
-    </div >
+    </div>
   );
 };
 
