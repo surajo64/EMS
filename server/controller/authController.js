@@ -189,7 +189,6 @@ export const deleteMessage = async (req, res) => {
 };
 
 
-// controllers/messageController.js
 export const replyToMessage = async (req, res) => {
   try {
     const { message, replyToAll } = req.body;
@@ -198,14 +197,14 @@ export const replyToMessage = async (req, res) => {
 
     console.log("Reply request:", { message, replyToAll, messageId, userId });
 
-    // Fetch the original message
-    const originalMessage = await Message.findById(messageId);
-    
+    // Fetch the original message with populated fields
+    const originalMessage = await Message.findById(messageId)
+      .populate("recipients", "_id")
+      .populate("createdBy", "_id");
+
     if (!originalMessage) {
       return res.status(404).json({ success: false, message: "Message not found" });
     }
-
-    console.log("Original message found:", originalMessage._id);
 
     // Build reply object
     const reply = {
@@ -222,86 +221,83 @@ export const replyToMessage = async (req, res) => {
 
     console.log("Reply added to original message");
 
-    // Handle reply based on type
+    // Determine recipients based on reply type
+    let recipientIds = [];
+
     if (replyToAll) {
       console.log("Processing Reply to All");
       
       // Get all recipient IDs (including original sender, excluding current user)
-      let recipientIds = [
-        ...originalMessage.recipients.map(r => r.toString()),
-        originalMessage.createdBy.toString()
+      recipientIds = [
+        ...originalMessage.recipients.map(r => r._id.toString()),
+        originalMessage.createdBy._id.toString()
       ];
-      
-      // Remove duplicates and current user
-      recipientIds = [...new Set(recipientIds)].filter(id => id !== userId.toString());
-
-      console.log("Recipient IDs for new message:", recipientIds);
-
-      if (recipientIds.length === 0) {
-        return res.json({
-          success: true,
-          message: "No recipients to send to",
-          updatedMessage,
-        });
-      }
-
-      // Create isRead array
-      const isReadArray = recipientIds.map(recipientId => ({
-        userId: recipientId,
-        read: recipientId === userId.toString()
-      }));
-
-      // Add sender to isRead array as read
-      isReadArray.push({ userId: userId, read: true });
-
-      // Create a NEW message for all recipients
-      const newMessage = new Message({
-        title: `Re: ${originalMessage.title}`,
-        text: message,
-        recipients: recipientIds,
-        createdBy: userId,
-        isRead: isReadArray,
-        threadId: originalMessage._id
-      });
-
-      console.log("New message created:", newMessage);
-
-      const savedMessage = await newMessage.save();
-      console.log("New message saved:", savedMessage._id);
-
-      // Populate the new message
-      const populatedNewMessage = await Message.findById(savedMessage._id)
-        .populate("recipients", "name email role")
-        .populate("createdBy", "name email role");
-
-      // Emit socket events (if you have socket.io setup)
-      if (io) {
-        recipientIds.forEach(rid => {
-          io.to(rid).emit("newMessage", populatedNewMessage);
-        });
-      }
-
-      return res.json({
-        success: true,
-        message: "Reply sent to all participants",
-        updatedMessage,
-        newMessage: populatedNewMessage
-      });
-
     } else {
       console.log("Processing Reply to Sender Only");
       
-      // Emit socket event (if you have socket.io setup)
-      if (io) {
-        io.to(originalMessage.createdBy.toString()).emit("messageUpdated", updatedMessage);
-      }
+      // Only send to the original sender
+      recipientIds = [originalMessage.createdBy._id.toString()];
+    }
 
+    // Remove duplicates and current user
+    recipientIds = [...new Set(recipientIds)].filter(id => id !== userId.toString());
+
+    console.log("Recipient IDs for new message:", recipientIds);
+
+    if (recipientIds.length === 0) {
       return res.json({
         success: true,
-        message: "Reply sent to sender",
+        message: "No recipients to send to",
         updatedMessage,
       });
     }
+
+    // Create isRead array
+    const isReadArray = recipientIds.map(recipientId => ({
+      userId: recipientId,
+      read: false // Set to false initially for recipients
+    }));
+
+    // Add sender to isRead array as read
+    isReadArray.push({ userId: userId, read: true });
+
+    // Create a NEW message for recipients
+    const newMessage = new Message({
+      title: `Re: ${originalMessage.title}`,
+      text: message,
+      recipients: recipientIds,
+      createdBy: userId,
+      isRead: isReadArray,
+      threadId: originalMessage._id,
+      isReply: true // Add flag to identify this as a reply message
+    });
+
+    console.log("New message created:", newMessage);
+
+    const savedMessage = await newMessage.save();
+    console.log("New message saved:", savedMessage._id);
+
+    // Populate the new message
+    const populatedNewMessage = await Message.findById(savedMessage._id)
+      .populate("recipients", "name email role")
+      .populate("createdBy", "name email role");
+
+    // Emit socket events to all recipients
+    if (io) {
+      recipientIds.forEach(rid => {
+        io.to(rid).emit("newMessage", populatedNewMessage);
+      });
+      
+      // Also emit to sender so it appears in their sent folder
+      io.to(userId.toString()).emit("newSentMessage", populatedNewMessage);
+    }
+
+    return res.json({
+      success: true,
+      message: replyToAll ? "Reply sent to all participants" : "Reply sent to sender",
+      updatedMessage,
+      newMessage: populatedNewMessage
+    });
 
   } catch (err) {
     console.error("Error in replyToMessage:", err);

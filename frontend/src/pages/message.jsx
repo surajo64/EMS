@@ -50,31 +50,25 @@ const SendMessage = () => {
   }, [token, backendUrl, user]);
 
   const { inboxMessages, sentMessages, unreadInboxMessages } = useMemo(() => {
-    const userIdStr = user?.id?.toString();
+  const userIdStr = user?.id?.toString();
 
-    const inbox = (messages || []).filter((msg) => {
-      // Handle recipients as populated or raw ObjectId
-      const isRecipient = msg.recipients?.some((r) => {
-        const rId = typeof r === "string" ? r : r._id?.toString();
-        return rId === userIdStr;
-      });
-
-      // Handle replies userId as populated or raw ObjectId
-      const isMentionedInReply = msg.replies?.some((reply) => {
-        const replyUserId = typeof reply.userId === "string" ? reply.userId : reply.userId?._id?.toString();
-        return replyUserId === userIdStr;
-      });
-
-      return isRecipient || isMentionedInReply;
+  const inbox = (messages || []).filter((msg) => {
+    // Handle recipients as populated or raw ObjectId
+    const isRecipient = msg.recipients?.some((r) => {
+      const rId = typeof r === "string" ? r : r._id?.toString();
+      return rId === userIdStr;
     });
 
-    const sent = (messages || []).filter((msg) => {
-      const createdById =
-        typeof msg.createdBy === "string"
-          ? msg.createdBy
-          : msg.createdBy?._id?.toString();
-      return createdById === userIdStr;
-    });
+    return isRecipient;
+  });
+
+  const sent = (messages || []).filter((msg) => {
+    const createdById =
+      typeof msg.createdBy === "string"
+        ? msg.createdBy
+        : msg.createdBy?._id?.toString();
+    return createdById === userIdStr;
+  });
 
     const unreadInbox = inbox.filter((msg) => {
       const myReadStatus = msg.isRead?.find((r) => {
