@@ -148,7 +148,7 @@ const employee = () => {
       setSelectedCVFile(item.cv || null);
       setSelectedImageFile(item.userId?.profileImage || null);
       setAddress(item.address);
-      setPhone(item.phone); 
+      setPhone(item.phone);
       setQualification(item.qualification)
       setExperience(item.experience)
       setState(item.state);
@@ -335,7 +335,7 @@ const employee = () => {
     }
   };
 
-if (!employees) return <LoadingOverlay />;
+  if (!employees) return <LoadingOverlay />;
   return (
     <div className='w-full max-w-6xl mx-auto px-4 text-center'>
       <p className="text-xl sm:text-2xl font-bold text-gray-800 mt-5">MANAGE EMPLOYEE</p>
@@ -766,7 +766,7 @@ if (!employees) return <LoadingOverlay />;
 
             {/* Profile Image */}
             <div className="mt-4 sm:mt-6 text-center">
-             
+
 
               <img
                 src={selectedEmployee.userId?.profileImage}
@@ -803,20 +803,20 @@ if (!employees) return <LoadingOverlay />;
                   ),
                 },
                 {
-  label: "CV",
-  value: selectedEmployee.cv ? (
-    <a
-      href={selectedEmployee.cv}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-600 underline block"
-    >
-      View Uploaded CV
-    </a>
-  ) : (
-    <span className="text-red-500">No CV uploaded</span>
-  ),
-}
+                  label: "CV",
+                  value: selectedEmployee.cv ? (
+                    <a
+                      href={selectedEmployee.cv}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline block"
+                    >
+                      View Uploaded CV
+                    </a>
+                  ) : (
+                    <span className="text-red-500">No CV uploaded</span>
+                  ),
+                }
 
               ].map((item, index) => (
                 <div key={index} className="flex border-b py-2">

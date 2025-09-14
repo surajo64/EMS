@@ -229,7 +229,7 @@ const adminEvaluation = () => {
 
 
 
-
+if (!paginatedEvaluations) return <LoadingOverlay />;
     return (
         <div className='w-full max-w-6xl m-5 text-center'>
             <p className="text-2xl font-bold text-gray-800">MANAGE EVALUATION</p>

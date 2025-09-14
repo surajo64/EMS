@@ -9,6 +9,7 @@ const SendMessage = () => {
     useContext(AppContext);
 
   // State management
+  
   const [isLoading, setIsLoading] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyMessage, setReplyMessage] = useState("");
@@ -102,6 +103,7 @@ const SendMessage = () => {
 
     setFilteredMessages(list);
     setCurrentPage(1);
+   
   }, [activeTab, searchTerm, inboxMessages, sentMessages]);
 
   // Pagination
@@ -343,6 +345,8 @@ const SendMessage = () => {
       </div>
     );
   };
+
+ if (!messages) return <LoadingOverlay />;
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6">
@@ -769,7 +773,7 @@ const SendMessage = () => {
 
       {isLoading && <LoadingOverlay />}
     </div>
-  );
+  )
 };
 
 export default SendMessage;

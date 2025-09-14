@@ -6,9 +6,9 @@ import { useEffect } from 'react';
 import { toast } from "react-toastify";
 import LoadingOverlay from '../components/loadingOverlay.jsx';
 
-const attendance = () => {
+const Attendance = () => {
   const { token, getAllDepartment, setDepartment, department, backendUrl } = useContext(AppContext);
-  const [selectedEmployee, setSelectedEmployee] = useState(null); // For detail view
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employeeDetails, setEmployeeDetails] = useState([]);
   const [selectedRecords, setSelectedRecords] = useState([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -19,70 +19,86 @@ const attendance = () => {
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with true to show loading initially
   const [filteredAttendance, setFilteredAttendance] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5
+  const itemsPerPage = 5;
+
+  // Fetch attendance data on component mount
+  useEffect(() => {
+    const fetchGrouped = async () => {
+      try {
+        setIsLoading(true);
+        const { data } = await axios.get(`${backendUrl}/api/admin/get-Attendance`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (data.success) {
+          setAttendance(data.groupedAttendance);
+          setFilteredAttendance(data.groupedAttendance);
+          console.log("Grouped Attendance:", data.groupedAttendance);
+        }
+      } catch (error) {
+        console.error("Error fetching attendance:", error);
+        toast.error("Failed to load attendance data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGrouped();
+  }, [token, backendUrl]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
-      setIsLoading(true);
+    setIsLoading(true);
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-    const { data } = await axios.post(backendUrl + '/api/admin/add-attendance', formData,
-      { headers: { Authorization: `Bearer ${token}` }, });
+      const { data } = await axios.post(backendUrl + '/api/admin/add-attendance', formData,
+        { headers: { Authorization: `Bearer ${token}` }, });
 
-    if (data.success) {
-      toast.success(data.message || "Attendance data uploaded successfully");
-      setShowForm(false);
-      setFile(null);
-      fetchGrouped();
-
-
-      console.log("Upload Response:", data);
-    } else {
-
-      toast.error(data.message || "Upload failed.");
-    }
+      if (data.success) {
+        toast.success(data.message || "Attendance data uploaded successfully");
+        setShowForm(false);
+        setFile(null);
+        
+        // Refetch attendance data after upload
+        const { newData } = await axios.get(`${backendUrl}/api/admin/get-Attendance`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (newData.success) {
+          setAttendance(newData.groupedAttendance);
+          setFilteredAttendance(newData.groupedAttendance);
+        }
+      } else {
+        toast.error(data.message || "Upload failed.");
+      }
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || "Something went wrong.");
-    }finally {
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleAddNew = () => {
-    setIsLoading(true);
-    setTimeout(() => {
     setShowForm(true);
-setIsLoading(false);
-    }, 300);
   };
 
-
   const handleView = () => {
-    setIsLoading(true);
-    setTimeout(() => {
     setShowDetailModal(true);
- setIsLoading(false);
-    }, 300);
   };
 
   const handleClose = () => {
-     setIsLoading(true);
-    setTimeout(() => {
-    setShowDetailModal(false)
+    setShowDetailModal(false);
     setMonth("");
     setReport([]);
     setSelectedEmployee(null);
     setEmployeeDetails([]);
- setIsLoading(false);
-    }, 300);
   };
-
 
   const fetchReport = async () => {
     setIsLoading(true);
@@ -97,36 +113,34 @@ setIsLoading(false);
       }
     } catch (err) {
       console.error("Fetch error:", err);
-    }finally {
+    } finally {
       setIsLoading(false);
     }
   };
 
-
+  // Filter attendance based on search term
   useEffect(() => {
-    const fetchGrouped = async () => {
-      const { data } = await axios.get(`${backendUrl}/api/admin/get-Attendance`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (data.success) {
-        setAttendance(data.groupedAttendance); // ✅ matches backend
-        console.log("Grouped Attendance:", data.groupedAttendance);
-      }
-    };
-
-    fetchGrouped();
-  }, []);
-
-
+    if (searchTerm.trim() === '') {
+      setFilteredAttendance(attendance);
+    } else {
+      const filtered = attendance.filter(item => 
+        item._id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredAttendance(filtered);
+    }
+    setCurrentPage(1);
+  }, [searchTerm, attendance]);
 
   // Pagination logic
-  const totalItems = attendance?.length;
-  const totalPages = Math.ceil(filteredAttendance.length / itemsPerPage);
+  const totalItems = filteredAttendance.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedAttendance = filteredAttendance.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  if (isLoading) return <LoadingOverlay />;
+  
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 text-center">
       {/* Page Title */}
@@ -162,43 +176,41 @@ setIsLoading(false);
           <p>off Duty</p>
           <p>Actions</p>
         </div>
-        {attendance.length > 0 ? (
-          attendance
-            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-            .map((monthGroup, index) => {
-              const presentCount = monthGroup.records.filter(r => r.status === 'Present').length;
-              const absentCount = monthGroup.records.filter(r => r.status === 'Absent').length;
-              const leaveCount = monthGroup.records.filter(r => r.status === 'Leave').length;
-              const overTimeCount = monthGroup.records.filter(r => r.status === 'overTime').length;
-              const offCount = monthGroup.records.filter(r => r.status === 'offDuty').length;
+        {filteredAttendance.length > 0 ? (
+          paginatedAttendance.map((monthGroup, index) => {
+            const presentCount = monthGroup.records.filter(r => r.status === 'Present').length;
+            const absentCount = monthGroup.records.filter(r => r.status === 'Absent').length;
+            const leaveCount = monthGroup.records.filter(r => r.status === 'Leave').length;
+            const overTimeCount = monthGroup.records.filter(r => r.status === 'overTime').length;
+            const offCount = monthGroup.records.filter(r => r.status === 'offDuty').length;
 
-              const [year, month] = monthGroup._id.split("-");
+            const [year, month] = monthGroup._id.split("-");
 
-              return (
-                <div
-                  key={index}
-                  className="flex flex-wrap justify-between sm:grid sm:grid-cols-[0.5fr_1fr_1fr_0.5fr_0.5fr_0.5fr_0.5fr_0.5fr_1fr] items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50"
-                >
-                  <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
-                  <p>{month}</p>
-                  <p>{year}</p>
+            return (
+              <div
+                key={index}
+                className="flex flex-wrap justify-between sm:grid sm:grid-cols-[0.5fr_1fr_1fr_0.5fr_0.5fr_0.5fr_0.5fr_0.5fr_1fr] items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50"
+              >
+                <p>{(currentPage - 1) * itemsPerPage + index + 1}</p>
+                <p>{month}</p>
+                <p>{year}</p>
 
-                  <p className="text-green-700">{presentCount}</p>
-                  <p className="text-red-700">{absentCount}</p>
-                  <p className="text-yellow-700">{leaveCount}</p>
-                  <p className="text-blue-700">{overTimeCount}</p>
-                  <p className="text-gray-700">{offCount}</p>
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => handleView()}
-                      className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full"
-                    >
-                      View Detail
-                    </button>
-                  </div>
+                <p className="text-green-700">{presentCount}</p>
+                <p className="text-red-700">{absentCount}</p>
+                <p className="text-yellow-700">{leaveCount}</p>
+                <p className="text-blue-700">{overTimeCount}</p>
+                <p className="text-gray-700">{offCount}</p>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => handleView()}
+                    className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full"
+                  >
+                    View Detail
+                  </button>
                 </div>
-              );
-            })
+              </div>
+            );
+          })
         ) : (
           <p className="text-center py-5 text-gray-500">No attendance data found.</p>
         )}
@@ -208,13 +220,7 @@ setIsLoading(false);
             {/* Pagination controls */}
             <div className="flex justify-center items-center mt-2 gap-2">
               <button
-                onClick={() => {
-                  setIsLoading(true);
-                  setTimeout(() => {
-                    setCurrentPage(prev => Math.max(prev - 1, 1))
-                    setIsLoading(false);
-                  }, 300);
-                }}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                 Prev
@@ -230,13 +236,7 @@ setIsLoading(false);
               ))}
 
               <button
-                onClick={() => {
-                  setIsLoading(true);
-                  setTimeout(() => {
-                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
-                    setIsLoading(false);
-                  }, 300);
-                }}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className="text-white px-3 py-1 bg-blue-500 hover:bg-blue-800 rounded disabled:opacity-50">
                 Next
@@ -250,16 +250,12 @@ setIsLoading(false);
         )}
       </div>
 
-
-
-
-
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <h2 className="text-xl font-bold mb-2">Upload Monthly Attendance</h2>
           <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md relative">
             <button onClick={() => setShowForm(false)} className="font-bold text-3xl absolute top-2 right-4 text-red-700 hover:text-red-800">✕</button>
+            <h2 className="text-xl font-bold mb-2">Upload Monthly Attendance</h2>
             <h2 className="text-2xl font-bold text-center mb-6 text-gray-700">
               Upload Attendance
             </h2>
@@ -270,7 +266,6 @@ setIsLoading(false);
           </div>
         </div>
       )}
-
 
       {showDetailModal && (
         <div
@@ -305,15 +300,11 @@ setIsLoading(false);
                     View
                   </button>
                 </div>
-
-
               </>
             )}
 
-
             {/* Attendance Table Wrapper */}
             <div id="print-salary-table" className="overflow-x-auto">
-
               <h2 className="text-lg sm:text-xl font-bold mb-4 text-center sm:text-left">
                 {selectedEmployee
                   ? `Details for ${selectedEmployee.name} (${selectedEmployee.staffId})`
@@ -383,12 +374,8 @@ setIsLoading(false);
                             <td className="border p-2">
                               <button
                                 onClick={() => {
-                                  setIsLoading(true);
-                                  setTimeout(() => {
-                                    setSelectedEmployee(emp.employeeId);
-                                    setEmployeeDetails(emp.records);
-                                    setIsLoading(false);
-                                  }, 300);
+                                  setSelectedEmployee(emp.employeeId);
+                                  setEmployeeDetails(emp.records);
                                 }}
                                 className="text-blue-600 hover:underline text-sm"
                               >
@@ -440,11 +427,7 @@ setIsLoading(false);
                   <div className="flex justify-end mt-4">
                     <button
                       onClick={() => {
-                        setIsLoading(true);
-                        setTimeout(() => {
-                          setSelectedEmployee(null)
-                          setIsLoading(false);
-                        }, 300);
+                        setSelectedEmployee(null);
                       }}
                       className="bg-gray-300 text-gray-800 px-4 py-1 rounded hover:bg-gray-400"
                     >
@@ -454,7 +437,6 @@ setIsLoading(false);
                 </>
               )}
             </div>
-
 
             {/* Print Button */}
             <div className="flex justify-center mt-6">
@@ -489,4 +471,4 @@ setIsLoading(false);
   );
 };
 
-export default attendance;
+export default Attendance;

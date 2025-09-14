@@ -143,9 +143,10 @@ const Department = () => {
     );
     setFilteredDepartments(filtered);
     setCurrentPage(1); // Reset to first page on new search
+    console.log("departments:", paginatedDepartments)
   }, [searchTerm, department]);
 
-  // Pagination logic
+  // Pagination logic 
   const totalItems = department?.length;
   const totalPages = Math.ceil(filteredDepartments.length / itemsPerPage);
   const paginatedDepartments = filteredDepartments.slice(
@@ -153,6 +154,9 @@ const Department = () => {
     currentPage * itemsPerPage
   );
 
+   
+
+  if (!paginatedDepartments) return <LoadingOverlay />;
 
   return (
     <div className='w-full max-w-6xl mx-auto px-4 text-center'>
