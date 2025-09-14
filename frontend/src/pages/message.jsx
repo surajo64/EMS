@@ -2,12 +2,14 @@ import React, { useState, useEffect, useContext, useMemo } from "react";
 import axios from "axios";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
+import LoadingOverlay from '../components/loadingOverlay.jsx';
 
 const SendMessage = () => {
   const { token, backendUrl, user, userData, messages, setMessages, fetchMessages } =
     useContext(AppContext);
 
   // State management
+  const [isLoading, setIsLoading] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyMessage, setReplyMessage] = useState("");
   const [replyToAll, setReplyToAll] = useState(false);
@@ -157,6 +159,7 @@ const SendMessage = () => {
 
   // Send message
   const handleSend = async (e) => {
+    setIsLoading(true);
     e.preventDefault();
     if (!selectedUsers.length || !message.trim()) {
       setStatus("Please select at least one user and type a message.");
@@ -182,11 +185,14 @@ const SendMessage = () => {
     } catch (err) {
       console.error("Error sending message:", err);
       toast.error("Error sending message ❌");
-    }
+    }finally {
+    setIsLoading(false); 
+  }
   };
 
   // Remove User from Message
   const handleDelete = async (id) => {
+     setIsLoading(true);
     try {
       const { data } = await axios.delete(
         backendUrl + `/api/auth/delete/${id}`,
@@ -203,11 +209,14 @@ const SendMessage = () => {
     } catch (err) {
       console.error("Error removing message:", err);
       toast.error("Error removing message ❌");
-    }
+    }finally {
+    setIsLoading(false); 
+  }
   };
 
   // Handle reply
   const handleReply = async () => {
+     setIsLoading(true);
     try {
       if (!replyMessage.trim()) return;
 
@@ -221,12 +230,15 @@ const SendMessage = () => {
         toast.success(data.message);
         setReplyMessage("");
         setShowReplyForm(false);
+        setShowRead(false);
         fetchMessages();
       }
     } catch (err) {
       console.error("Error sending reply:", err);
       toast.error(err.response?.data?.message || "Failed to send reply");
-    }
+    }finally {
+    setIsLoading(false); 
+  }
   };
 
   // View message details
@@ -336,7 +348,7 @@ const SendMessage = () => {
       <div className="flex border-b mb-6">
         <button
           className={`px-6 py-3 font-medium ${activeTab === "inbox"
-            ? "border-b-2 border-blue-500 text-blue-600"
+            ? "border-b-2 border-green-500 text-green-600"
             : "text-gray-500 hover:text-gray-700"}`}
           onClick={() => setActiveTab("inbox")}
         >
@@ -373,7 +385,7 @@ const SendMessage = () => {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white py-2 px-4 rounded-lg text-sm hover:bg-blue-700 flex items-center transition-colors"
+          className="bg-green-600 text-white py-2 px-4 rounded-lg text-sm hover:bg-green-700 flex items-center transition-colors"
         >
           <span className="mr-2">+</span> New Message
         </button>
@@ -461,7 +473,7 @@ const SendMessage = () => {
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => handleViewMessage(item)}
-                      className="bg-blue-100 text-blue-700 text-sm px-3 py-1.5 rounded-lg hover:bg-blue-200 transition-colors"
+                      className="bg-green-100 text-green-700 text-sm px-3 py-1.5 rounded-lg hover:bg-green-200 transition-colors"
                     >
                       View
                     </button>
@@ -738,6 +750,8 @@ const SendMessage = () => {
           </div>
         )
       }
+
+      {isLoading && <LoadingOverlay />}
     </div >
   );
 };

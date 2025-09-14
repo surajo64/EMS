@@ -148,7 +148,7 @@ const employee = () => {
       setSelectedCVFile(item.cv || null);
       setSelectedImageFile(item.userId?.profileImage || null);
       setAddress(item.address);
-      setPhone(item.phone);
+      setPhone(item.phone); 
       setQualification(item.qualification)
       setExperience(item.experience)
       setState(item.state);
@@ -803,20 +803,21 @@ if (!employees) return <LoadingOverlay />;
                   ),
                 },
                 {
-                  label: "CV",
-                  value: selectedEmployee.cv ? (
-                    <a
-                      href={`${backendUrl}/upload/${selectedEmployee.cv}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline block"
-                    >
-                      View Uploaded CV
-                    </a>
-                  ) : (
-                    <span className="text-red-500">No CV uploaded</span>
-                  ),
-                },
+  label: "CV",
+  value: selectedEmployee.cv ? (
+    <a
+      href={selectedEmployee.cv}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline block"
+    >
+      View Uploaded CV
+    </a>
+  ) : (
+    <span className="text-red-500">No CV uploaded</span>
+  ),
+}
+
               ].map((item, index) => (
                 <div key={index} className="flex border-b py-2">
                   <div className="font-semibold w-32 sm:w-40">{item.label}:</div>
