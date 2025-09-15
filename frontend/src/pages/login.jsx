@@ -55,6 +55,7 @@ const [isLoading, setIsLoading] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-green-100 px-4">
+       <img src="https://res.cloudinary.com/dyii5iyqq/image/upload/v1756986671/logo_arebic.png" alt="Logo" className="w-40 h-140 rounded-full border border-gray-300 object-cover" />
       <h1 className="text-2xl sm:text-3xl font-bold text-center text-green-800 mb-6">
         KIRCT EMPLOYEE MANAGEMENT SYSTEM
       </h1>
