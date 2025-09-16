@@ -170,8 +170,8 @@ const hodLeave = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) {
-        setEmployee(data.employee);
-        console.log("List Of Employee", data.employee)
+        setEmployee(data.users);
+        console.log("List Of Employee", data.users)
       } else {
         console.log(data.message);
       }
@@ -518,7 +518,7 @@ const hodLeave = () => {
             {/* Employee Profile Section */}
             <div className="flex justify-center mb-4">
               <img
-                src={selectedLeave.userId?.profileImage}
+                src={backendUrl + `/upload/${selectedLeave.userId?.profileImage}`}
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover border"
               />
@@ -698,13 +698,13 @@ const hodLeave = () => {
                   value={relievingStaff}
                   onChange={(e) => setRelievingStaff(e.target.value)}>
                   <option value="">-- Select Relieving Staff --</option>
-{employees
-  .filter(emp => emp._id !== leave.employeeId) // exclude the one who applied
-  .map(emp => (
-    <option key={emp._id} value={emp._id}>
-      {emp.name}
-    </option>
-))}
+                  {employee
+                    .filter(emp => emp._id !== selectedLeave.userId._id)
+                    .map(emp => (
+                      <option key={emp._id} value={emp._id}>
+                        {emp.name}
+                      </option>
+                    ))}
 
                 </select>
 
@@ -716,13 +716,7 @@ const hodLeave = () => {
               <div className="flex flex-col sm:flex-row justify-end sm:gap-3 gap-2 mt-6">
                 <button
                   onClick={() => setSelectedLeave(null)}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleApproved(selectedLeave._id, "Approved")}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-full font-medium transition text-px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
                 >
                   Approve
                 </button>
@@ -735,11 +729,13 @@ const hodLeave = () => {
               </div>
 
             )}
+
+
           </div>
-        </div>
+        </div >
       )}
-{isLoading && <LoadingOverlay />}
-    </div>
+      {isLoading && <LoadingOverlay />}
+    </div >
   );
 };
 
