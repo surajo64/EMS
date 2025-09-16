@@ -99,7 +99,7 @@ const employeeLoan = () => {
             headers: { Authorization: `Bearer ${token}` },
         });
         if (data.success)
-            setLoans(data.loan);
+            setLoans(data.loans);
         console.log("Employee Loans", data.loans);
     };
 
@@ -179,7 +179,7 @@ const employeeLoan = () => {
         document.body.innerHTML = originalContents;
         window.location.reload(); // Optional: reload to restore event bindings
     };
-const hasOutstandingLoan = loans && loans.some(l => l.status !== "Completed");
+
     return (
 
 
@@ -196,25 +196,24 @@ const hasOutstandingLoan = loans && loans.some(l => l.status !== "Completed");
                     className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/3'
                 />
 
+                <div className="flex flex-col gap-2">
+                    <button
+                        onClick={handleAddNew}
+                        disabled={loans && loans.status !== "Completed"}
+                        className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${loans && loans.status !== "Completed"
+                                ? "bg-gray-400 text-white cursor-not-allowed"
+                                : "bg-green-500 hover:bg-green-600 text-white"
+                            }`}
+                    >
+                        Apply Loan
+                    </button>
 
-<button
-  onClick={handleAddNew}
-  disabled={hasOutstandingLoan}
-  className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${
-    hasOutstandingLoan
-      ? "bg-gray-400 text-white cursor-not-allowed"
-      : "bg-green-500 hover:bg-green-600 text-white"
-  }`}
->
-  Apply Loan
-</button>
-
-{hasOutstandingLoan && (
-  <p className="text-sm text-red-600 font-medium">
-    You have an outstanding loan to pay
-  </p>
-)}
-
+                    {loans && loans.status !== "Completed" && (
+                        <p className="text-sm text-red-600 font-medium">
+                            You have an outstanding loan to pay
+                        </p>
+                    )}
+                </div>
 
 
             </div>

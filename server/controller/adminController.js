@@ -1753,10 +1753,10 @@ const getAllyLoan = async (req, res) => {
 const getEmployeeLoan = async (req, res) => {
   try {
     const userId = req.userId; // Ensure your auth middleware sets this
-const loan = await Loan.findOne({ userId }).sort({ createdAt: -1 }); 
-   
 
-    res.json({ success: true, loan });
+    const loans = await Loan.find({ userId }).populate("userId", "name email");
+
+    res.json({ success: true, loans });
   } catch (error) {
     console.error("Error fetching user loans:", error);
     res.status(500).json({ success: false, error: error.message });
