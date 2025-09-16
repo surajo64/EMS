@@ -59,7 +59,7 @@ adminRouter.post('/leave-resumed',authUser, resumeLeave );
 adminRouter.get('/hod-leave', authUser, getLeaveToHod);
 adminRouter.post('/hod-approve',authUser, approveHodLeave );
 adminRouter.post('/hod-reject',authUser, rejectHodLeave );
-adminRouter.get('/employee-list', authUser,fetchUsers );
+adminRouter.get('/users-list', authUser,fetchUsers );
 
 
 

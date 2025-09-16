@@ -166,7 +166,7 @@ const hodLeave = () => {
   const fetchEmployees = async () => {
     try {
 
-      const { data } = await axios.get(`${backendUrl}/api/admin/employee-list`, {
+      const { data } = await axios.get(`${backendUrl}/api/admin/users-list`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) {
@@ -698,8 +698,7 @@ const hodLeave = () => {
                   value={relievingStaff}
                   onChange={(e) => setRelievingStaff(e.target.value)}>
                   <option value="">-- Select Relieving Staff --</option>
-                  {employee
-                    .filter(emp => emp._id !== selectedLeave.userId._id)
+                  {employee?.filter(emp => emp._id !== selectedLeave.userId._id)
                     .map(emp => (
                       <option key={emp._id} value={emp._id}>
                         {emp.name}
@@ -715,8 +714,8 @@ const hodLeave = () => {
             {selectedLeave.hodStatus === "Pending" && (
               <div className="flex flex-col sm:flex-row justify-end sm:gap-3 gap-2 mt-6">
                 <button
-                  onClick={() => setSelectedLeave(null)}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-full font-medium transition text-px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
+                  onClick={() => handleApproved(selectedLeave._id, "Approved")}
+                  className="bg-green-300 hover:bg-green-400 text-white px-4 py-2 rounded-full font-medium transition text-px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
                 >
                   Approve
                 </button>
