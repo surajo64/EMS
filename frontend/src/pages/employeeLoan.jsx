@@ -199,7 +199,7 @@ const employeeLoan = () => {
                 <div className="flex flex-col gap-2">
                     <button
                         onClick={handleAddNew}
-                        disabled={loans && loans.status !== "Completed"}
+                        disabled={loans && loans.status && loans.status !== "Completed"}
                         className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${loans && loans.status !== "Completed"
                                 ? "bg-gray-400 text-white cursor-not-allowed"
                                 : "bg-green-500 hover:bg-green-600 text-white"
