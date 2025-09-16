@@ -1794,33 +1794,6 @@ const approveRejectLoan = async (req, res) => {
 };
 
 
-// get all employee from same department
-const fetchUsers = async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    const currentUser = await User.findOne({ userId }).populate('department');
-    if (!currentUser) {
-
-      return res.status(404).json({ success: false, message: 'Employee not found' });
-    }
-
-    const departmentId = currentUser.department._id;
-
-
-    const users = await User.find({
-      department: departmentId,
-      userId: { $ne: userId }
-    })
-      .populate('userId', 'name email role profileImage')
-      .populate('department', 'name');
-
-    res.json({ success: true, users });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
 
 
 
@@ -1836,6 +1809,6 @@ export {
   getAllevaluations, updateEvaluation, getUsers, getEmployeeDashboardData, fetchEmployees,
   submitKpi, getKpi, hodEvaluation, getKpiByDepartment, adminEvaluation, updateAdminEvaluation,
   uploadAttendance, getAttendance, getAllAttendance, resumeLeave, deactivateEmployee, getEmployeesByStatus,
-  applyLoan, getAllyLoan, approveRejectLoan, updateLoan, getEmployeeLoan,getAllUsers,fetchUsers
+  applyLoan, getAllyLoan, approveRejectLoan, updateLoan, getEmployeeLoan,getAllUsers,
 
 }

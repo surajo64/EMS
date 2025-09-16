@@ -166,12 +166,12 @@ const hodLeave = () => {
   const fetchEmployees = async () => {
     try {
 
-      const { data } = await axios.get(`${backendUrl}/api/admin/users-list`, {
+      const { data } = await axios.get(`${backendUrl}/api/admin/employee-list`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) {
-        setEmployee(data.users);
-        console.log("List Of Employee", data.users)
+        setEmployee(data.employee);
+        console.log("List Of Employee", data.employee)
       } else {
         console.log(data.message);
       }
@@ -518,7 +518,7 @@ const hodLeave = () => {
             {/* Employee Profile Section */}
             <div className="flex justify-center mb-4">
               <img
-                src={backendUrl + `/upload/${selectedLeave.userId?.profileImage}`}
+                src={selectedLeave.userId?.profileImage}
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover border"
               />
@@ -698,12 +698,14 @@ const hodLeave = () => {
                   value={relievingStaff}
                   onChange={(e) => setRelievingStaff(e.target.value)}>
                   <option value="">-- Select Relieving Staff --</option>
-                  {employee?.filter(emp => emp._id !== selectedLeave.userId._id)
+                  {employee
+                    ?.filter(emp => emp.userId?._id !== selectedLeave?.userId?._id)
                     .map(emp => (
                       <option key={emp._id} value={emp._id}>
-                        {emp.name}
+                        {emp.userId?.name}
                       </option>
                     ))}
+
 
                 </select>
 

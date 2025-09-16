@@ -4,7 +4,7 @@ import { addDepartment, addEmployee, addLeave, addSalary, adminEvaluation, apply
      approveRejectLoan,
      changePassword,
      deactivateEmployee,
-     deleteDepartment, deleteEmployee, deleteLeave, fetchEmployees, fetchUsers, forgotPassword, getAllAttendance, getAllDepartment, 
+     deleteDepartment, deleteEmployee, deleteLeave, fetchEmployees, forgotPassword, getAllAttendance, getAllDepartment, 
      getAllEmployees, getAllevaluations, getAllLeaves,getAllSalaries,getAllUsers,getAllyLoan,getAttendance,getEmployeeDashboardData,getEmployeeLeaves,  
     getEmployeeLoan,  
     getEmployeeSalaries, 
@@ -59,7 +59,7 @@ adminRouter.post('/leave-resumed',authUser, resumeLeave );
 adminRouter.get('/hod-leave', authUser, getLeaveToHod);
 adminRouter.post('/hod-approve',authUser, approveHodLeave );
 adminRouter.post('/hod-reject',authUser, rejectHodLeave );
-adminRouter.get('/users-list', authUser,fetchUsers );
+
 
 
 
