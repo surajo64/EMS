@@ -518,7 +518,7 @@ const hodLeave = () => {
             {/* Employee Profile Section */}
             <div className="flex justify-center mb-4">
               <img
-                src={backendUrl + `/upload/${selectedLeave.userId?.profileImage}`}
+                src={selectedLeave.userId?.profileImage}
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover border"
               />
@@ -590,7 +590,7 @@ const hodLeave = () => {
                   </tr>
 
                   <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50">Admin Approval</th>
+                    <th className="px-4 py-2 font-medium bg-gray-50">HR Approval</th>
                     <td className="px-4 py-2">
                       <span
                         className={`font-semibold px-2 py-1 rounded 
