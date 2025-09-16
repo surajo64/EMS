@@ -715,7 +715,7 @@ const hodLeave = () => {
               <div className="flex flex-col sm:flex-row justify-end sm:gap-3 gap-2 mt-6">
                 <button
                   onClick={() => handleApproved(selectedLeave._id, "Approved")}
-                  className="bg-green-300 hover:bg-green-400 text-white px-4 py-2 rounded-full font-medium transition text-px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium transition text-px-4 py-2 rounded-full font-medium transition text-sm w-full sm:w-auto"
                 >
                   Approve
                 </button>
