@@ -179,7 +179,7 @@ const employeeLoan = () => {
         document.body.innerHTML = originalContents;
         window.location.reload(); // Optional: reload to restore event bindings
     };
-
+const hasOutstandingLoan = loans && loans.some(l => l.status !== "Completed");
     return (
 
 
