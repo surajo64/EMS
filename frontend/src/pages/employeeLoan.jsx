@@ -99,7 +99,7 @@ const employeeLoan = () => {
             headers: { Authorization: `Bearer ${token}` },
         });
         if (data.success)
-            setLoans(data.loans);
+            setLoans(data.loan);
         console.log("Employee Loans", data.loans);
     };
 
