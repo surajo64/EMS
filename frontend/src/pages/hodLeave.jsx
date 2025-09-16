@@ -590,7 +590,7 @@ const hodLeave = () => {
                   </tr>
 
                   <tr className="border-b">
-                    <th className="px-4 py-2 font-medium bg-gray-50">Admin Approval</th>
+                    <th className="px-4 py-2 font-medium bg-gray-50">HR Approval</th>
                     <td className="px-4 py-2">
                       <span
                         className={`font-semibold px-2 py-1 rounded 
@@ -697,13 +697,15 @@ const hodLeave = () => {
                     }`}
                   value={relievingStaff}
                   onChange={(e) => setRelievingStaff(e.target.value)}>
-                  <option value="">-- Select Staff --</option>
-                  {employee.map(emp => (
-                    <option key={emp._id} value={emp._id}>
-                      {emp.name}
-                    </option>
+                  <option value="">-- Select Relieving Staff --</option>
+{employees
+  .filter(emp => emp._id !== leave.employeeId) // exclude the one who applied
+  .map(emp => (
+    <option key={emp._id} value={emp._id}>
+      {emp.name}
+    </option>
+))}
 
-                  ))}
                 </select>
 
               </div>
