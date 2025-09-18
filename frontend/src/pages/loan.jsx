@@ -262,7 +262,7 @@ const loan = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/3'
                 />
-
+ 
                 <div className="flex flex-col gap-2">
                     <button
                         onClick={handleAddNew}

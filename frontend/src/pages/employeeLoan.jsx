@@ -196,25 +196,24 @@ const employeeLoan = () => {
                     className='px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/3'
                 />
 
-                <button
-                    onClick={handleAddNew}
-                    disabled={loans.length > 0 && loans.some(loan => loan.status !== "Completed")}
-                    className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${loans.length > 0 && loans.some(loan => loan.status !== "Completed")
+                <div className="flex flex-col gap-2">
+                    <button
+                        onClick={handleAddNew}
+                        disabled={loans.length > 0 && loans.some(loan => loan.status !== "Completed")}
+                        className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${loans.length > 0 && loans.some(loan => loan.status !== "Completed")
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : "bg-green-500 hover:bg-green-600 text-white"
-                        }`}
-                >
-                    Apply Loan
-                </button>
+                            }`}
+                    >
+                        Apply Loan
+                    </button>
 
-                {loans.length > 0 && loans.some(loan => loan.status !== "Completed") && (
-                    <p className="text-sm text-red-600 font-medium">
-                        You have an outstanding loan to pay
-                    </p>
-                )}
-
-
-
+                    {loans.length > 0 && loans.some(loan => loan.status !== "Completed") && (
+                        <p className="text-sm text-red-600 font-medium">
+                            You have an outstanding loan to pay
+                        </p>
+                    )}
+                </div>
             </div>
 
             {/* Table container */}
