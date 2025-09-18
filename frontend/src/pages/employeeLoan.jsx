@@ -199,27 +199,42 @@ const employeeLoan = () => {
                 <div className="flex flex-col gap-2">
                     <button
                         onClick={handleAddNew}
-                        disabled={loans.length > 0 && loans.some(loan => loan.status !== "Completed")}
-                        className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${loans.length > 0 && loans.some(loan => loan.status !== "Completed")
-                            ? "bg-gray-400 text-white cursor-not-allowed"
-                            : "bg-green-500 hover:bg-green-600 text-white"
+                        disabled={
+                            loans.length > 0 &&
+                            loans.some(
+                                loan =>
+                                    loan.status !== "Completed" && loan.status !== "Rejected"
+                            )
+                        }
+                        className={`py-2 px-4 rounded-md text-sm w-full sm:w-auto transition ${loans.length > 0 &&
+                                loans.some(
+                                    loan =>
+                                        loan.status !== "Completed" && loan.status !== "Rejected"
+                                )
+                                ? "bg-gray-400 text-white cursor-not-allowed"
+                                : "bg-green-500 hover:bg-green-600 text-white"
                             }`}
                     >
                         Apply Loan
                     </button>
 
-                    {loans.length > 0 && loans.some(loan => loan.status !== "Completed") && (
-                        <p className="text-sm text-red-600 font-medium">
-                            You have an outstanding loan to pay
-                        </p>
-                    )}
+                    {loans.length > 0 &&
+                        loans.some(
+                            loan =>
+                                loan.status !== "Completed" && loan.status !== "Rejected"
+                        ) && (
+                            <p className="text-sm text-red-600 font-medium">
+                                You have an outstanding loan to pay
+                            </p>
+                        )}
+
                 </div>
             </div>
 
             {/* Table container */}
             <div className='bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]'>
                 {/* Header */}
-                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
+                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
                     <p className="hidden sm:block">#</p>
                     <p>Reason</p>
                     <p>Requested Amount</p>
@@ -229,6 +244,7 @@ const employeeLoan = () => {
                     <p>Total Repaid</p>
                     <p>Outstanding Balance</p>
                     <p>Application Date</p>
+                    <p>Loan Status</p>
                     <p>Actions</p>
                 </div>
 
@@ -237,7 +253,7 @@ const employeeLoan = () => {
                     paginatedLoans.map((item, index) => (
                         <div
                             key={index}
-                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
+                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
                         >
                             <p className="hidden sm:block">{(currentPage - 1) * itemsPerPage + index + 1}</p>
                             <p>{item.reason}</p>
@@ -250,7 +266,7 @@ const employeeLoan = () => {
                             <p>₦{item.totalRepaid.toLocaleString()}</p>
                             <p>₦{(item.approvedAmount - item.totalRepaid).toLocaleString()}</p>
                             <p>{new Date(item.createdAt).toISOString().split('T')[0]}</p>
-
+                            <p>{item.status}</p>
                             <div className="flex sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
 
                                 {item.status === "Completed" && (

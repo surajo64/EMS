@@ -233,7 +233,7 @@ const loan = () => {
                 );
 
                 // Check if there's any loan not completed
-                const pending = data.loans?.some((loan) => loan.status !== "Completed");
+                const pending = data.loans?.some((loan) => loan.status !== "Completed" && loan.status !== "Rejected");
                 setHasPendingLoan(pending);
             } catch (error) {
                 console.error("Failed to fetch loan status:", error);
@@ -288,7 +288,7 @@ const loan = () => {
             {/* Table container */}
             <div className='bg-white mt-6 rounded-lg shadow overflow-x-auto text-sm max-h-[80vh] min-h-[60vh]'>
                 {/* Header */}
-                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_1.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
+                <div className='bg-gray-200 hidden sm:grid grid-cols-[0.5fr_1.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] py-3 px-6 rounded-t-xl border-b-4 border-green-500'>
                     <p className="hidden sm:block">#</p>
                     <p>Employee</p>
                     <p>Reason</p>
@@ -298,6 +298,7 @@ const loan = () => {
                     <p>Monthly Deductions</p>
                     <p>Total Repaid</p>
                     <p>Outstanding Balance</p>
+                    <p>Loan Status</p>
                     <p>Actions</p>
                 </div>
 
@@ -306,7 +307,7 @@ const loan = () => {
                     paginatedLoans.map((item, index) => (
                         <div
                             key={index}
-                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_1.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
+                            className="flex flex-col sm:grid sm:grid-cols-[0.5fr_1.5fr_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr] items-start sm:items-center text-gray-500 py-3 px-6 border-b hover:bg-blue-50 gap-2"
                         >
                             <p className="hidden sm:block">{(currentPage - 1) * itemsPerPage + index + 1}</p>
                             <p>{item.userId?.name}</p>
@@ -319,7 +320,7 @@ const loan = () => {
                             <p>{item.monthDeduction}</p>
                             <p>₦{item.totalRepaid.toLocaleString()}</p>
                             <p>₦{(item.approvedAmount - item.totalRepaid).toLocaleString()}</p>
-
+                            <p>{item.status}</p>
                             <div className="flex sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
 
                                 {item.status === "Completed" && (
