@@ -442,7 +442,7 @@ const SendMessage = () => {
               const myReadStatus = item.isRead?.find(r => r.userId?.toString() === userId);
               const isUnread = !myReadStatus || myReadStatus.read === false;
 
-              let dotColor = "bg-green-500";
+              let dotColor = "bg-blue-500";
               if (activeTab === "inbox") {
                 dotColor = isUnread ? "bg-red-500" : "bg-green-500";
               }
